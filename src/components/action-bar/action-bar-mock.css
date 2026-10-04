@@ -1,0 +1,2037 @@
+/* --- Mock action bar layout --- */
+
+#ich-action-bar-dock.ich-action-bar-full-layout #ich-action-bar {
+  width: 1120px;
+  max-width: 1120px;
+  padding: 6px 10px;
+  background: rgba(18, 12, 10, 0.92);
+  border-color: rgba(120, 72, 40, 0.55);
+  overflow: visible;
+}
+
+#ich-action-bar-dock .ich-action-bar-motion {
+  overflow: visible;
+}
+
+.ich-mock-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  position: relative;
+}
+
+.ich-mock-bar.ich-mock-defeated {
+  filter: grayscale(0.35);
+  opacity: 0.92;
+}
+
+.ich-mock-bar.ich-mock-defeated .ich-mock-center {
+  filter: grayscale(1);
+  opacity: 0.42;
+  pointer-events: none;
+  user-select: none;
+}
+
+.ich-mock-economy {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  width: max-content;
+  max-width: none;
+  height: 28px;
+  min-height: 28px;
+  position: relative;
+  z-index: 2;
+}
+
+.ich-mock-side-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  gap: 0;
+  flex: 0 0 auto;
+  padding-top: 0;
+  position: relative;
+  min-width: 36px;
+}
+
+.ich-mock-side-left .ich-mock-config-btn {
+  position: static;
+  transform: none;
+  width: 27px;
+  height: 28px;
+  min-width: 27px;
+  min-height: 28px;
+  font-size: 16px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #b4bbc6;
+  box-shadow: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+  line-height: 1;
+  flex: 0 0 28px;
+  z-index: 2;
+}
+
+.ich-mock-side-left .ich-mock-config-btn:hover {
+  background: transparent;
+  color: #dce1e8;
+}
+
+.ich-mock-side-left .ich-mock-config-btn.is-spacer {
+  display: block;
+  visibility: hidden;
+  pointer-events: none;
+  cursor: default;
+  width: 27px;
+  height: 28px;
+  min-width: 27px;
+  min-height: 28px;
+  flex: 0 0 28px;
+}
+
+.ich-mock-side-left .ich-mock-passives {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Same avatar-tall zone as the sheet/light/visibility column. */
+  height: 171px;
+  min-height: 171px;
+  max-height: 171px;
+  padding-top: 0;
+  margin: 0;
+  box-sizing: content-box;
+}
+
+.ich-mock-gem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 0;
+  color: inherit;
+  position: relative;
+}
+
+.ich-mock-gem.is-placeholder {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ich-mock-gem-svg {
+  display: block;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+.ich-mock-gem-face {
+  paint-order: stroke fill;
+}
+
+.ich-mock-gem-action .ich-mock-gem-face {
+  fill: #d9534f !important;
+  stroke: #f4a8a6 !important;
+}
+
+.ich-mock-gem-bonus .ich-mock-gem-face {
+  fill: #5b8fd9 !important;
+  stroke: #9ec5f0 !important;
+}
+
+.ich-mock-gem-reaction .ich-mock-gem-face {
+  fill: #e0b040 !important;
+  stroke: #f0d878 !important;
+}
+
+.ich-mock-gem-legendary .ich-mock-gem-face {
+  fill: #c8a030 !important;
+  stroke: #f0ddb0 !important;
+}
+
+.ich-mock-gem-items {
+  width: 27px;
+  height: 27px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: #c9a962;
+  font-size: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+.ich-mock-gem-items i {
+  pointer-events: none;
+  line-height: 1;
+}
+
+.ich-mock-gem-items.is-selected {
+  color: #f0ddb0;
+  filter: drop-shadow(0 0 5px rgba(240, 221, 176, 0.55));
+}
+
+.ich-mock-gem-items.is-spent {
+  background: transparent;
+  border: none;
+  color: rgba(184, 154, 92, 0.55);
+  opacity: 0.7;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)) grayscale(0.35);
+}
+
+.ich-mock-gem-count {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 4px;
+  border: 1px solid rgba(240, 221, 176, 0.95);
+  background: rgba(10, 7, 18, 0.96);
+  color: #f0ddb0;
+  font-family: "Signika", sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+  z-index: 2;
+}
+
+.ich-mock-gem.is-selected {
+  filter:
+    drop-shadow(0 0 4px rgba(240, 221, 176, 1))
+    drop-shadow(0 0 8px rgba(255, 230, 160, 0.85));
+}
+
+.ich-mock-gem.is-spent .ich-mock-gem-face {
+  fill: #6a6a72 !important;
+  stroke: #8a8a92 !important;
+  stroke-width: 1.5;
+  opacity: 0.55;
+}
+
+.ich-mock-gem-action.is-spent .ich-mock-gem-face,
+.ich-mock-gem-bonus.is-spent .ich-mock-gem-face,
+.ich-mock-gem-reaction.is-spent .ich-mock-gem-face,
+.ich-mock-gem-legendary.is-spent .ich-mock-gem-face {
+  fill: #6a6a72 !important;
+  stroke: #8a8a92 !important;
+}
+
+.ich-mock-gem.is-spent {
+  filter: grayscale(1);
+  opacity: 0.55;
+  cursor: default;
+}
+
+.ich-mock-gem.is-spent.is-selected {
+  filter: grayscale(0.85);
+  opacity: 0.7;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-gem {
+  min-width: 27px;
+  min-height: 27px;
+  font-size: 0;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-gem-items {
+  font-size: 16px;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-gem:focus {
+  outline: none;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-gem:focus-visible .ich-mock-gem-svg,
+#ich-action-bar-dock #ich-action-bar .ich-mock-gem-items:focus-visible {
+  filter: drop-shadow(0 0 2px rgba(240, 221, 176, 0.9));
+}
+
+#ich-action-bar-dock.ich-action-bar-full-layout #ich-action-bar:has(.ich-mock-your-turn) {
+  border-color: rgba(255, 236, 170, 1);
+  box-shadow:
+    0 0 0 1px rgba(255, 240, 190, 0.95),
+    0 0 28px rgba(255, 220, 120, 0.8),
+    0 0 56px rgba(240, 200, 90, 0.5),
+    inset 0 0 36px rgba(255, 220, 120, 0.2);
+  animation: ich-your-turn-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes ich-your-turn-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(255, 232, 160, 0.85),
+      0 0 22px rgba(255, 220, 120, 0.65),
+      0 0 44px rgba(240, 200, 90, 0.38),
+      inset 0 0 30px rgba(255, 220, 120, 0.14);
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px rgba(255, 245, 200, 1),
+      0 0 34px rgba(255, 230, 140, 0.9),
+      0 0 68px rgba(255, 210, 100, 0.55),
+      inset 0 0 42px rgba(255, 230, 140, 0.24);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ich-action-bar-dock.ich-action-bar-full-layout #ich-action-bar:has(.ich-mock-your-turn) {
+    animation: none;
+  }
+}
+
+.ich-mock-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  width: 100%;
+  height: 232px;
+  min-height: 232px;
+  max-height: 232px;
+  overflow: visible;
+}
+
+.ich-mock-left,
+.ich-mock-center,
+.ich-mock-right {
+  height: 100%;
+  min-height: 0;
+  overflow: visible;
+}
+
+/* Left: [passives] [portrait column] [utility column] */
+.ich-mock-left {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  height: 100%;
+  min-height: 0;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.ich-mock-vitals {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  overflow: visible;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: fit-content;
+}
+
+.ich-mock-passives {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: center;
+  gap: 0;
+  padding-top: 0;
+  min-width: 36px;
+  height: auto;
+}
+
+.ich-mock-passive-triangle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  flex: 0 0 auto;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.ich-mock-passive-triangle .ich-mock-passive {
+  position: relative;
+}
+
+.ich-mock-config-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #b4bbc6;
+  cursor: pointer;
+  font-size: 18px;
+  flex-shrink: 0;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+.ich-mock-config-btn:hover {
+  background: transparent;
+  color: #dce1e8;
+}
+
+.ich-mock-passive {
+  display: block;
+  width: 34px;
+  height: 36px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #d8d0c4;
+  cursor: help;
+  line-height: 1;
+  overflow: visible;
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.ich-mock-passive-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: 17px;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+.ich-mock-passive-prc {
+  color: #8fd4a8;
+}
+
+.ich-mock-passive-ins {
+  color: #c4a8f0;
+}
+
+.ich-mock-passive-inv {
+  color: #e0c070;
+}
+
+.ich-mock-passive-value {
+  position: absolute;
+  right: -5px;
+  bottom: -4px;
+  min-width: 18px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 4px;
+  border: 1px solid rgba(20, 14, 28, 0.85);
+  background: rgba(10, 7, 18, 0.94);
+  color: #f0e8d8;
+  font-family: "Signika", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 16px;
+  text-align: center;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
+.ich-mock-portrait-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex: 0 0 auto;
+  overflow: visible;
+  min-width: 171px;
+}
+
+.ich-mock-portrait-block {
+  position: relative;
+  width: 171px;
+  height: 171px;
+  overflow: visible;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+  flex: 0 0 auto;
+}
+
+.ich-mock-char-name {
+  max-width: 171px;
+  margin: 4px 0 0;
+  padding: 0 4px;
+  color: #f0e8d8;
+  font-family: "Signika", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 4;
+}
+
+.ich-mock-bar.ich-mock-down .ich-mock-portrait {
+  filter: grayscale(1) brightness(0.72);
+  opacity: 0.7;
+  border-color: rgba(150, 150, 160, 0.45);
+  box-shadow: none;
+  transition: filter 0.35s ease, opacity 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+.ich-mock-bar.ich-mock-stabilized .ich-mock-portrait {
+  filter: grayscale(0.25) brightness(0.7) sepia(0.15) hue-rotate(180deg);
+  opacity: 0.75;
+  transition: filter 0.35s ease, opacity 0.35s ease;
+}
+
+.ich-mock-bar.ich-mock-defeated .ich-mock-portrait {
+  filter: grayscale(1) brightness(0.42);
+  opacity: 0.4;
+  transition: filter 0.35s ease, opacity 0.35s ease;
+}
+
+.ich-mock-death-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+  color: rgba(220, 220, 225, 0.88);
+  font-size: 28px;
+  pointer-events: none;
+  z-index: 2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
+  transition: color 0.35s ease, background-color 0.35s ease, opacity 0.35s ease, font-size 0.35s ease;
+}
+
+.ich-mock-death-overlay.is-dead {
+  background: rgba(0, 0, 0, 0.45);
+  color: rgba(145, 145, 150, 0.95);
+  font-size: 30px;
+}
+
+.ich-mock-death-overlay.is-stabilized {
+  background: rgba(40, 60, 120, 0.28);
+  color: rgba(190, 210, 255, 0.9);
+}
+
+.ich-mock-death-save-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  width: 141px;
+  height: 141px;
+  border-radius: 50%;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 4;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.ich-mock-death-save-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ich-mock-death-save-btn:focus-visible {
+  outline: 2px solid rgba(240, 221, 176, 0.85);
+  outline-offset: 2px;
+}
+
+.ich-mock-ds-ring {
+  position: absolute;
+  inset: 0;
+  width: 171px;
+  height: 171px;
+  pointer-events: none;
+  z-index: 5;
+  overflow: visible;
+}
+
+.ich-mock-ds-pip {
+  fill: rgba(0, 0, 0, 0.001);
+  stroke-width: 2;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.ich-mock-ds-pip.is-success {
+  stroke: rgba(120, 190, 130, 0.85);
+}
+
+.ich-mock-ds-pip.is-success.is-filled {
+  fill: rgba(90, 180, 110, 0.95);
+  stroke: rgba(180, 240, 190, 0.95);
+  filter: drop-shadow(0 0 3px rgba(90, 180, 110, 0.75));
+}
+
+.ich-mock-ds-pip.is-failure {
+  stroke: rgba(200, 90, 90, 0.85);
+}
+
+.ich-mock-ds-pip.is-failure.is-filled {
+  fill: rgba(190, 70, 70, 0.95);
+  stroke: rgba(255, 160, 160, 0.95);
+  filter: drop-shadow(0 0 3px rgba(190, 70, 70, 0.75));
+}
+
+.ich-mock-ds-pip:hover {
+  stroke-width: 2.5;
+  filter: brightness(1.15);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-hp-label,
+#ich-action-bar-dock #ich-action-bar .ich-full-hp-label.ich-mock-hp-label {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  transform: translateX(-50%);
+  padding: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  font-size: 17px;
+  font-weight: 800;
+  color: #f0e8d8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  z-index: 3;
+  text-align: center;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-hp-label .ich-mock-hp-current,
+#ich-action-bar-dock #ich-action-bar .ich-mock-hp-label .ich-mock-hp-temp,
+#ich-action-bar-dock #ich-action-bar .ich-mock-hp-label .ich-mock-hp-max {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-hp-temp {
+  color: #7ec8ff;
+  margin-left: 1px;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-hp-max {
+  opacity: 0.92;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-portrait-block .ich-mock-ac {
+  position: absolute;
+  right: -2px;
+  bottom: 4px;
+  z-index: 6;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #eef1f4;
+  border: 1px solid rgba(190, 196, 205, 0.7);
+  background: linear-gradient(180deg, #9aa1ab 0%, #6a717c 42%, #454b55 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  /* Point-down shield (flipped from the old point-up shape). */
+  clip-path: polygon(18% 0%, 82% 0%, 100% 58%, 50% 100%, 0% 58%);
+  border-radius: 0;
+  padding-top: 2px;
+}
+
+.ich-mock-movement {
+  display: flex;
+  align-items: center;
+  width: auto;
+  align-self: stretch;
+  margin: 0;
+  padding: 5px 8px;
+  border: 1px solid rgba(184, 154, 92, 0.35);
+  border-radius: 6px;
+  background: rgba(10, 7, 18, 0.55);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  min-width: 168px;
+}
+
+.ich-mock-movement:hover {
+  border-color: rgba(224, 192, 96, 0.65);
+  background: rgba(18, 12, 24, 0.72);
+}
+
+.ich-mock-movement.is-muted {
+  opacity: 0.45;
+}
+
+.ich-mock-movement-mode {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #f0ddb0;
+  font-size: 14px;
+  line-height: 1;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-movement .ich-movement-chip {
+  margin-bottom: 0;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-movement-row {
+  gap: 6px;
+  width: 100%;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-movement-bar {
+  flex: 1;
+  height: 10px;
+  min-width: 0;
+  border-radius: 4px;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-movement-bar .ich-movement-fill {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #2f5f8a 0%, #4a8ec4 100%);
+}
+
+.ich-mock-speed-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: rgba(224, 176, 64, 0.2);
+  border: 1px solid rgba(224, 176, 64, 0.55);
+  color: #f0ddb0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.ich-mock-util {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  flex: 0 0 auto;
+  padding-top: 0;
+}
+
+.ich-mock-vitals > .ich-mock-util {
+  /* Gem row (28) + offset so sheet/rolls/light share the 3-passive axis. */
+  display: flex;
+  flex-direction: column;
+  padding-top: calc(28px + 32px);
+  gap: 2px;
+  align-self: flex-start;
+  justify-content: flex-start;
+  height: auto;
+  min-height: 171px;
+  max-height: none;
+  box-sizing: content-box;
+}
+
+.ich-mock-vitals > .ich-mock-util .ich-mock-util-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  font-size: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+  flex: 0 0 34px;
+}
+
+.ich-mock-vitals > .ich-mock-util .ich-mock-util-btn:hover {
+  background: transparent;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)) brightness(1.15);
+}
+
+.ich-mock-vitals > .ich-mock-util .ich-mock-config-btn {
+  color: #b4bbc6;
+}
+
+.ich-mock-vitals > .ich-mock-util .ich-mock-util-btn[data-util="sheet"] {
+  color: #e8dcc4;
+}
+
+.ich-mock-vitals > .ich-mock-util .ich-mock-util-btn[data-util="light"] {
+  color: #f0d060;
+}
+
+.ich-mock-vitals > .ich-mock-util .ich-mock-util-btn[data-util="rolls"] {
+  color: #e8dcc4;
+}
+
+.ich-mock-vitals > .ich-mock-util .ich-mock-util-btn[data-util="light"].is-active {
+  color: #ffe28a;
+  filter: drop-shadow(0 0 6px rgba(255, 210, 90, 0.85));
+}
+
+.ich-mock-vitals > .ich-mock-util .ich-mock-util-btn[data-util="visibility"] {
+  color: #8fd4a8;
+}
+
+.ich-mock-vitals > .ich-mock-util .ich-mock-util-btn.is-spacer {
+  display: block;
+  visibility: hidden;
+  pointer-events: none;
+  cursor: default;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+}
+
+.ich-mock-util-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(184, 154, 92, 0.45);
+  background: rgba(240, 232, 216, 0.92);
+  color: #2a2038;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.ich-mock-util-stat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 800;
+  color: #f0e8d8;
+  border: 1px solid rgba(184, 154, 92, 0.45);
+  background: rgba(10, 7, 18, 0.85);
+  flex-shrink: 0;
+}
+
+.ich-mock-ac {
+  clip-path: polygon(18% 0%, 82% 0%, 100% 58%, 50% 100%, 0% 58%);
+  border-radius: 0;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding-top: 2px;
+  align-self: center;
+  color: #eef1f4;
+  border-color: rgba(190, 196, 205, 0.7);
+  background: linear-gradient(180deg, #9aa1ab 0%, #6a717c 42%, #454b55 100%);
+}
+
+.ich-mock-temp {
+  color: #8fd4ff;
+  border-color: rgba(80, 170, 220, 0.55);
+  min-width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
+.ich-mock-util-btn:hover {
+  background: #fff8ea;
+}
+
+.ich-mock-util-btn.is-dropdown-open {
+  background: #fff8ea;
+  box-shadow: 0 0 0 2px rgba(224, 176, 64, 0.65);
+}
+
+.ich-util-dropdown {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: auto;
+  border-radius: 8px;
+  border: 1px solid rgba(184, 154, 92, 0.45);
+  background: rgba(18, 12, 10, 0.96);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  padding: 6px 8px;
+}
+
+.ich-util-dropdown-economy {
+  min-width: 148px;
+  padding: 4px;
+}
+
+.ich-util-dropdown-economy .ich-util-dropdown-item {
+  width: 100%;
+}
+
+.ich-util-dropdown-heading {
+  margin: 0 0 4px;
+  padding: 0 2px;
+  color: #c8b898;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ich-util-dropdown-movement {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 132px;
+}
+
+.ich-util-dropdown-light {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+}
+
+.ich-util-dropdown-rolls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(260px, calc(100vw - 24px));
+  max-height: min(420px, calc(100vh - 24px));
+  overflow: hidden;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.ich-rolls-search {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(184, 154, 92, 0.4);
+  background: rgba(8, 6, 14, 0.92);
+  color: #c9a962;
+}
+
+.ich-rolls-search > .fa-magnifying-glass {
+  flex: 0 0 auto;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.ich-rolls-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #f0e6d2;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.ich-rolls-search-input::placeholder {
+  color: rgba(220, 210, 190, 0.45);
+}
+
+.ich-rolls-tabs {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+}
+
+.ich-rolls-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 5px 6px;
+  border: 1px solid rgba(184, 154, 92, 0.35);
+  border-radius: 6px;
+  background: rgba(8, 6, 14, 0.55);
+  color: rgba(240, 230, 210, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.ich-rolls-tab:hover {
+  color: #f0e6d2;
+  border-color: rgba(201, 169, 98, 0.55);
+}
+
+.ich-rolls-tab.is-active {
+  color: #1a1208;
+  background: linear-gradient(180deg, #e6c878 0%, #c9a962 100%);
+  border-color: #c9a962;
+}
+
+.ich-rolls-panels {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: #c9a962 rgba(8, 6, 14, 0.95);
+}
+
+.ich-rolls-panel {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ich-rolls-panel.is-active {
+  display: flex;
+}
+
+.ich-rolls-panel.is-active.is-empty {
+  display: none;
+}
+
+.ich-util-dropdown-rolls .ich-rolls-item.is-filtered-out {
+  display: none;
+}
+
+.ich-util-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #f0e8d8;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ich-util-dropdown-item-label {
+  flex: 1 1 auto;
+}
+
+.ich-util-dropdown-item-meta {
+  flex: 0 0 auto;
+  color: #d4c4a0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ich-util-dropdown-item:hover {
+  background: rgba(184, 154, 92, 0.2);
+}
+
+.ich-util-dropdown-item.is-active {
+  background: rgba(80, 140, 200, 0.28);
+  color: #d8ecff;
+}
+
+.ich-util-dropdown-item.is-active .ich-util-dropdown-item-meta {
+  color: #b8daf0;
+}
+
+.ich-util-dropdown-item.is-disabled {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+.ich-util-dropdown-item.is-disabled:hover {
+  background: transparent;
+}
+
+.ich-util-dropdown-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: min(248px, calc(100vw - 24px));
+  max-height: min(320px, calc(100vh - 24px));
+  overflow: hidden;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.ich-token-status-search {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(184, 154, 92, 0.4);
+  background: rgba(8, 6, 14, 0.92);
+  color: #c9a962;
+}
+
+.ich-token-status-search > .fa-magnifying-glass {
+  flex: 0 0 auto;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.ich-token-status-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: 2px 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #f0e6d2;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.ich-token-status-search-input::placeholder {
+  color: rgba(220, 210, 190, 0.45);
+}
+
+.ich-token-status-search-input::-webkit-search-cancel-button {
+  cursor: pointer;
+  filter: brightness(1.4);
+}
+
+.ich-util-dropdown-status .ich-token-status-picker {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 4px;
+  justify-content: stretch;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c9a962 rgba(8, 6, 14, 0.95);
+}
+
+.ich-util-dropdown-status .ich-token-status-picker-btn {
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  min-width: 0;
+  padding: 2px;
+  transition: opacity 0.16s ease, filter 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.ich-util-dropdown-status .ich-token-status-picker-btn.is-filtered-out {
+  opacity: 0.16;
+  filter: grayscale(0.7) brightness(0.7);
+  pointer-events: none;
+  box-shadow: none;
+}
+
+/* Ability well */
+.ich-mock-center {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  align-self: stretch;
+}
+
+.ich-mock-center-body {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.ich-mock-section-title {
+  flex: 0 0 auto;
+  padding: 0 2px;
+  color: #f0ddb0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.ich-mock-ability-well {
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: 8px;
+  background: rgba(8, 6, 12, 0.88);
+  border: 1px solid rgba(60, 50, 45, 0.65);
+  padding: 8px;
+  overflow: hidden;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-groups {
+  margin: 0;
+  max-height: none;
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: auto;
+  scrollbar-color: #c9a962 rgba(8, 6, 14, 0.95);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-groups::-webkit-scrollbar {
+  width: 10px;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-groups::-webkit-scrollbar-track {
+  background: rgba(8, 6, 14, 0.95);
+  border-radius: 6px;
+  border: 1px solid rgba(184, 154, 92, 0.35);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-groups::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #f0ddb0 0%, #c9a962 55%, #8a6a30 100%);
+  border-radius: 6px;
+  border: 1px solid rgba(80, 55, 20, 0.65);
+  min-height: 28px;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-groups::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #fff0c8 0%, #e0c070 55%, #a07a38 100%);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-group-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-content: stretch;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  line-height: normal;
+  font-size: initial;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-btn {
+  display: grid;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  flex: 0 0 auto;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-btn .ich-ability-img,
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-btn img {
+  width: 32px;
+  height: 32px;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-group {
+  margin-bottom: 6px;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-group-flat {
+  margin-bottom: 0;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-group-header {
+  padding: 4px 2px 6px;
+  font-size: 16px;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-action-empty,
+#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-mock-ability-empty {
+  margin: 0;
+  padding: 10px 4px;
+  color: #b8a898;
+  font-size: 16px;
+  text-align: center;
+}
+
+.ich-hotbar-well {
+  display: none !important;
+}
+
+/* Right: mirror left portrait geometry (171 ring / 141 face) */
+.ich-mock-right {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  min-width: 0;
+  width: fit-content;
+  padding-right: 2px;
+  box-sizing: border-box;
+}
+
+.ich-mock-right-cluster {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  overflow: visible;
+  width: fit-content;
+}
+
+.ich-mock-combat-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  flex: 0 0 auto;
+  min-width: 171px;
+  overflow: visible;
+  /* Match left economy strip so both circles share the same horizontal axis. */
+  padding-top: 28px;
+  box-sizing: border-box;
+}
+
+.ich-mock-combat-block {
+  position: relative;
+  width: 171px;
+  height: 171px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  overflow: visible;
+  margin-bottom: 42px;
+}
+
+.ich-mock-speed-ring {
+  position: absolute;
+  inset: 0;
+  width: 171px;
+  height: 171px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ich-mock-speed-ring-bg {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 5;
+}
+
+.ich-mock-speed-ring-fill {
+  stroke: #5aa4d4;
+  stroke-width: 5;
+  stroke-linecap: butt;
+  transition: stroke-dasharray 0.45s ease;
+}
+
+.ich-mock-speed-ring-fill.is-dashing {
+  stroke: #e0b040;
+}
+
+.ich-mock-speed-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.ich-mock-speed-hit:focus,
+.ich-mock-speed-hit:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.ich-mock-speed-hit.is-muted {
+  opacity: 0.45;
+}
+
+.ich-mock-speed-readout {
+  position: absolute;
+  left: 50%;
+  bottom: -34px;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #f0e8d8;
+  font-family: "Signika", sans-serif;
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.75);
+  cursor: pointer;
+}
+
+.ich-mock-speed-readout.is-muted {
+  opacity: 0.45;
+}
+
+.ich-mock-speed-readout:hover {
+  color: #fff;
+}
+
+.ich-mock-speed-readout i {
+  font-size: 18px;
+  line-height: 1;
+  color: #9ec5f0;
+  position: relative;
+  top: 0;
+}
+
+.ich-mock-speed-readout span {
+  font-size: 21px;
+  font-weight: 800;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+.ich-mock-speed-modes {
+  position: absolute;
+  left: 50%;
+  bottom: -34px;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: stretch;
+  gap: 14px;
+  width: max-content;
+  max-width: 300px;
+  margin: 0;
+  padding: 0;
+}
+
+.ich-mock-speed-modes.is-muted {
+  opacity: 0.45;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-speed-mode {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 3px;
+  margin: 0;
+  min-width: 45px;
+  min-height: 0;
+  padding: 1px 2px 2px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #b8c4d0;
+  font-family: "Signika", sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.75);
+  opacity: 0.75;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+}
+
+.ich-mock-speed-mode-top {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  line-height: 1;
+  min-height: 18px;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-speed-mode i {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 13px;
+  width: 13px;
+  height: 13px;
+  font-size: 12px;
+  line-height: 1;
+  text-align: center;
+  color: #9ec5f0;
+  position: relative;
+  top: 0;
+  overflow: visible;
+}
+
+.ich-mock-speed-mode-value {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.ich-mock-speed-mode-bar {
+  display: block;
+  width: 100%;
+  height: 4px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.ich-mock-speed-mode-fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(1);
+  border-radius: 1px;
+  background: #5aa4d4;
+  transition: transform 0.45s ease;
+  will-change: transform;
+}
+
+.ich-mock-speed-mode:hover {
+  color: #fff;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.ich-mock-speed-mode.is-active {
+  color: #f0e8d8;
+  opacity: 1;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+}
+
+.ich-mock-speed-mode.is-active i {
+  color: #c8e0f8;
+}
+
+.ich-mock-speed-mode.is-active .ich-mock-speed-mode-fill {
+  background: #7ec0f0;
+}
+
+.ich-mock-speed-mode.is-empty {
+  opacity: 0.38;
+  text-decoration: none;
+}
+
+.ich-mock-speed-mode.is-empty .ich-mock-speed-mode-value {
+  text-decoration: line-through;
+}
+
+.ich-mock-speed-mode.is-empty .ich-mock-speed-mode-fill {
+  background: rgba(90, 164, 212, 0.35);
+}
+
+/* Status: small rim chip at 1-o'clock (pairs with rest at 4-o'clock). */
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn {
+  position: absolute;
+  right: -7px;
+  top: -7px;
+  z-index: 6;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  max-width: 38px;
+  min-height: 38px;
+  max-height: 38px;
+  border: 1.5px solid rgba(232, 220, 196, 0.55);
+  border-radius: 50%;
+  background: rgba(18, 12, 10, 0.92);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #e8dcc4;
+  font-size: 15px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 38px;
+  cursor: pointer;
+  outline: none;
+  filter: none;
+  overflow: hidden;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn:focus,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 2px rgba(224, 176, 64, 0.55);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn:hover,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn.is-dropdown-open {
+  border-color: rgba(240, 232, 216, 0.85);
+  background: rgba(28, 20, 16, 0.96);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #f0e8d8;
+  filter: none;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn > i {
+  pointer-events: none;
+  line-height: 1;
+}
+
+/* Rest / leave: ~2–3px outside the combat ring at 4-o'clock, with a rim circle. */
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  z-index: 6;
+  margin: 0;
+  width: 43px;
+  height: 43px;
+  min-width: 43px;
+  border: 1.5px solid rgba(158, 197, 240, 0.55);
+  border-radius: 50%;
+  background: rgba(18, 12, 10, 0.92);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #9ec5f0;
+  font-size: 19px;
+  filter: none;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn:hover:not(:disabled):not(.is-disabled) {
+  border-color: rgba(200, 224, 248, 0.85);
+  background: rgba(28, 20, 16, 0.96);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  color: #c8e0f8;
+  filter: none;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn.is-leave {
+  border-color: rgba(232, 160, 96, 0.55);
+  color: #e8c080;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn.is-leave:hover:not(:disabled):not(.is-disabled) {
+  border-color: rgba(240, 192, 120, 0.85);
+  color: #f0d8a8;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn.is-disabled,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn:disabled {
+  border-color: rgba(120, 120, 120, 0.45);
+  background: rgba(18, 12, 10, 0.75);
+  color: #6a6a6a;
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: grayscale(0.85);
+}
+
+.ich-mock-bar.ich-mock-ooc .ich-mock-combat-block .ich-mock-rest-btn:not(:disabled):not(.is-disabled) {
+  border-color: rgba(232, 208, 160, 0.55);
+  color: #e8d0a0;
+}
+
+.ich-mock-bar.ich-mock-ooc .ich-mock-combat-block .ich-mock-rest-btn:hover:not(:disabled):not(.is-disabled) {
+  border-color: rgba(240, 221, 176, 0.85);
+  color: #f0ddb0;
+}
+
+/* Same face size/rim as avatar portrait */
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  z-index: 3;
+  width: 141px;
+  height: 141px;
+  border-radius: 50%;
+  border: 1px solid rgba(184, 154, 92, 0.28);
+  background: #08060f;
+  color: #f0e8d8;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: none;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: filter 0.15s ease, border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn > i {
+  font-size: 42px;
+  line-height: 1;
+  color: inherit;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.85));
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn.is-enter {
+  border-color: rgba(200, 72, 72, 0.4);
+  background: radial-gradient(circle at 50% 42%, #2a1014 0%, #08060f 72%);
+  color: #f07070;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn.is-enter:not(:disabled):hover {
+  border-color: rgba(240, 120, 120, 0.55);
+  color: #ff9a9a;
+  filter: brightness(1.08);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn.is-end {
+  border-color: rgba(72, 140, 200, 0.35);
+  background: radial-gradient(circle at 50% 42%, #10202e 0%, #08060f 72%);
+  color: #7ec0f0;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn.is-end:not(:disabled):hover {
+  border-color: rgba(140, 200, 240, 0.5);
+  color: #b8defe;
+  filter: brightness(1.08);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn.is-waiting {
+  border-color: rgba(184, 154, 92, 0.32);
+  background: radial-gradient(circle at 50% 42%, #2a2214 0%, #08060f 72%);
+  color: #d4b878;
+  box-shadow: none;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn.is-waiting:not(:disabled):hover {
+  border-color: rgba(224, 192, 120, 0.5);
+  color: #f0ddb0;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn.is-disabled,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn:disabled {
+  border-color: rgba(120, 120, 128, 0.35);
+  background: radial-gradient(circle at 50% 42%, #1a1a1e 0%, #0a0a0c 72%);
+  color: #6e6e76;
+  filter: grayscale(1);
+  opacity: 0.55;
+  cursor: not-allowed;
+  /* Keep hover so the permission / waiting tooltip still shows. */
+  pointer-events: auto;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn.is-disabled:hover,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn:disabled:hover {
+  border-color: rgba(120, 120, 128, 0.35);
+  color: #6e6e76;
+  background: radial-gradient(circle at 50% 42%, #1a1a1e 0%, #0a0a0c 72%);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn.is-waiting.is-disabled,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-btn.is-waiting:disabled {
+  border-color: rgba(140, 130, 100, 0.3);
+  background: radial-gradient(circle at 50% 42%, #1c1a14 0%, #0a0a0c 72%);
+  color: #8a8070;
+  filter: grayscale(0.6);
+  opacity: 0.65;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-confirm-btn {
+  border-color: rgba(80, 160, 110, 0.85);
+  background: radial-gradient(circle at 50% 42%, #102818 0%, #08060f 72%);
+  color: #7ed49a;
+  z-index: 8;
+}
+
+/* Target pick: hide rim chips so nothing sits above the confirm check. */
+.ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-status-btn,
+.ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-rest-btn {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-confirm-btn:not(:disabled):hover {
+  border-color: rgba(130, 210, 150, 0.95);
+  color: #b0f0c0;
+  filter: brightness(1.08);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-confirm-btn {
+  border-color: rgba(100, 170, 120, 0.7);
+  background: #08060f;
+  color: #7ed89a;
+  box-shadow: none;
+}
+
+.ich-mock-center.is-target-pick,
+.ich-mock-center.is-target-pick * {
+  pointer-events: auto;
+}
+
+.ich-mock-bar.ich-mock-defeated .ich-mock-center.is-target-pick,
+.ich-mock-bar.ich-mock-defeated .ich-mock-center.is-target-pick * {
+  pointer-events: auto;
+  filter: none;
+  opacity: 1;
+}
+
+body.ich-target-picking #ich-hud-overlay #ich-action-bar-dock {
+  z-index: 1100;
+  pointer-events: auto;
+}
+
+body.ich-target-picking #ich-hud-overlay #ich-action-bar-dock .ich-action-bar-motion,
+body.ich-target-picking #ich-hud-overlay #ich-action-bar-dock #ich-action-bar {
+  pointer-events: auto;
+}
+
+.ich-mock-center.is-target-pick .ich-mock-center-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  overflow: visible;
+}
+
+.ich-mock-target-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 12px 16px;
+  width: 100%;
+}
+
+.ich-mock-target-pick-title {
+  color: #f0e8d8;
+  font-size: 16px;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.ich-mock-target-pick-count {
+  color: #9ec5f0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+}
+
+.ich-mock-target-pick-hint {
+  margin: 0;
+  max-width: 32ch;
+  color: #b8c4d0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.ich-mock-target-cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 148px;
+  min-height: 44px;
+  margin: 4px 0 0;
+  padding: 10px 18px;
+  border: 1px solid rgba(220, 120, 100, 0.55);
+  border-radius: 8px;
+  background: rgba(90, 28, 28, 0.72);
+  color: #f5e6d8;
+  cursor: pointer;
+  font-family: "Signika", sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.ich-mock-target-cancel i {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.ich-mock-target-cancel-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.2em;
+  padding: 3px 6px;
+  border: 1px solid rgba(240, 220, 190, 0.35);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #d8c8b0;
+  font-family: "Signika", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.ich-mock-target-cancel:hover {
+  color: #fff;
+  border-color: rgba(240, 150, 130, 0.8);
+  background: rgba(120, 36, 36, 0.9);
+}
+
+body.ich-target-picking #board {
+  cursor: crosshair;
+}
+
+.ich-mock-reaction-banner {
+  margin: 0 0 2px;
+}
+
+.ich-picker-prompt {
+  margin: 0 0 8px;
+  color: #d8d0c4;
+  font-size: 15px;
+}
+
+.ich-util-dropdown-status .ich-token-status-picker-btn {
+  width: 34px;
+  height: 34px;
+  padding: 2px;
+}
+
+.ich-token-status-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-width: 360px;
+  padding: 4px 0;
+}
+
+.ich-token-status-picker-btn {
+  width: 40px;
+  height: 40px;
+  padding: 2px;
+  border-radius: 6px;
+  border: 2px solid rgba(120, 110, 100, 0.45);
+  background: rgba(20, 16, 24, 0.85);
+  cursor: pointer;
+}
+
+.ich-token-status-picker-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.ich-token-status-picker-btn.is-active {
+  border-color: #f0ddb0;
+  background: rgba(201, 169, 98, 0.42);
+  box-shadow:
+    0 0 0 1px rgba(240, 221, 176, 0.7),
+    0 0 10px rgba(201, 169, 98, 0.55);
+  filter: brightness(1.12);
+}
+
+.ich-token-status-picker-btn.is-overlay.is-active {
+  border-color: #e8b060;
+  background: rgba(220, 140, 50, 0.4);
+  box-shadow:
+    0 0 0 1px rgba(232, 176, 96, 0.75),
+    0 0 10px rgba(220, 140, 50, 0.5);
+}
+
+.ich-token-status-picker-btn:hover:not(.is-filtered-out) {
+  filter: brightness(1.1);
+}
+
+.ich-token-status-picker-btn.is-filtered-out {
+  opacity: 0.16;
+  filter: grayscale(0.7) brightness(0.7);
+  pointer-events: none;
+}
+
+#ich-action-bar-ui-tooltip {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  max-width: 280px;
+}
+
+#ich-action-bar-ui-tooltip .ich-ui-tip-card {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(184, 154, 92, 0.55);
+  background: rgba(12, 8, 16, 0.96);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+  color: #f0e8d8;
+}
+
+#ich-action-bar-ui-tooltip .ich-ui-tip-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: #f0ddb0;
+}
+
+#ich-action-bar-ui-tooltip .ich-ui-tip-detail {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
+  line-height: 1.35;
+  color: #d8d0c4;
+}
+
+#ich-action-bar-ui-tooltip .ich-ui-tip-detail-line {
+  display: block;
+}

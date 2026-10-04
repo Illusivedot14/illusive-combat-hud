@@ -1,0 +1,360 @@
+﻿#ich-turn-tracker {
+  --ich-turn-control-gap: 16px;
+  /* Inner horizontal pad on the scroll track (glow room for the anchored active card). */
+  --ich-turn-track-pad: 20px;
+  position: fixed;
+  top: 48px;
+  left: 50%;
+  width: max-content;
+  max-width: none;
+  transform: translateX(-50%) scale(var(--ich-turn-scale, var(--ich-global-scale, 1)));
+  transform-origin: top center;
+  z-index: 1000;
+  pointer-events: none;
+  overflow: visible;
+}
+
+#ich-turn-tracker.ich-hidden {
+  display: none;
+}
+
+#ich-turn-tracker .ich-turn-dock {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-end;
+  /* Menu spacing is set per-side (see controls-left/right) to equalize the
+   * VISIBLE card→menu gap: the anchored active card sits inside the track's
+   * left pad, so the right menu adds that same pad to match. */
+  gap: 0;
+  width: max-content;
+  pointer-events: none;
+}
+
+#ich-turn-tracker .ich-turn-carousel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  /* Only interactive children (cards, minimize, slider) opt back in. */
+  pointer-events: none;
+  /* Keep visible: clipping this box chops active card tops. */
+  overflow: visible;
+}
+
+/* In-flow beside the carousel. */
+#ich-turn-tracker .ich-turn-controls {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+  pointer-events: auto;
+  /* Lift above minimize / scroll slider (same offsets as the old absolute bottom). */
+  margin-bottom: calc(22px + 24px);
+}
+
+/*
+ * Equal VISIBLE gap on both sides:
+ *   left  = control-gap + track-pad (active card is inset by the track's left pad)
+ *   right = (control-gap + track-pad)  (right card clips flush at the viewport edge)
+ * The right menu adds track-pad to compensate for the left-only visible pad.
+ */
+#ich-turn-tracker .ich-turn-controls-left {
+  margin-right: var(--ich-turn-control-gap);
+}
+
+#ich-turn-tracker .ich-turn-controls-right {
+  margin-left: calc(var(--ich-turn-control-gap) + var(--ich-turn-track-pad));
+}
+
+#ich-turn-tracker.ich-turn-scrollable .ich-turn-controls {
+  margin-bottom: calc(22px + 44px);
+}
+
+#ich-turn-tracker .ich-turn-controls[hidden] {
+  display: none !important;
+}
+
+#ich-turn-tracker .ich-turn-btn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  max-width: 28px;
+  max-height: 28px;
+  padding: 0;
+  margin: 0;
+  flex: 0 0 28px;
+  box-sizing: border-box;
+  border: 1px solid #9a7840;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(18, 12, 30, 0.96) 0%, rgba(10, 7, 18, 0.98) 100%);
+  color: #f0ddb0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  appearance: none;
+}
+
+/* Side GM strips: denser so the stack matches portrait height. */
+#ich-turn-tracker .ich-turn-controls .ich-turn-btn {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  max-width: 20px;
+  max-height: 20px;
+  flex: 0 0 20px;
+  font-size: 9px;
+}
+
+#ich-turn-tracker .ich-turn-controls .ich-turn-btn i {
+  font-size: 9px;
+}
+
+#ich-turn-tracker .ich-turn-btn i {
+  font-size: 11px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+#ich-turn-tracker .ich-turn-btn:hover {
+  border-color: #e8e0d0;
+  color: #ffffff;
+  background: rgba(88, 62, 128, 0.45);
+}
+
+#ich-turn-tracker .ich-turn-btn[hidden] {
+  display: none !important;
+}
+
+#ich-turn-tracker .ich-turn-minimize {
+  align-self: center;
+  width: auto;
+  min-width: 42px;
+  max-width: none;
+  height: 18px;
+  min-height: 18px;
+  max-height: 18px;
+  padding: 0 12px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  pointer-events: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+#ich-turn-tracker .ich-turn-minimize i {
+  font-size: 10px;
+}
+
+#ich-turn-tracker .ich-turn-motion {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+}
+
+#ich-turn-tracker.ich-turn-rail-motion {
+  overflow: visible;
+}
+
+#ich-turn-tracker.ich-turn-reveal-in .ich-turn-dock,
+#ich-turn-tracker.ich-turn-reveal-prep .ich-turn-dock {
+  will-change: transform, opacity;
+}
+
+#ich-turn-tracker.ich-turn-reveal-in .ich-turn-dock {
+  transition:
+    transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    opacity 280ms ease-out;
+}
+
+#ich-turn-tracker.ich-turn-rail-motion-out .ich-turn-motion {
+  transition:
+    margin-top 320ms cubic-bezier(0.55, 0.06, 0.68, 0.19),
+    transform 320ms cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  will-change: margin-top, transform;
+}
+
+#ich-turn-tracker.ich-turn-rail-motion-in .ich-turn-motion {
+  transition:
+    margin-top 280ms cubic-bezier(0.22, 0.61, 0.36, 1),
+    transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  will-change: margin-top, transform;
+}
+
+#ich-turn-tracker.ich-turn-rail-motion-out .ich-turn-controls,
+#ich-turn-tracker.ich-turn-rail-motion-in .ich-turn-controls {
+  transition:
+    opacity 220ms ease,
+    transform 320ms cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  will-change: opacity, transform;
+}
+
+#ich-turn-tracker.ich-turn-rail-motion-out .ich-turn-controls {
+  opacity: 0;
+  transform: translateY(-12px);
+  pointer-events: none;
+}
+
+#ich-turn-tracker.ich-turn-minimized .ich-turn-motion {
+  height: 0 !important;
+  max-height: 0 !important;
+  min-height: 0 !important;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  pointer-events: none !important;
+  visibility: hidden;
+}
+
+#ich-turn-tracker.ich-turn-minimized .ich-turn-motion *,
+#ich-turn-tracker.ich-turn-minimized .ich-turn-controls,
+#ich-turn-tracker.ich-turn-minimized .ich-turn-controls * {
+  pointer-events: none !important;
+}
+
+#ich-turn-tracker.ich-turn-minimized .ich-turn-controls {
+  display: none !important;
+}
+
+#ich-turn-tracker.ich-turn-minimized .ich-turn-carousel {
+  gap: 0;
+}
+
+#ich-turn-tracker.ich-turn-minimized .ich-turn-dock {
+  min-width: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ich-turn-tracker.ich-turn-rail-motion-out .ich-turn-motion,
+  #ich-turn-tracker.ich-turn-rail-motion-in .ich-turn-motion,
+  #ich-turn-tracker.ich-turn-rail-motion-out .ich-turn-controls,
+  #ich-turn-tracker.ich-turn-rail-motion-in .ich-turn-controls,
+  #ich-turn-tracker.ich-turn-reveal-in .ich-turn-dock {
+    transition: none;
+  }
+}
+
+#ich-turn-tracker-track {
+  flex: 0 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 8px;
+  /*
+   * Vertical pad = active scale/glow room. Horizontal pad = glow room for the
+   * anchored (front/left) active card so its edge/glow is never clipped. The
+   * right menu compensates for this pad (see controls-right) so the visible
+   * gaps stay equal. No negative horizontal margin (that pulls under the menus).
+   * pointer-events:none on the track so the pad does not steal canvas clicks;
+   * cards / slider opt back in.
+   */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: auto;
+  scrollbar-width: none;
+  padding: 32px var(--ich-turn-track-pad);
+  margin: -32px 0;
+  scroll-padding-inline: var(--ich-turn-track-pad);
+  pointer-events: none;
+}
+
+#ich-turn-tracker-track::-webkit-scrollbar {
+  display: none;
+}
+
+#ich-turn-tracker .ich-turn-scroll-slider {
+  width: 100%;
+  height: 14px;
+  margin: 0 4px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#ich-turn-tracker .ich-turn-scroll-slider[hidden] {
+  display: none !important;
+}
+
+#ich-turn-tracker .ich-turn-scroll-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(8, 6, 14, 0.85);
+  border: 1px solid rgba(184, 154, 92, 0.4);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45) inset;
+}
+
+#ich-turn-tracker .ich-turn-scroll-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -5px;
+  border-radius: 50%;
+  border: 1px solid #9a7840;
+  background: linear-gradient(180deg, #f0ddb0 0%, #c9a962 100%);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+
+#ich-turn-tracker .ich-turn-scroll-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(8, 6, 14, 0.85);
+  border: 1px solid rgba(184, 154, 92, 0.4);
+}
+
+#ich-turn-tracker .ich-turn-scroll-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1px solid #9a7840;
+  background: linear-gradient(180deg, #f0ddb0 0%, #c9a962 100%);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+}
+
+#ich-turn-tracker .ich-turn-scroll-slider:hover::-webkit-slider-thumb,
+#ich-turn-tracker .ich-turn-scroll-slider:hover::-moz-range-thumb {
+  border-color: #e8e0d0;
+  filter: brightness(1.08);
+}
+
+@keyframes ich-turn-slide-fwd {
+  from { transform: translateX(var(--ich-turn-slide-dist, 42px)); }
+  to { transform: translateX(0); }
+}
+
+@keyframes ich-turn-slide-back {
+  from { transform: translateX(calc(-1 * var(--ich-turn-slide-dist, 42px))); }
+  to { transform: translateX(0); }
+}
+
+#ich-turn-tracker-track.ich-turn-sliding-fwd {
+  animation: ich-turn-slide-fwd var(--ich-turn-slide-dur, 300ms) cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+#ich-turn-tracker-track.ich-turn-sliding-back {
+  animation: ich-turn-slide-back var(--ich-turn-slide-dur, 300ms) cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ich-turn-tracker-track.ich-turn-sliding-fwd,
+  #ich-turn-tracker-track.ich-turn-sliding-back {
+    animation: none;
+  }
+}

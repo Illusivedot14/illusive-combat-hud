@@ -1,0 +1,17 @@
+<div class="ich-util-dropdown ich-util-dropdown-movement" role="menu" aria-label="{{title}}">
+  <div class="ich-util-dropdown-heading">{{title}}</div>
+  {{#each choices}}
+  <button
+    type="button"
+    class="ich-util-dropdown-item{{#if isActive}} is-active{{/if}}"
+    data-movement-id="{{id}}"
+    role="menuitem"
+    title="{{#if hint}}{{hint}}{{else}}{{label}}{{#if speed}} — {{speed}}{{/if}}{{/if}}"
+  >
+    <span class="ich-util-dropdown-item-label">{{label}}</span>
+    {{#if speed}}
+    <span class="ich-util-dropdown-item-meta">{{speed}}</span>
+    {{/if}}
+  </button>
+  {{/each}}
+</div>

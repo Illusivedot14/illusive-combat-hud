@@ -1,0 +1,35 @@
+{{#if statuses.length}}
+<div class="ich-status-list">
+  {{#each statuses}}
+  <div
+    class="ich-status-icon ich-status-{{disposition}}{{#if isConcentration}} is-concentration{{/if}}{{#if expiringSoon}} is-expiring{{/if}}"
+    data-uuid="{{uuid}}"
+    data-status-id="{{statusId}}"
+    tabindex="0"
+    role="button"
+    aria-label="{{name}}{{#if durationLabel}} — {{durationLabel}}{{/if}}"
+  >
+    <img class="ich-status-img" src="{{img}}" alt="" width="56" height="56" loading="lazy">
+    {{#if showTimedBadge}}
+    <span class="ich-status-rounds">{{timedBadge}}</span>
+    {{/if}}
+    {{#if expiringSoon}}
+    <span class="ich-status-expiring-mark" aria-hidden="true">!</span>
+    {{/if}}
+    <div class="ich-status-tooltip" role="tooltip">
+      <div class="ich-status-tooltip-name">{{name}}</div>
+      {{#if durationLabel}}
+      <div class="ich-status-tooltip-duration">{{durationLabel}}</div>
+      {{/if}}
+      {{#if hasDescription}}
+      <div class="ich-status-tooltip-body">
+        {{#each descriptionLines}}
+        <div class="ich-status-tooltip-line">{{this}}</div>
+        {{/each}}
+      </div>
+      {{/if}}
+    </div>
+  </div>
+  {{/each}}
+</div>
+{{/if}}

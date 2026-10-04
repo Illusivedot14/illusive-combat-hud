@@ -1,0 +1,77 @@
+{
+  "id": "illusive-combat-hud",
+  "title": "Illusive Combat HUD",
+  "description": "BG3-style combat HUD with an independent mobile sheet-only client (no Swipe VTT required).",
+  "version": "1.18.53",
+  "socket": true,
+  "authors": [
+    {
+      "name": "Illusive"
+    }
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json"
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "14"
+  },
+  "relationships": {
+    "requires": [
+      {
+        "id": "midi-qol",
+        "type": "module",
+        "compatibility": {
+          "minimum": "14.0.0"
+        }
+      }
+    ],
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "5.2.0"
+        }
+      }
+    ]
+  },
+  "flags": {
+    "illusive-combat-hud": {
+      "roundTotal": {
+        "type": "Number",
+        "default": null
+      },
+      "startRound": {
+        "type": "Number",
+        "default": null
+      },
+      "combatId": {
+        "type": "String",
+        "default": null
+      },
+      "bossBarActors": {
+        "type": "Array",
+        "default": []
+      }
+    }
+  },
+  "esmodules": [
+    "src/main.mjs"
+  ],
+  "styles": [
+    "src/components/mobile-sheet/mobile-sheet.css",
+    "src/styles/hud-overlay.css",
+    "src/styles/ornate-frames.css",
+    "src/components/party-status/party-status.css",
+    "src/components/token-statuses/token-statuses.css",
+    "src/components/action-bar/action-bar.css",
+    "src/components/turn-tracker/turn-tracker.css",
+    "src/components/boss-bar/boss-bar.css",
+    "src/styles/panel-polish.css"
+  ]
+}

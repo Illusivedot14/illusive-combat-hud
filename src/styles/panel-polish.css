@@ -1,0 +1,62 @@
+/* HP tier colors */
+.ich-hp-tier-healthy .ich-hp-base {
+  background: linear-gradient(90deg, #2d6a3d 0%, #4caf6a 100%);
+}
+
+.ich-hp-tier-warn .ich-hp-base {
+  background: linear-gradient(90deg, #8f6a1e 0%, #d4a83a 100%);
+}
+
+.ich-hp-tier-critical .ich-hp-base {
+  background: linear-gradient(90deg, #8f2433 0%, #c43d4f 100%);
+}
+
+.ich-hp-tier-down .ich-hp-base {
+  background: linear-gradient(90deg, #4a1520 0%, #6a2030 100%);
+}
+
+.ich-hp-flat .ich-hp-base {
+  background: linear-gradient(90deg, #8f2433 0%, #c43d4f 100%);
+}
+
+/* Party rail */
+#ich-party-status {
+  opacity: var(--ich-party-opacity, 1);
+}
+
+body.ich-active-pulse-off #ich-turn-tracker .ich-turn-card.is-active .ich-turn-portrait.ich-ornate-frame::before,
+body.ich-active-pulse-off #ich-party-status .ich-portrait-card.ich-ornate-frame.is-selected::before {
+  animation: none;
+}
+
+/* Minimal theme */
+body.ich-theme-minimal .ich-ornate-frame::before,
+body.ich-theme-minimal .ich-ornate-frame::after,
+body.ich-theme-minimal .ich-ornate-panel::before,
+body.ich-theme-minimal .ich-ornate-panel::after,
+body.ich-theme-minimal .ich-frame-corner {
+  display: none;
+}
+
+body.ich-theme-minimal #ich-party-status .ich-portrait-card.ich-ornate-frame::before {
+  display: block;
+  border-width: 1px;
+  border-radius: 4px;
+  background: rgba(10, 8, 15, 0.92);
+  animation: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+body.ich-ornate-disabled .ich-ornate-frame::before,
+body.ich-ornate-disabled .ich-ornate-frame::after,
+body.ich-ornate-disabled .ich-ornate-panel::before,
+body.ich-ornate-disabled .ich-ornate-panel::after,
+body.ich-ornate-disabled .ich-frame-corner {
+  display: none !important;
+}
+
+body.ich-ornate-disabled #ich-party-status .ich-portrait-card {
+  border: 1px solid #6b4f2a;
+  border-radius: 4px;
+  background: rgba(10, 8, 15, 0.92);
+}

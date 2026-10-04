@@ -1,0 +1,368 @@
+{{#if showPanel}}
+<div
+  class="ich-mock-bar{{#unless inCombat}} ich-mock-ooc{{/unless}}{{#if member.isDefeated}} ich-mock-defeated{{/if}}{{#if member.isDeathSaving}} ich-mock-down{{/if}}{{#if member.isStabilized}} ich-mock-stabilized{{/if}}{{#if showYourTurn}} ich-mock-your-turn{{/if}}"
+  data-actor-id="{{member.actorId}}"
+>
+  {{#if reactionBanner}}
+  <div class="ich-reaction-banner ich-mock-reaction-banner">
+    <span>{{reactionBanner}}</span>
+    {{#if showReactionPass}}
+    <button type="button" class="ich-reaction-pass-btn">{{labels.reactionPass}}</button>
+    {{/if}}
+  </div>
+  {{/if}}
+
+  <div class="ich-mock-row">
+    <section class="ich-mock-left" aria-label="{{labels.vitals}}">
+      <div class="ich-mock-vitals">
+        <div class="ich-mock-side ich-mock-side-left">
+          {{#if configureDisabled}}
+          <span class="ich-mock-config-btn is-spacer" aria-hidden="true"></span>
+          {{else}}
+          <button
+            type="button"
+            class="ich-mock-util-btn ich-mock-config-btn"
+            data-util="configure"
+            data-ich-tip-title="{{tips.configure.title}}"
+            data-ich-tip-detail="{{tips.configure.detail}}"
+            aria-label="{{labels.configure}}"
+          >
+            <i class="fas fa-gear" aria-hidden="true"></i>
+          </button>
+          {{/if}}
+          <div class="ich-mock-passives" role="group" aria-label="{{labels.passiveScores}}">
+            <div class="ich-mock-passive-triangle">
+              {{#each passives}}
+              <span class="ich-mock-passive ich-mock-passive-{{id}}" data-passive="{{id}}" data-ich-tip-title="{{tipTitle}}" data-ich-tip-detail="{{tipDetail}}" aria-label="{{tipTitle}}">
+                <span class="ich-mock-passive-glyph" aria-hidden="true">
+                  <i class="fas {{icon}}"></i>
+                </span>
+                <span class="ich-mock-passive-value">{{value}}</span>
+              </span>
+              {{/each}}
+            </div>
+          </div>
+        </div>
+
+        <div class="ich-mock-portrait-column">
+          <div class="ich-mock-economy" role="toolbar" aria-label="{{labels.actionEconomy}}">
+            {{#if showItemsGem}}
+            <button type="button" class="ich-mock-gem ich-mock-gem-items{{#if economy.itemsSpent}} is-spent{{/if}}{{#if economySelected.standard}} is-selected{{/if}}" data-economy="standard" data-ich-tip-title="{{tips.gemItems.title}}" data-ich-tip-detail="{{tips.gemItems.detail}}" aria-label="{{labels.items}}" aria-pressed="{{economySelected.standard}}">
+              <i class="fas fa-suitcase" aria-hidden="true"></i>
+            </button>
+            {{/if}}
+            <button type="button" class="ich-mock-gem ich-mock-gem-action{{#if economy.actionSpent}} is-spent{{/if}}{{#if economySelected.action}} is-selected{{/if}}" data-economy="action" data-ich-tip-title="{{tips.gemAction.title}}" data-ich-tip-detail="{{tips.gemAction.detail}}" aria-label="{{labels.action}}" aria-pressed="{{economySelected.action}}">
+              <svg class="ich-mock-gem-svg" viewBox="0 0 20 20" aria-hidden="true"><polygon class="ich-mock-gem-face" points="10,1.5 18.5,10 10,18.5 1.5,10" fill="#d9534f" stroke="#f4a8a6" stroke-width="1.25" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="ich-mock-gem ich-mock-gem-bonus{{#if economy.bonusSpent}} is-spent{{/if}}{{#if economySelected.bonus}} is-selected{{/if}}" data-economy="bonus" data-ich-tip-title="{{tips.gemBonus.title}}" data-ich-tip-detail="{{tips.gemBonus.detail}}" aria-label="{{labels.bonus}}" aria-pressed="{{economySelected.bonus}}">
+              <svg class="ich-mock-gem-svg" viewBox="0 0 20 20" aria-hidden="true"><polygon class="ich-mock-gem-face" points="10,1.5 18.5,10 10,18.5 1.5,10" fill="#5b8fd9" stroke="#9ec5f0" stroke-width="1.25" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="ich-mock-gem ich-mock-gem-reaction{{#if economy.reactionSpent}} is-spent{{/if}}{{#if economySelected.reaction}} is-selected{{/if}}{{#if reactionGemPrompt}} ich-reaction-prompt{{/if}}" data-economy="reaction" data-ich-tip-title="{{tips.gemReaction.title}}" data-ich-tip-detail="{{tips.gemReaction.detail}}" aria-label="{{labels.reaction}}" aria-pressed="{{economySelected.reaction}}">
+              <svg class="ich-mock-gem-svg" viewBox="0 0 20 20" aria-hidden="true"><polygon class="ich-mock-gem-face" points="10,1.5 18.5,10 10,18.5 1.5,10" fill="#e0b040" stroke="#f0d878" stroke-width="1.25" stroke-linejoin="round"/></svg>
+            </button>
+            {{#if showLegendaryGem}}
+            <button type="button" class="ich-mock-gem ich-mock-gem-legendary{{#unless legendary.remaining}} is-spent{{/unless}}{{#if economySelected.legendary}} is-selected{{/if}}" data-economy="legendary" data-ich-tip-title="{{tips.gemLegendary.title}}" data-ich-tip-detail="{{tips.gemLegendary.detail}}" aria-label="{{labels.legendary}}" aria-pressed="{{economySelected.legendary}}">
+              <svg class="ich-mock-gem-svg" viewBox="0 0 20 20" aria-hidden="true"><polygon class="ich-mock-gem-face" points="10,1.5 18.5,10 10,18.5 1.5,10" fill="#c8a030" stroke="#f0ddb0" stroke-width="1.25" stroke-linejoin="round"/></svg>
+              {{#if legendary.remaining}}
+              <span class="ich-mock-gem-count">{{legendary.remaining}}</span>
+              {{/if}}
+            </button>
+            {{/if}}
+          </div>
+
+          <div class="ich-full-portrait-block ich-mock-portrait-block" data-action="show-location" title="{{labels.showLocation}}">
+            {{#unless member.isDowned}}
+            <svg class="ich-full-rings" viewBox="0 0 {{rings.size}} {{rings.size}}" aria-hidden="true">
+              <circle class="ich-full-ring-bg" cx="{{rings.center}}" cy="{{rings.center}}" r="{{rings.r}}" fill="none"></circle>
+              <circle
+                class="ich-full-ring-hp ich-hp-tier-{{member.hp.tier}}{{#unless colorHpBar}} ich-hp-flat{{/unless}}"
+                cx="{{rings.center}}"
+                cy="{{rings.center}}"
+                r="{{rings.r}}"
+                fill="none"
+                stroke-dasharray="{{rings.hpLength}} {{rings.hpGap}}"
+                stroke-dashoffset="0"
+                transform="rotate(90 {{rings.center}} {{rings.center}})"
+              ></circle>
+              {{#if rings.showTemp}}
+              <circle
+                class="ich-full-ring-temp"
+                cx="{{rings.center}}"
+                cy="{{rings.center}}"
+                r="{{rings.r}}"
+                fill="none"
+                stroke-dasharray="{{rings.tempLength}} {{rings.tempGap}}"
+                stroke-dashoffset="{{rings.tempOffset}}"
+                transform="rotate(90 {{rings.center}} {{rings.center}})"
+              ></circle>
+              {{/if}}
+            </svg>
+            {{/unless}}
+
+            {{#if member.deathSavePips}}
+            <svg class="ich-mock-ds-ring" viewBox="0 0 {{rings.size}} {{rings.size}}" aria-label="{{deathSavesLabel}}">
+              {{#each member.deathSavePips.successes}}
+              <circle
+                class="ich-mock-ds-pip is-success{{#if filled}} is-filled{{/if}}"
+                cx="{{cx}}"
+                cy="{{cy}}"
+                r="7"
+                data-action="death-save-pip"
+                data-pip-type="success"
+                data-pip-index="{{index}}"
+                role="button"
+                tabindex="-1"
+              ></circle>
+              {{/each}}
+              {{#each member.deathSavePips.failures}}
+              <circle
+                class="ich-mock-ds-pip is-failure{{#if filled}} is-filled{{/if}}"
+                cx="{{cx}}"
+                cy="{{cy}}"
+                r="7"
+                data-action="death-save-pip"
+                data-pip-type="failure"
+                data-pip-index="{{index}}"
+                role="button"
+                tabindex="-1"
+              ></circle>
+              {{/each}}
+            </svg>
+            {{/if}}
+
+            <img class="ich-full-portrait ich-ornate-portrait ich-mock-portrait" src="{{member.img}}" alt="{{member.name}}">
+
+            {{#if member.vitalityIcon}}
+            <div class="ich-mock-death-overlay{{#if member.isDefeated}} is-dead{{/if}}{{#if member.isStabilized}} is-stabilized{{/if}}" aria-hidden="true">
+              <i class="fas {{member.vitalityIcon.icon}}"></i>
+            </div>
+            {{/if}}
+
+            {{#if member.canRollDeathSave}}
+            <button
+              type="button"
+              class="ich-mock-death-save-btn"
+              data-action="death-save"
+              data-ich-tip-title="{{deathSavesLabel}}"
+              data-ich-tip-detail="{{tips.deathSave.detail}}"
+              aria-label="{{tips.deathSave.detail}}"
+            ></button>
+            {{/if}}
+
+            {{#unless member.isDowned}}
+            <div class="ich-full-hp-label ich-mock-hp-label" data-ich-tip-title="{{tips.hp.title}}" data-ich-tip-detail="{{tips.hp.detail}}">
+              <span class="ich-mock-hp-current">{{member.hp.value}}</span>{{#if member.hp.temp}}<span class="ich-mock-hp-temp">+{{member.hp.temp}}</span>{{/if}}<span class="ich-mock-hp-max">/{{member.hp.max}}</span>
+            </div>
+            {{/unless}}
+
+            {{#if showStatChips}}
+            {{#if member.stats.ac}}
+            <span class="ich-mock-util-stat ich-mock-ac" data-ich-tip-title="{{tips.ac.title}}" data-ich-tip-detail="{{tips.ac.detail}}">{{member.stats.ac}}</span>
+            {{/if}}
+            {{/if}}
+          </div>
+          <div class="ich-mock-char-name" title="{{member.name}}">{{member.name}}</div>
+        </div>
+
+        <div class="ich-mock-util ich-mock-util-right" role="toolbar" aria-label="{{labels.utilities}}">
+          <button type="button" class="ich-mock-util-btn" data-util="sheet" data-ich-tip-title="{{tips.sheet.title}}" data-ich-tip-detail="{{tips.sheet.detail}}" aria-label="{{labels.openSheet}}">
+            <i class="fas fa-file-lines" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="ich-mock-util-btn" data-util="rolls" data-ich-tip-title="{{tips.rolls.title}}" data-ich-tip-detail="{{tips.rolls.detail}}" aria-label="{{labels.rolls}}">
+            <i class="fas fa-dice-d20" aria-hidden="true"></i>
+          </button>
+          <button type="button" class="ich-mock-util-btn{{#if lightOn}} is-active{{/if}}" data-util="light" data-ich-tip-title="{{tips.light.title}}" data-ich-tip-detail="{{tips.light.detail}}" aria-label="{{labels.toggleLight}}" aria-pressed="{{lightOn}}">
+            <i class="fas fa-lightbulb" aria-hidden="true"></i>
+          </button>
+          {{#unless visibilityDisabled}}
+          <button type="button" class="ich-mock-util-btn" data-util="visibility" data-ich-tip-title="{{tips.visibility.title}}" data-ich-tip-detail="{{tips.visibility.detail}}" aria-label="{{labels.toggleVisibility}}">
+            <i class="fas fa-eye" aria-hidden="true"></i>
+          </button>
+          {{/unless}}
+        </div>
+      </div>
+    </section>
+
+    <section class="ich-mock-center{{#if targetPick}} is-target-pick{{/if}}" aria-label="{{labels.actionEconomy}}">
+      <div class="ich-mock-center-body">
+        {{#if targetPick}}
+        <div class="ich-mock-target-pick" role="status">
+          <div class="ich-mock-target-pick-title">{{targetPick.abilityName}}</div>
+          <div class="ich-mock-target-pick-count">{{targetPick.label}}</div>
+          <p class="ich-mock-target-pick-hint">{{labels.targetPickCanvasHint}}</p>
+          <button
+            type="button"
+            class="ich-mock-target-cancel"
+            data-action="target-pick-cancel"
+            aria-label="{{targetPick.cancelLabel}}"
+            data-ich-tip-title="{{targetPick.cancelLabel}}"
+            data-ich-tip-detail="Esc"
+          >
+            <i class="fas fa-xmark" aria-hidden="true"></i>
+            <span>{{targetPick.cancelLabel}}</span>
+            <kbd class="ich-mock-target-cancel-key">Esc</kbd>
+          </button>
+        </div>
+        {{else}}
+        {{#if sectionTitle}}
+        <div class="ich-mock-section-title" role="status">{{sectionTitle}}</div>
+        {{/if}}
+        {{#if resources.length}}
+        <div class="ich-mock-resources" role="group" aria-label="{{labels.resources}}">
+          {{#each resources}}
+          <div
+            class="ich-mock-resource is-{{kind}}"
+            data-resource="{{id}}"
+            data-ich-tip-title="{{label}}"
+            data-ich-tip-detail="{{tipDetail}}"
+            aria-label="{{label}}: {{value}} / {{max}}{{#if subtitle}} ({{subtitle}}){{/if}}"
+          >
+            <span class="ich-mock-resource-label">{{label}}</span>
+            {{#if diamonds}}
+            <span class="ich-spell-slot-diamonds" aria-hidden="true">
+              {{#each diamonds}}
+              <span class="ich-spell-slot-gem{{#unless filled}} is-spent{{/unless}}">
+                <svg class="ich-spell-slot-gem-svg" viewBox="0 0 20 20" aria-hidden="true"><polygon class="ich-spell-slot-gem-outer" points="10,1 19,10 10,19 1,10"/><polygon class="ich-spell-slot-gem-inner" points="10,6 14,10 10,14 6,10"/></svg>
+              </span>
+              {{/each}}
+            </span>
+            {{else}}
+            <span class="ich-mock-resource-count">{{value}}/{{max}}</span>
+            {{/if}}
+            {{#if subtitle}}
+            <span class="ich-mock-resource-sub">{{subtitle}}</span>
+            {{/if}}
+          </div>
+          {{/each}}
+        </div>
+        {{/if}}
+        <div class="ich-mock-ability-well" role="region" aria-label="{{sectionTitle}}">
+          {{{abilitiesHtml}}}
+        </div>
+        {{/if}}
+      </div>
+    </section>
+
+    <section class="ich-mock-right">
+      <div class="ich-mock-right-cluster">
+        <div class="ich-mock-combat-column">
+          <div class="ich-mock-combat-block">
+            {{#if targetPick}}
+            <button
+              type="button"
+              class="ich-mock-combat-btn ich-mock-confirm-btn{{#unless targetPick.canConfirm}} is-disabled{{/unless}}"
+              data-action="target-pick-confirm"
+              data-ich-tip-title="{{targetPick.confirmLabel}}"
+              data-ich-tip-detail="{{targetPick.label}}"
+              aria-label="{{targetPick.confirmLabel}}"
+              {{#unless targetPick.canConfirm}}disabled{{/unless}}
+            >
+              <i class="fas fa-check" aria-hidden="true"></i>
+            </button>
+            {{else}}
+            {{#if movement}}
+            {{#if speedRing}}
+            <svg class="ich-mock-speed-ring" viewBox="0 0 {{speedRing.size}} {{speedRing.size}}" aria-hidden="true">
+              <circle class="ich-mock-speed-ring-bg" cx="{{speedRing.center}}" cy="{{speedRing.center}}" r="{{speedRing.r}}" fill="none"></circle>
+              <circle
+                class="ich-mock-speed-ring-fill{{#if speedRing.isDashing}} is-dashing{{/if}}"
+                cx="{{speedRing.center}}"
+                cy="{{speedRing.center}}"
+                r="{{speedRing.r}}"
+                fill="none"
+                stroke-dasharray="{{speedRing.displayFillLength}} {{speedRing.displayFillGap}}"
+                stroke-dashoffset="0"
+                transform="rotate(90 {{speedRing.center}} {{speedRing.center}})"
+              ></circle>
+            </svg>
+            {{/if}}
+            <button
+              type="button"
+              class="ich-mock-speed-hit{{#unless inCombat}} is-muted{{/unless}}"
+              data-util="movement"
+              data-ich-tip-title="{{tips.movement.title}}"
+              data-ich-tip-detail="{{tips.movement.detail}}"
+              aria-label="{{#if movement.modeLabel}}{{movement.modeLabel}} — {{tips.movement.title}}{{else}}{{tips.movement.title}}{{/if}}"
+            ></button>
+            {{/if}}
+
+            <button
+              type="button"
+              class="ich-mock-combat-btn is-{{combatButton.tone}}{{#if combatButton.disabled}} is-disabled{{/if}}{{#if combatButton.waiting}} is-waiting{{/if}}"
+              data-action="combat-flow"
+              data-ich-tip-title="{{tips.combat.title}}"
+              data-ich-tip-detail="{{tips.combat.detail}}"
+              aria-label="{{combatButton.label}}"
+              aria-disabled="{{#if combatButton.disabled}}true{{else}}false{{/if}}"
+            >
+              <i class="fas {{combatButton.icon}}" aria-hidden="true"></i>
+            </button>
+
+            {{#if movement}}
+            {{#if movement.modes.length}}
+            <div class="ich-mock-speed-modes{{#unless inCombat}} is-muted{{/unless}}" role="group" aria-label="{{tips.movement.title}}">
+              {{#each movement.modes}}
+              <button
+                type="button"
+                class="ich-mock-speed-mode ich-movement-mode-btn{{#if isActive}} is-active{{/if}}{{#if isEmpty}} is-empty{{/if}}"
+                data-mode="{{id}}"
+                data-mode-percent="{{percent}}"
+                title="{{label}}: {{remaining}}{{#if ../inCombat}}/{{max}}{{/if}}"
+                aria-label="{{label}}: {{remaining}}{{#if ../inCombat}} of {{max}}{{/if}}"
+                aria-pressed="{{isActive}}"
+              >
+                <span class="ich-mock-speed-mode-top">
+                  <i class="fas {{icon}}" aria-hidden="true"></i>
+                  <span class="ich-mock-speed-mode-value">{{remaining}}</span>
+                </span>
+                <span class="ich-mock-speed-mode-bar" aria-hidden="true">
+                  <span class="ich-mock-speed-mode-fill" style="transform: scaleX({{displayScale}})"></span>
+                </span>
+              </button>
+              {{/each}}
+            </div>
+            {{else}}
+            <button
+              type="button"
+              class="ich-mock-speed-readout{{#unless inCombat}} is-muted{{/unless}}"
+              data-util="movement"
+              data-ich-tip-title="{{tips.movement.title}}"
+              data-ich-tip-detail="{{tips.movement.detail}}"
+              aria-label="{{#if movement.modeLabel}}{{movement.modeLabel}} — {{tips.movement.title}}{{else}}{{tips.movement.title}}{{/if}}"
+            >
+              <i class="fas {{#if movement.modeIcon}}{{movement.modeIcon}}{{else}}fa-person-running{{/if}}" aria-hidden="true"></i>
+              <span>{{movement.remainingFeet}}{{#if inCombat}}/{{movement.maxFeet}}{{/if}}</span>
+            </button>
+            {{/if}}
+            {{/if}}
+            {{/if}}
+
+            <button
+              type="button"
+              class="ich-mock-status-btn"
+              data-util="status"
+              data-ich-tip-title="{{tips.status.title}}"
+              data-ich-tip-detail="{{tips.status.detail}}"
+              aria-label="{{labels.assignStatus}}"
+            >
+              <i class="fas fa-tags" aria-hidden="true"></i>
+            </button>
+
+            <button
+              type="button"
+              class="ich-mock-util-btn ich-mock-rest-btn{{#if showLeaveCombat}} is-leave{{/if}}{{#if restDisabled}} is-disabled{{/if}}"
+              data-util="rest"
+              data-ich-tip-title="{{tips.rest.title}}"
+              data-ich-tip-detail="{{tips.rest.detail}}"
+              aria-label="{{utilityRestLabel}}"
+              {{#if restDisabled}}disabled{{/if}}
+            >
+              <i class="fas {{#if showLeaveCombat}}fa-right-from-bracket{{else}}fa-bed{{/if}}" aria-hidden="true"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+{{/if}}

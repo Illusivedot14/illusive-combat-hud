@@ -1,0 +1,77 @@
+/* Early paint: hide Foundry chrome on phones before JS finishes.
+   html.ich-mobile-boot is set from sessionStorage / heuristic in mobile-boot.mjs */
+
+html.ich-mobile-boot,
+html.ich-mobile-boot body,
+body.ich-mobile-client {
+  background: #121116 !important;
+}
+
+html.ich-mobile-boot #board,
+html.ich-mobile-boot #ui-left,
+html.ich-mobile-boot #ui-right,
+html.ich-mobile-boot #ui-top,
+html.ich-mobile-boot #ui-bottom,
+html.ich-mobile-boot #sidebar,
+html.ich-mobile-boot #navigation,
+html.ich-mobile-boot #players,
+html.ich-mobile-boot #hotbar,
+html.ich-mobile-boot #fps,
+html.ich-mobile-boot #logo,
+html.ich-mobile-boot #pause,
+html.ich-mobile-boot #controls,
+html.ich-mobile-boot #scene-controls,
+html.ich-mobile-boot #camera-views,
+html.ich-mobile-boot #ich-hud-overlay,
+html.ich-mobile-boot #ich-action-bar-dock,
+html.ich-mobile-boot #ich-party-status,
+html.ich-mobile-boot #ich-turn-tracker,
+html.ich-mobile-boot #ich-token-statuses,
+body.ich-mobile-client #board,
+body.ich-mobile-client #ui-left,
+body.ich-mobile-client #ui-right,
+body.ich-mobile-client #ui-top,
+body.ich-mobile-client #ui-bottom,
+body.ich-mobile-client #sidebar,
+body.ich-mobile-client #navigation,
+body.ich-mobile-client #players,
+body.ich-mobile-client #hotbar,
+body.ich-mobile-client #fps,
+body.ich-mobile-client #logo,
+body.ich-mobile-client #pause,
+body.ich-mobile-client #controls,
+body.ich-mobile-client #scene-controls,
+body.ich-mobile-client #camera-views,
+body.ich-mobile-client #ich-hud-overlay,
+body.ich-mobile-client #ich-action-bar-dock,
+body.ich-mobile-client #ich-party-status,
+body.ich-mobile-client #ich-turn-tracker,
+body.ich-mobile-client #ich-token-statuses {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+html.ich-mobile-boot #interface {
+  background: #121116 !important;
+}
+
+/* Heuristic cover for first visit before session flag exists (phones only). */
+@media (hover: none) and (pointer: coarse) and (max-width: 1024px) {
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #ui-left,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #ui-right,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #ui-top,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #ui-bottom,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #sidebar,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #navigation,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #players,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #hotbar,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #fps,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #logo,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #controls,
+  html:not(.ich-mobile-force-desktop):not(.ich-mobile-boot) #scene-controls {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
+}

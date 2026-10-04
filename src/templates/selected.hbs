@@ -1,0 +1,27 @@
+{{#if empty}}
+<div class="ich-empty-text">No token selected</div>
+{{else}}
+<div class="ich-selected-card" data-token-id="{{member.id}}" data-actor-id="{{member.actorId}}">
+  <img class="ich-selected-portrait" src="{{member.img}}" alt="{{member.name}}" title="{{member.name}}">
+
+  <div class="ich-selected-info">
+    <div class="ich-selected-name">{{member.name}}</div>
+
+    <div class="ich-bar-row ich-hp-bar">
+      <div class="ich-bar-fill" style="width: {{member.hp.percent}}%"></div>
+      <span class="ich-bar-label">{{member.hp.value}}/{{member.hp.max}}</span>
+    </div>
+
+    {{#if member.resource}}
+    <div class="ich-bar-row ich-resource-bar">
+      <div class="ich-bar-fill" style="width: {{member.resource.percent}}%"></div>
+      <span class="ich-bar-label">{{member.resource.value}}/{{member.resource.max}}</span>
+    </div>
+    {{/if}}
+  </div>
+
+  <button type="button" class="ich-member-config" title="Open Character Sheet" aria-label="Open Character Sheet">
+    <i class="fas fa-cog"></i>
+  </button>
+</div>
+{{/if}}

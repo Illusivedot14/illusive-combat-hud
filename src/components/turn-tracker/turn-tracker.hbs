@@ -1,0 +1,56 @@
+{{#each combatants}}
+{{#unless hidden}}
+<div
+  class="ich-turn-card{{#if isEvent}} ich-turn-card-event{{/if}}{{#if isGroup}} ich-turn-card-group{{/if}}{{#if isActive}} is-active{{/if}}{{#if markedDefeated}} is-defeated{{/if}}{{#if isDeathSaving}} is-death-saving{{/if}}{{#if isDead}} is-dead{{/if}}{{#if isStabilized}} is-stabilized{{/if}}{{#if secret}} is-secret{{/if}}"
+  data-combatant-id="{{id}}"
+  {{#if isGroup}}data-group-id="{{groupId}}"{{/if}}
+  data-token-id="{{tokenId}}"
+  {{#if showHp}}data-hp-tier="{{hp.tier}}"{{/if}}
+  style="order: {{order}};{{#if showDamageWash}} --ich-hp-pct: {{washPctCss}};{{/if}}"
+  title="{{name}}"
+>
+  <div class="ich-turn-portrait ich-ornate-frame">
+    <img class="ich-turn-portrait-img" src="{{img}}" alt="" aria-hidden="true">
+    <span class="ich-frame-corner ich-frame-corner-tl" aria-hidden="true"></span>
+    <span class="ich-frame-corner ich-frame-corner-tr" aria-hidden="true"></span>
+    <span class="ich-frame-corner ich-frame-corner-bl" aria-hidden="true"></span>
+    <span class="ich-frame-corner ich-frame-corner-br" aria-hidden="true"></span>
+
+    {{#if showDamageWash}}
+    <span class="ich-turn-damage-wash" aria-hidden="true"></span>
+    {{/if}}
+
+    {{#if vitalityIcon}}
+    <span class="ich-turn-vitality-icon" title="{{vitalityIcon.label}}" aria-label="{{vitalityIcon.label}}">
+      <i class="fas {{vitalityIcon.icon}}" aria-hidden="true"></i>
+    </span>
+    {{/if}}
+
+    <span class="ich-turn-init{{#if canRollInitiative}} ich-turn-init-roll{{/if}}"{{#if canRollInitiative}} data-action="roll-initiative" data-tooltip="COMBAT.InitiativeRoll"{{/if}}>{{#if canRollInitiative}}<i class="fas fa-dice-d20"></i>{{else}}{{#if hasRolled}}{{initiative}}{{else}}—{{/if}}{{/if}}</span>
+    {{#if isGroup}}
+    <span class="ich-turn-group-count"><i class="fas fa-users"></i>{{count}}</span>
+    {{else}}
+    {{#unless isEvent}}
+    {{#if showHp}}
+    {{#if ../showHpNumbers}}
+    <span class="ich-turn-hp">{{hp.value}}/{{hp.max}}</span>
+    {{/if}}
+    {{/if}}
+    {{/unless}}
+    {{/if}}
+  </div>
+  {{#if isEvent}}
+  <div class="ich-turn-name ich-turn-event-label">{{name}}{{#if roundsLeft}} |{{roundsLeft}}{{/if}}</div>
+  {{else}}
+  <div class="ich-turn-name">{{name}}</div>
+  {{/if}}
+</div>
+{{/unless}}
+{{/each}}
+<div class="ich-turn-separator" style="order: {{separatorOrder}}">
+  <div class="ich-turn-separator-line"></div>
+  <div class="ich-turn-separator-round">
+    <i class="fas fa-chevron-right"></i>
+    <span>{{round}}</span>
+  </div>
+</div>

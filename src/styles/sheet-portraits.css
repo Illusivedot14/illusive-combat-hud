@@ -1,0 +1,153 @@
+/* dnd5e character sheet portraits: circular crop, object-fit cover, no HP arc rings. */
+
+.ich-sheet-portrait {
+  object-fit: cover;
+  object-position: top center;
+}
+
+.ich-sheet-portrait-frame {
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #0a080f;
+}
+
+.ich-sheet-portrait-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(140, 110, 70, 0.65);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5) inset;
+  pointer-events: none;
+  z-index: 6;
+}
+
+/* Action bar — portrait fills the block like the sheet header token art */
+#ich-action-bar-dock #ich-action-bar .ich-full-portrait-block,
+#ich-action-bar-dock #ich-action-bar .ich-mock-portrait-block {
+  overflow: visible;
+}
+
+#ich-turn-tracker .ich-portrait-token-art .ich-turn-portrait-img {
+  object-fit: contain;
+  object-position: center center;
+}
+
+#ich-action-bar-dock .ich-portrait-token-art .ich-full-portrait,
+#ich-action-bar-dock .ich-portrait-token-art .ich-mock-portrait.ich-sheet-portrait {
+  object-fit: contain;
+  object-position: center center;
+}
+
+#ich-party-status .ich-portrait-token-art .ich-portrait-img {
+  object-fit: contain;
+  object-position: center center;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-full-portrait,
+#ich-action-bar-dock #ich-action-bar .ich-mock-portrait.ich-sheet-portrait {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: none;
+  box-shadow: none;
+  background: #08060f;
+  z-index: 1;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-full-portrait-block::after,
+#ich-action-bar-dock #ich-action-bar .ich-mock-portrait-block::after {
+  z-index: 4;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-full-rings {
+  display: none !important;
+}
+
+/* Turn tracker */
+#ich-turn-tracker .ich-turn-portrait.ich-sheet-portrait-frame {
+  width: 88px;
+  height: 88px;
+  border: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+}
+
+#ich-turn-tracker .ich-turn-card.is-active .ich-turn-portrait.ich-sheet-portrait-frame::after {
+  border-color: rgba(210, 185, 130, 0.9);
+}
+
+#ich-turn-tracker .ich-turn-card.is-secret .ich-turn-portrait.ich-sheet-portrait-frame {
+  filter: grayscale(0.6) brightness(0.85);
+  outline: 1px dashed rgba(140, 110, 70, 0.7);
+  outline-offset: -2px;
+}
+
+#ich-turn-tracker .ich-turn-card.is-death-saving .ich-turn-portrait.ich-sheet-portrait-frame::after {
+  box-shadow: inset 0 0 24px rgba(40, 40, 48, 0.55);
+}
+
+#ich-turn-tracker .ich-turn-card.is-dead .ich-turn-portrait.ich-sheet-portrait-frame::after {
+  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.7);
+}
+
+#ich-turn-tracker .ich-turn-card.is-stabilized .ich-turn-portrait.ich-sheet-portrait-frame::after {
+  box-shadow: inset 0 0 28px rgba(20, 40, 100, 0.55);
+}
+
+/* Party rail */
+#ich-party-status .ich-portrait-card.ich-sheet-portrait-frame {
+  width: 62px;
+  height: 62px;
+  border: none;
+  box-shadow: none;
+}
+
+#ich-party-status .ich-portrait-card.ich-sheet-portrait-frame.is-selected::after {
+  border-color: rgba(240, 221, 176, 0.95);
+  animation: ich-sheet-portrait-glow 2.2s ease-in-out infinite;
+}
+
+#ich-party-status .ich-portrait-card.ich-sheet-portrait-frame.is-turn::after {
+  border-color: rgba(232, 160, 96, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(232, 160, 96, 0.35) inset,
+    0 0 16px rgba(232, 160, 96, 0.35);
+}
+
+#ich-party-status .ich-portrait-card.ich-sheet-portrait-frame.is-death-saving::after {
+  box-shadow: inset 0 0 24px rgba(40, 40, 48, 0.55);
+}
+
+#ich-party-status .ich-portrait-card.ich-sheet-portrait-frame.is-dead::after {
+  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.7);
+}
+
+#ich-party-status .ich-portrait-card.ich-sheet-portrait-frame.is-stabilized::after {
+  box-shadow: inset 0 0 28px rgba(20, 40, 100, 0.55);
+}
+
+body[data-ich-party-size="compact"] #ich-party-status .ich-portrait-card.ich-sheet-portrait-frame {
+  width: 51px;
+  height: 51px;
+}
+
+body[data-ich-party-size="large"] #ich-party-status .ich-portrait-card.ich-sheet-portrait-frame {
+  width: 76px;
+  height: 76px;
+}
+
+@keyframes ich-sheet-portrait-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.5) inset,
+      0 0 12px rgba(240, 221, 176, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.28) inset,
+      0 0 20px rgba(240, 221, 176, 0.65);
+  }
+}

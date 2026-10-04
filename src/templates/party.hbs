@@ -1,0 +1,15 @@
+{{#each members}}
+<button
+  type="button"
+  class="ich-portrait-card{{#if selected}} is-selected{{/if}}"
+  data-token-id="{{id}}"
+  data-actor-id="{{actorId}}"
+  title="{{name}}"
+  aria-label="{{name}}"
+>
+  <img class="ich-portrait-img" src="{{img}}" alt="{{name}}">
+  <span class="ich-hp-overlay">{{hp.value}}/{{hp.max}}</span>
+</button>
+{{else}}
+<div class="ich-empty-text">No party</div>
+{{/each}}
