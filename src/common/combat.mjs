@@ -58,8 +58,20 @@ export function getViewedCombat() {
   // Drop zombies: game.combat can still resolve a deleted encounter for a beat.
   if (viewed && combatInCollection(viewed)) return viewed;
 
-  if (!canvas?.scene) return null;
-  return resolveSceneCombat(canvas.scene);
+  const scene = canvas?.scene
+    ?? game.scenes?.active
+    ?? game.scenes?.current
+    ?? game.scenes?.viewed
+    ?? null;
+  const fromScene = resolveSceneCombat(scene);
+  if (fromScene) return fromScene;
+
+  try {
+    const list = game.combats.contents ?? [...game.combats];
+    return list.find((combat) => combat?.started && combatInCollection(combat)) ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**

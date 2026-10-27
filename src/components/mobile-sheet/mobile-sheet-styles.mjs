@@ -1699,7 +1699,7 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
 
 /* ---- Manual dice roller: fixed toggle + docked panel ---- */
 #ich-mobile-dice-roller {
-  --ich-dice-fab-size: 48px;
+  --ich-dice-fab-size: 72px;
   --ich-dice-fab-gap: 12px;
   position: fixed !important;
   inset: 0 !important;
@@ -1718,16 +1718,18 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
   width: var(--ich-dice-fab-size) !important;
   height: var(--ich-dice-fab-size) !important;
   border-radius: 50% !important;
-  border: 2px solid rgba(255,255,255,0.22) !important;
-  background: rgba(42, 41, 48, 0.95) !important;
-  color: #fff !important;
-  font-size: 1.2rem !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.45) !important;
+  border: 2px solid var(--mobile-btn-border, var(--mobile-accent-50, #b794f6)) !important;
+  background: var(--mobile-bg-secondary, #1f1830) !important;
+  color: var(--mobile-text-primary, #fff) !important;
+  box-shadow: 0 4px 16px var(--mobile-shadow-strong, rgba(0,0,0,0.45)) !important;
+  font-size: 1.8rem !important;
   cursor: pointer !important;
   z-index: 100003 !important;
 }
-#ich-mobile-dice-roller.is-open .ich-dice-toggle {
+#ich-mobile-dice-roller.is-open .ich-dice-toggle,
+#ich-mobile-dice-roller .ich-dice-toggle:active {
   border-color: var(--mobile-accent, #b794f6) !important;
+  background: var(--mobile-bg-button-active, rgba(183,148,246,0.24)) !important;
   color: var(--mobile-accent, #b794f6) !important;
 }
 /* Panel left of FAB so Roll never overlaps the manual-roller button */
@@ -1743,8 +1745,8 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
   gap: 8px !important;
   padding: 10px !important;
   border-radius: 12px !important;
-  background: rgba(36, 36, 40, 0.97) !important;
-  border: 1px solid rgba(255,255,255,0.14) !important;
+  background: var(--mobile-bg-secondary, rgba(36, 36, 40, 0.97)) !important;
+  border: 1px solid var(--mobile-border, rgba(255,255,255,0.14)) !important;
   box-shadow: 0 8px 28px rgba(0,0,0,0.55) !important;
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
@@ -1778,9 +1780,9 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
   aspect-ratio: 1 !important;
   min-height: 44px !important;
   border-radius: 8px !important;
-  border: 1px solid rgba(255,255,255,0.14) !important;
-  background: rgba(48, 48, 54, 0.95) !important;
-  color: rgba(255,255,255,0.92) !important;
+  border: 1px solid var(--mobile-btn-border, rgba(255,255,255,0.14)) !important;
+  background: var(--mobile-bg-button, rgba(48, 48, 54, 0.95)) !important;
+  color: var(--mobile-text-primary, #fff) !important;
   font-size: 1.05rem !important;
   cursor: pointer !important;
   display: flex !important;
@@ -1798,8 +1800,8 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
   min-width: 16px !important;
   height: 16px !important;
   border-radius: 4px !important;
-  background: #a35a4a !important;
-  color: #fff !important;
+  background: var(--mobile-accent, #b794f6) !important;
+  color: var(--mobile-page-bg, #111) !important;
   font-size: 0.65rem !important;
   font-weight: 700 !important;
   display: none !important;
@@ -1820,9 +1822,9 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
 #ich-mobile-dice-roller .ich-dice-roll-btn {
   min-height: 48px !important;
   border-radius: 8px !important;
-  border: 1px solid rgba(255,255,255,0.14) !important;
-  background: rgba(48, 48, 54, 0.95) !important;
-  color: #fff !important;
+  border: 1px solid var(--mobile-btn-border, rgba(255,255,255,0.14)) !important;
+  background: var(--mobile-bg-button, rgba(48, 48, 54, 0.95)) !important;
+  color: var(--mobile-text-primary, #fff) !important;
 }
 #ich-mobile-dice-roller .ich-dice-mod-btn {
   font-size: 1.35rem !important;
@@ -1870,7 +1872,7 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
   font-size: 1rem !important;
   font-weight: 700 !important;
   cursor: pointer !important;
-  background: rgba(58, 58, 66, 0.98) !important;
+  background: var(--mobile-btn-bg, rgba(58, 58, 66, 0.98)) !important;
 }
 #ich-mobile-dice-roller .ich-dice-roll-btn:active {
   background: var(--mobile-accent, #b794f6) !important;

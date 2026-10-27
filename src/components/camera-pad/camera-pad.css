@@ -1,0 +1,78 @@
+#ich-camera-pad {
+  position: fixed !important;
+  inset: auto !important;
+  left: 90px !important;
+  bottom: 16px !important;
+  z-index: 2147483646 !important;
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  width: 224px !important;
+  height: 164px !important;
+  max-width: 224px !important;
+  max-height: 164px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  pointer-events: auto !important;
+  touch-action: none;
+}
+
+#ich-camera-pad .ich-camera-pad-arrows {
+  display: grid !important;
+  grid-template-columns: 52px 52px 52px !important;
+  grid-template-rows: 52px 52px 52px !important;
+  gap: 4px;
+  width: 164px !important;
+  height: 164px !important;
+}
+
+#ich-camera-pad .ich-camera-pad-empty,
+#ich-camera-pad .ich-camera-pad-hub {
+  width: 52px !important;
+  height: 52px !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+#ich-camera-pad [data-camera] {
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #f0ddb0 !important;
+  border-radius: 10px !important;
+  background: #2a1c10 !important;
+  color: #f0ddb0 !important;
+  font-size: 26px !important;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+}
+
+#ich-camera-pad [data-camera] i {
+  pointer-events: none;
+}
+
+#ich-camera-pad .ich-camera-pad-zoom {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  width: 52px;
+}
+
+#ich-camera-pad [data-camera].is-held,
+#ich-camera-pad [data-camera]:active {
+  background: #c8a030 !important;
+  color: #1a1208 !important;
+}

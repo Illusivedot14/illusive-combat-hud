@@ -91,7 +91,27 @@ export const HUD_FALLBACKS = {
   "actionBar.tipResistanceDetail": "{remaining} left",
   "actionBar.lairActions": "Lair Actions",
   "ui.ready": "Ready",
-  "ui.cancel": "Cancel"
+  "ui.cancel": "Cancel",
+  "cameraPad.title": "Move the map",
+  "cameraPad.zoomIn": "Closer",
+  "cameraPad.zoomOut": "Farther",
+  "cameraPad.panUp": "Up",
+  "cameraPad.panDown": "Down",
+  "cameraPad.panLeft": "Left",
+  "cameraPad.panRight": "Right",
+  "mobileMove.title": "Move",
+  "mobileMove.noToken": "This character is not on the map.",
+  "mobileMove.panUp": "Up",
+  "mobileMove.panDown": "Down",
+  "mobileMove.panLeft": "Left",
+  "mobileMove.panRight": "Right",
+  "mobileMove.panUpLeft": "Up left",
+  "mobileMove.panUpRight": "Up right",
+  "mobileMove.panDownLeft": "Down left",
+  "mobileMove.panDownRight": "Down right",
+  "mobileMove.undoOne": "Undo 1",
+  "mobileMove.undoAll": "Undo all",
+  "mobileMove.failed": "Could not move that token."
 };
 
 /** @type {Map<string, string>} */

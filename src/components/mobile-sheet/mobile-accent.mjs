@@ -150,7 +150,9 @@ export function applyMobileAccentColor(color = getMobileAccentColor()) {
     document.getElementById("ich-mobile-sheet-root"),
     document.getElementById("ich-mobile-carousel"),
     document.getElementById("ich-mobile-nocanvas-bg"),
-    document.getElementById("ich-mobile-global-gear")
+    document.getElementById("ich-mobile-global-gear"),
+    document.getElementById("ich-mobile-move"),
+    document.getElementById("ich-mobile-dice-roller")
   ];
   for (const el of targets) {
     if (!el) continue;

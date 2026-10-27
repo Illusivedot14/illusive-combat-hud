@@ -8,22 +8,19 @@ import { MODULE_ID } from "../constants.mjs";
 let hudFocusTokenId = null;
 let hooksBound = false;
 
-function isCoarseTouchDevice() {
-  return navigator.maxTouchPoints > 0
-    && typeof matchMedia === "function"
-    && matchMedia("(pointer: coarse)").matches;
-}
-
-/** Dedicated touch map client — explicit setting, or auto on coarse touch (non-GM). */
+/** Table / map-display account only. Never the GM. */
 export function isTouchTableClient() {
+  if (game.user?.isGM) return false;
   try {
-    const raw = game.settings.get(MODULE_ID, "touchTableClient") ?? "auto";
-    if (raw === "on" || raw === true) return true;
-    if (raw === "off" || raw === false) return false;
-    return !game.user.isGM && isCoarseTouchDevice();
+    return game.settings.get(MODULE_ID, "touchTableClient") === "on";
   } catch {
     return false;
   }
+}
+
+/** True when this account should show the on-screen camera pad. */
+export function shouldShowCameraPad() {
+  return isTouchTableClient();
 }
 
 export function getHudFocusToken() {

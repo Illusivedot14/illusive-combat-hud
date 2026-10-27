@@ -25,5 +25,7 @@ export const ich = {
   partyPlayerPrefs: group("partyPlayerPrefs"),
   currentToken: group("currentToken"),
   turnTracker: group("turnTracker"),
-  actionBar: group("actionBar")
+  actionBar: group("actionBar"),
+  cameraPad: group("cameraPad"),
+  mobileMove: group("mobileMove")
 };

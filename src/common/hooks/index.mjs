@@ -16,6 +16,7 @@
 import { bindSceneLoadDeselect } from "./scene-selection.mjs";
 import { bindTouchTableClient } from "./touch-table.mjs";
 import { bindSpellRegionCleanup } from "./spell-regions.mjs";
+import { bindCameraPad } from "../../components/camera-pad/camera-pad.mjs";
 
 export { bindSceneLoadDeselect } from "./scene-selection.mjs";
 export {
@@ -23,6 +24,7 @@ export {
   focusHudToken,
   getHudFocusToken,
   isTouchTableClient,
+  shouldShowCameraPad,
   releaseCanvasSelection
 } from "./touch-table.mjs";
 
@@ -31,4 +33,5 @@ export function bindCanvasHooks() {
   bindSceneLoadDeselect();
   bindTouchTableClient();
   bindSpellRegionCleanup();
+  bindCameraPad();
 }

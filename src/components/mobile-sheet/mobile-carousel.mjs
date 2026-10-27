@@ -17,6 +17,7 @@ import {
 import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
 import { bindMobileBackground, renderMobileBackground } from "./mobile-background.mjs";
 import { bindMobileDiceRoller, renderMobileDiceRoller } from "./mobile-dice-roller.mjs";
+import { bindMobileMove, renderMobileMove } from "./mobile-move.mjs";
 import { bindMobileGlobalGear, renderMobileGlobalGear } from "./mobile-global-settings.mjs";
 import { getMobileFocusedActorId, setMobileFocusedActorId } from "./mobile-focus.mjs";
 
@@ -135,6 +136,7 @@ async function settleOnCentered({ openSheet = true, snap = true } = {}) {
   if (!actor) return;
 
   setMobileFocusedActorId(actorId);
+  renderMobileMove();
   if (snap) centerAvatarInTrack(track, centered, { behavior: "smooth" });
   refreshFocusClasses();
 
@@ -205,6 +207,7 @@ export function renderMobileCarousel() {
     if (prevScroll > 0) track.scrollLeft = prevScroll;
     centerAvatarInTrack(track, focusBtn, { behavior: "auto" });
   });
+  renderMobileMove();
 }
 
 async function onAvatarActivate(actorId) {
@@ -215,6 +218,7 @@ async function onAvatarActivate(actorId) {
   const btn = track?.querySelector(`.ich-carousel-avatar[data-actor-id="${actorId}"]`);
 
   setMobileFocusedActorId(actorId);
+  renderMobileMove();
   if (btn) centerAvatarInTrack(track, btn, { behavior: "smooth" });
   refreshFocusClasses();
 
@@ -222,6 +226,7 @@ async function onAvatarActivate(actorId) {
   if (isMobileSheetOpen() && getMobileSheetActor()?.id === actorId) {
     await closeMobileSheet();
     refreshFocusClasses();
+    renderMobileMove();
     return;
   }
 
@@ -342,6 +347,8 @@ export async function bootMobileClientUi() {
   renderMobileBackground();
   bindMobileDiceRoller();
   renderMobileDiceRoller();
+  bindMobileMove();
+  renderMobileMove();
   bindMobileGlobalGear();
   renderMobileGlobalGear();
   bindMobileCarousel();

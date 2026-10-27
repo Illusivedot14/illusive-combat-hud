@@ -11,6 +11,7 @@ import { mountPanel, unmountPanel } from "../hud-mount.mjs";
  * @param {string} config.shell                                   HTML for the root element
  * @param {() => boolean} [config.enabled]                        should the panel be shown? (defaults to always)
  * @param {(root: HTMLElement) => void} [config.onMount]          one-time wiring, run only on first mount
+ * @param {() => void} [config.onUnmount]                         cleanup when the panel is removed
  * @param {(root: HTMLElement, options?: object) => unknown} config.render   paint into the mounted root
  * @param {() => void} [config.position]                          reposition callback (layout passes / resize)
  * @returns {import("./registry.mjs").HudPanel}
@@ -21,6 +22,7 @@ export function definePanel(config) {
     mask: config.mask,
     position: config.position,
     unmount() {
+      config.onUnmount?.();
       unmountPanel(config.id);
     },
     async paint(options) {

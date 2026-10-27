@@ -65,12 +65,14 @@
   ],
   "styles": [
     "src/components/mobile-sheet/mobile-sheet.css",
+    "src/components/mobile-sheet/mobile-move.css",
     "src/styles/hud-overlay.css",
     "src/styles/ornate-frames.css",
     "src/components/party-status/party-status.css",
     "src/components/token-statuses/token-statuses.css",
     "src/components/action-bar/action-bar.css",
     "src/components/turn-tracker/turn-tracker.css",
+    "src/components/camera-pad/camera-pad.css",
     "src/components/boss-bar/boss-bar.css",
     "src/styles/panel-polish.css"
   ]

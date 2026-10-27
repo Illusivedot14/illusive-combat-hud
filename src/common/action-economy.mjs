@@ -211,7 +211,12 @@ export function buildMovementData(token) {
   const movement = token.actor.system?.attributes?.movement;
   if (!movement) return null;
 
-  const gridDistance = canvas.scene?.grid?.distance ?? canvas.scene?.dimensions?.distance ?? 5;
+  const scene = canvas?.scene
+    ?? token.document?.parent
+    ?? game.scenes?.active
+    ?? game.scenes?.current
+    ?? null;
+  const gridDistance = Number(scene?.grid?.distance ?? scene?.dimensions?.distance) || 5;
   const pose = getTokenMovementDisplay(token);
   const mode = pose.mode;
   const poolMax = getMovementPoolMax(movement);
@@ -411,6 +416,16 @@ function getLastRecordedMovementId(token) {
 
 export function canUndoTokenMovement(token) {
   return getRecordedMovementHistory(token).length > 1 && Boolean(getLastRecordedMovementId(token));
+}
+
+/** Undo only the last recorded step. */
+export async function undoOneTokenMovement(token) {
+  const doc = token?.document;
+  if (!doc || typeof doc.revertRecordedMovement !== "function") return false;
+  if (!canUndoTokenMovement(token)) return false;
+  const movementId = getLastRecordedMovementId(token);
+  if (!movementId) return false;
+  return Boolean(await doc.revertRecordedMovement(movementId));
 }
 
 /** Put the token all the way back. Foundry often leaves a 10ft stub as a second record. */

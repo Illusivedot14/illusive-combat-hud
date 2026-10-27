@@ -378,9 +378,14 @@ export function registerSettings() {
 
   registerHidden("touchTableClient", {
     type: String,
-    default: "auto",
+    default: "off",
     scope: "user",
-    choices: ichSettingChoices("touchTableClient", ["auto", "on", "off"])
+    choices: ichSettingChoices("touchTableClient", ["auto", "on", "off"]),
+    onChange: () => {
+      import("./components/camera-pad/camera-pad.mjs")
+        .then((m) => m.refreshCameraPad())
+        .catch((err) => console.error(`${MODULE_ID} | camera pad toggle failed`, err));
+    }
   });
 
   // Tracks whether Illusive set core.noCanvas so we can undo it on desktop.

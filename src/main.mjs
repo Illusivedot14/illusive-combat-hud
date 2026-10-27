@@ -19,6 +19,7 @@ import {
   suppressMobileClientNotices
 } from "./common/mobile-client.mjs";
 import { applyEarlyMobileBootClass, persistMobileBootFlag } from "./common/mobile-boot.mjs";
+import { bindTokenStepSocket } from "./common/token-step.mjs";
 import { bindCanvasHooks } from "./common/hooks/index.mjs";
 import { bindOverlayGuardHooks } from "./common/overlay-guard.mjs";
 import { bindConnectionQrOverlay, showConnectionQrs, purgeConnectionQrTiles } from "./components/connection-qr/connection-qr-overlay.mjs";
@@ -90,7 +91,12 @@ Hooks.once("ready", async () => {
 
   bindMobileSheet();
   bindMobileSheetDiceBroadcast();
+  bindTokenStepSocket();
   await bootMobileClientUi();
+
+  import("./components/camera-pad/camera-pad.mjs")
+    .then((m) => m.refreshCameraPad())
+    .catch((err) => console.error(`${MODULE_ID} | camera pad failed to show`, err));
 
   if (isIllusiveMobileMode()) {
     console.info(`${MODULE_ID} | mobile sheets-only active | noCanvas=${game.settings.get("core", "noCanvas")}`);
