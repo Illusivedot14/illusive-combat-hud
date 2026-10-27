@@ -16,27 +16,33 @@ describe("action-bar-token-hud", () => {
         fly: { label: "DND5E.MOVEMENT.Type.Fly" }
       }
     };
+    globalThis.CONFIG.Token = {
+      movement: {
+        defaultAction: "walk",
+        actions: {
+          walk: { label: "Walk", icon: "fa-solid fa-person-walking", order: 0 },
+          fly: { label: "Fly", icon: "fa-solid fa-person-fairy", order: 1 },
+          swim: { label: "Swim", icon: "fa-solid fa-person-swimming", order: 2 }
+        }
+      }
+    };
     globalThis.canvas = {
       tokens: { get: () => null },
       hud: { token: null }
     };
   });
 
-  it("prefers actor movement modes over Foundry locomotion actions", () => {
+  it("lists Foundry movement actions with leftover feet", () => {
     const token = {
       id: "tokA",
       document: { movementAction: "walk" },
-      actor: { system: { attributes: { movement: { walk: 30, fly: 60 } } } },
-      _getMovementActionChoices: () => ({
-        speed: { id: "speed", label: "Speed", isActive: true },
-        fly: { id: "fly", label: "Fly", isActive: false }
-      })
+      actor: { system: { attributes: { movement: { walk: 30, fly: 60 } } } }
     };
 
     const choices = collectMovementChoices(token);
-    expect(choices.map((entry) => entry.id)).toEqual(["walk", "fly"]);
-    expect(choices[0].speed).toBe(30);
-    expect(choices[1].speed).toBe(60);
+    expect(choices.map((entry) => entry.id)).toEqual(["walk", "fly", "swim"]);
+    expect(choices[0]).toMatchObject({ leftover: "30", isActive: true });
+    expect(choices[1]).toMatchObject({ leftover: "60", isActive: false });
   });
 
   it("marks the active movement mode", () => {

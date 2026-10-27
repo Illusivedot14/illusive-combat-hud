@@ -155,4 +155,5 @@ export async function clearTurnFlags(actor) {
   if (!actor) return;
   await actor.unsetFlag(MODULE_ID, "dashing");
   await actor.unsetFlag(MODULE_ID, "readied");
+  await actor.unsetFlag(MODULE_ID, "weaponSwings");
 }

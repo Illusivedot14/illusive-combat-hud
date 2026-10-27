@@ -57,6 +57,7 @@ export async function handleTurnTrackerAction(action, event) {
 		case "previous-turn":
 			return combat.previousTurn();
 		case "next-turn":
+			if (!combat.started) return startCombatRollingUnrolled(combat, event);
 			return combat.nextTurn();
 		case "previous-round":
 			return combat.previousRound();

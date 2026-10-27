@@ -1,4 +1,5 @@
 import { getTargetConfig, requiresCanvasTargets } from "../../common/ability-utils.mjs";
+import { getAbilityAttackCount } from "../../common/attack-count.mjs";
 import { ich } from "../../common/i18n.mjs";
 import { refreshHud } from "../../common/render/core.mjs";
 import { ICH_RENDER } from "../../common/render/scopes.mjs";
@@ -33,23 +34,10 @@ export function isTargetPickActive() {
   return Boolean(pickState);
 }
 
-/** Parse exact canvas target count required by an item/activity (default 1). */
-export function getRequiredTargetCount(item, activity) {
+/** How many people this use can hit. Extra Attack / Eldritch Blast scale this. */
+export function getRequiredTargetCount(item, activity, actor = null) {
   if (!requiresCanvasTargets(item, activity)) return null;
-
-  const target = getTargetConfig(item, activity);
-  const raw = target?.affects?.count ?? target?.value ?? 1;
-  const n = parseTargetCount(raw);
-  return Math.max(1, n);
-}
-
-function parseTargetCount(raw) {
-  if (Number.isFinite(Number(raw)) && Number(raw) > 0) return Math.floor(Number(raw));
-  const text = String(raw ?? "").trim();
-  if (!text) return 1;
-  const leading = text.match(/^(\d+)/);
-  if (leading) return Math.floor(Number(leading[1]));
-  return 1;
+  return Math.max(1, getAbilityAttackCount(actor, item, activity));
 }
 
 export function getSelectedTargetCount() {
@@ -66,7 +54,7 @@ export function buildTargetPickView() {
     selected,
     required,
     label: ich.actionBar("targetPickProgress", { selected, required }),
-    canConfirm: selected === required,
+    canConfirm: required > 1 ? selected >= 1 && selected <= required : selected === required,
     confirmLabel: ich.actionBar("targetPickConfirm"),
     cancelLabel: ich.actionBar("targetPickCancel")
   };
@@ -84,7 +72,7 @@ export async function startTargetPick(state) {
   ensureCastingControlled();
   bindCanvasTargeting();
   document.body.classList.add("ich-target-picking");
-  ui.notifications.info(ich.actionBar("targetPickHint", {
+  ui.notifications.info(ich.actionBar(pickState.required > 1 ? "targetPickHintMany" : "targetPickHint", {
     name: pickState.abilityName,
     count: pickState.required
   }), { localize: false });
@@ -105,8 +93,11 @@ export function cancelTargetPick({ clearTargets = true } = {}) {
 /** @returns {TargetPickState|null} pending payload if confirm is valid */
 export function confirmTargetPick() {
   if (!pickState) return null;
-  if (getSelectedTargetCount() !== pickState.required) {
-    ui.notifications.warn(ich.actionBar("targetPickExact", { count: pickState.required }));
+  const selected = getSelectedTargetCount();
+  const required = pickState.required;
+  const enough = required > 1 ? selected >= 1 && selected <= required : selected === required;
+  if (!enough) {
+    ui.notifications.warn(ich.actionBar("targetPickExact", { count: required }));
     return null;
   }
   const pending = { ...pickState };

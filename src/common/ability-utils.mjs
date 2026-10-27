@@ -4,6 +4,7 @@ import { hasAvailableSpellSlot } from "./actor-resources.mjs";
 import { canSpendEconomy } from "./midi-qol.mjs";
 import { checkAbilityRange } from "./range-utils.mjs";
 import { getViewedCombat, getActiveCombatant } from "./combat.mjs";
+import { getWeaponAttackCount, remainingWeaponAttacks } from "./attack-count.mjs";
 
 const ECONOMY_SECTIONS = new Set(["action", "bonus", "reaction"]);
 
@@ -18,11 +19,12 @@ function resolveEconomySection(section, activationType) {
  * but later weapon/attack uses are still legal on that same action.
  * Spells and non-attack features stay locked once Action is spent.
  */
-export function allowsExtraAttackSwing(item, activity, economySection) {
+export function allowsExtraAttackSwing(item, activity, economySection, actor = null) {
   if (economySection !== "action") return false;
   if (item?.type === "spell") return false;
-  if (item?.type === "weapon") return true;
-  return activity?.type === "attack";
+  if (item?.type !== "weapon" && activity?.type !== "attack") return false;
+  if (!actor) return true;
+  return getWeaponAttackCount(actor) > 1 && remainingWeaponAttacks(actor) > 0;
 }
 
 export function getTargetConfig(item, activity) {
@@ -237,7 +239,7 @@ export function evaluateAbilityState({
     inCombat
     && economySection
     && !canSpendEconomy(actor, economySection)
-    && !allowsExtraAttackSwing(item, activity, economySection)
+    && !allowsExtraAttackSwing(item, activity, economySection, actor)
   ) {
     disabled = true;
     reasons.push(ich.warning("economySpent", { type: economySection }));

@@ -6,6 +6,13 @@ function setCombatButtonVisibility(root, combat) {
 	const endButton = root.querySelector('[data-action="end-combat"]');
 	if (startButton) startButton.hidden = combat.started;
 	if (endButton) endButton.hidden = !combat.started;
+
+	const nextButton = root.querySelector('[data-action="next-turn"]');
+	if (nextButton) {
+		const label = combat.started ? "COMBAT.TurnNext" : "COMBAT.Begin";
+		nextButton.dataset.tooltip = label;
+		nextButton.setAttribute("aria-label", game.i18n.localize(label));
+	}
 }
 
 function setEncounterButtonVisibility(root) {

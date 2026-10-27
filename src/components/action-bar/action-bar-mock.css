@@ -166,6 +166,11 @@
   stroke: #f0ddb0 !important;
 }
 
+.ich-mock-gem-resistance .ich-mock-gem-face {
+  fill: #e8c878 !important;
+  stroke: #fff3c8 !important;
+}
+
 .ich-mock-gem-items {
   width: 27px;
   height: 27px;
@@ -232,7 +237,8 @@
 .ich-mock-gem-action.is-spent .ich-mock-gem-face,
 .ich-mock-gem-bonus.is-spent .ich-mock-gem-face,
 .ich-mock-gem-reaction.is-spent .ich-mock-gem-face,
-.ich-mock-gem-legendary.is-spent .ich-mock-gem-face {
+.ich-mock-gem-legendary.is-spent .ich-mock-gem-face,
+.ich-mock-gem-resistance.is-spent .ich-mock-gem-face {
   fill: #6a6a72 !important;
   stroke: #8a8a92 !important;
 }
@@ -913,18 +919,74 @@
   text-transform: uppercase;
 }
 
-.ich-util-dropdown-movement {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 132px;
+.ich-util-dropdown-movement,
+.ich-util-dropdown-light {
+  min-width: 168px;
+  max-width: 280px;
 }
 
-.ich-util-dropdown-light {
+.ich-util-tile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 6px;
+  width: 100%;
+}
+
+.ich-util-tile {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 160px;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 64px;
+  padding: 8px 6px;
+  border: 1px solid rgba(210, 176, 104, 0.45);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(48, 34, 24, 0.98) 0%, rgba(18, 12, 16, 0.98) 100%);
+  box-shadow: inset 0 1px 0 rgba(240, 221, 176, 0.12), 0 2px 6px rgba(0, 0, 0, 0.35);
+  color: #f0e8d8;
+  cursor: pointer;
+}
+
+.ich-util-tile:hover {
+  border-color: #f0ddb0;
+  background: linear-gradient(180deg, rgba(68, 48, 28, 0.98) 0%, rgba(26, 16, 18, 0.98) 100%);
+}
+
+.ich-util-tile.is-active {
+  border-color: #9ec5f0;
+  box-shadow: inset 0 2px 0 #5b8fd9, 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.ich-util-tile.is-disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.ich-util-tile-icon {
+  font-size: 16px;
+  color: #f0ddb0;
+}
+
+.ich-util-tile-name {
+  width: 100%;
+  color: #f5efe2;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.ich-util-tile-meta {
+  color: #f0ddb0;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ich-util-dropdown-rolls .ich-util-tile-grid {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
 }
 
 .ich-util-dropdown-rolls {
@@ -1243,31 +1305,31 @@
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-group-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  align-content: stretch;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 86px);
+  justify-content: start;
+  align-content: start;
+  gap: 8px;
   width: 100%;
   margin: 0;
-  padding: 0;
-  line-height: normal;
-  font-size: initial;
+  padding: 2px 0 4px;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-btn {
-  display: grid;
-  width: 100%;
-  height: auto;
-  min-width: 0;
-  max-width: none;
+  display: flex;
+  width: 86px;
+  min-width: 86px;
+  max-width: 86px;
+  height: 92px;
+  min-height: 92px;
   margin: 0;
   flex: 0 0 auto;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-btn .ich-ability-img,
 #ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-btn img {
-  width: 32px;
-  height: 32px;
+  width: 46px;
+  height: 46px;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-group {
@@ -1418,6 +1480,11 @@
   white-space: nowrap;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.75);
   cursor: pointer;
+}
+
+.ich-mock-speed-readout.is-static {
+  cursor: default;
+  pointer-events: none;
 }
 
 .ich-mock-speed-readout.is-muted {
@@ -1582,115 +1649,157 @@
   background: rgba(90, 164, 212, 0.35);
 }
 
-/* Status: small rim chip at 1-o'clock (pairs with rest at 4-o'clock). */
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn {
-  position: absolute;
-  right: -7px;
-  top: -7px;
-  z-index: 6;
+.ich-mock-combat-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  flex: 0 0 auto;
+  min-width: 36px;
+  padding-top: calc(28px + 32px);
+  box-sizing: content-box;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-flip-btn,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-move-btn,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-undo-move,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-status-btn,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-rest-btn {
+  position: static;
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
-  max-width: 38px;
-  min-height: 38px;
-  max-height: 38px;
-  border: 1.5px solid rgba(232, 220, 196, 0.55);
-  border-radius: 50%;
-  background: rgba(18, 12, 10, 0.92);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  color: #e8dcc4;
-  font-size: 15px;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-size: 16px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 38px;
+  flex: 0 0 34px;
   cursor: pointer;
   outline: none;
-  filter: none;
-  overflow: hidden;
   appearance: none;
-  -webkit-appearance: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
 }
 
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn:focus,
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn:focus-visible {
-  outline: none;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 2px rgba(224, 176, 64, 0.55);
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn:hover,
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn.is-dropdown-open {
-  border-color: rgba(240, 232, 216, 0.85);
-  background: rgba(28, 20, 16, 0.96);
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  color: #f0e8d8;
-  filter: none;
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-status-btn > i {
-  pointer-events: none;
-  line-height: 1;
-}
-
-/* Rest / leave: ~2–3px outside the combat ring at 4-o'clock, with a rim circle. */
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn {
-  position: absolute;
-  right: -7px;
-  bottom: -7px;
-  z-index: 6;
-  margin: 0;
-  width: 43px;
-  height: 43px;
-  min-width: 43px;
-  border: 1.5px solid rgba(158, 197, 240, 0.55);
-  border-radius: 50%;
-  background: rgba(18, 12, 10, 0.92);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-move-btn {
   color: #9ec5f0;
-  font-size: 19px;
-  filter: none;
 }
 
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn:hover:not(:disabled):not(.is-disabled) {
-  border-color: rgba(200, 224, 248, 0.85);
-  background: rgba(28, 20, 16, 0.96);
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-move-btn:hover {
   color: #c8e0f8;
-  filter: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)) brightness(1.15);
 }
 
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn.is-leave {
-  border-color: rgba(232, 160, 96, 0.55);
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-flip-btn {
+  color: #d4c4f0;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-flip-btn:hover,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-flip-btn.is-active {
+  color: #f0ddb0;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)) brightness(1.15);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-undo-move {
+  color: #e8dcc4;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-undo-move:hover {
+  color: #f0e8d8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)) brightness(1.15);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-status-btn {
+  color: #e8dcc4;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-status-btn:hover,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-status-btn.is-dropdown-open {
+  color: #f0e8d8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)) brightness(1.15);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-rest-btn {
+  color: #9ec5f0;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-rest-btn:hover:not(:disabled):not(.is-disabled) {
+  color: #c8e0f8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)) brightness(1.15);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-rest-btn.is-leave {
   color: #e8c080;
 }
 
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn.is-leave:hover:not(:disabled):not(.is-disabled) {
-  border-color: rgba(240, 192, 120, 0.85);
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-rest-btn.is-leave:hover:not(:disabled):not(.is-disabled) {
   color: #f0d8a8;
 }
 
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn.is-disabled,
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-block .ich-mock-rest-btn:disabled {
-  border-color: rgba(120, 120, 120, 0.45);
-  background: rgba(18, 12, 10, 0.75);
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-rest-btn.is-disabled,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-rest-btn:disabled {
   color: #6a6a6a;
   opacity: 0.55;
   cursor: not-allowed;
   filter: grayscale(0.85);
 }
 
-.ich-mock-bar.ich-mock-ooc .ich-mock-combat-block .ich-mock-rest-btn:not(:disabled):not(.is-disabled) {
-  border-color: rgba(232, 208, 160, 0.55);
+.ich-mock-bar.ich-mock-ooc .ich-mock-combat-rail .ich-mock-rest-btn:not(:disabled):not(.is-disabled) {
   color: #e8d0a0;
 }
 
-.ich-mock-bar.ich-mock-ooc .ich-mock-combat-block .ich-mock-rest-btn:hover:not(:disabled):not(.is-disabled) {
-  border-color: rgba(240, 221, 176, 0.85);
+.ich-mock-bar.ich-mock-ooc .ich-mock-combat-rail .ich-mock-rest-btn:hover:not(:disabled):not(.is-disabled) {
   color: #f0ddb0;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-elevation {
+  position: static;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  min-width: 34px;
+  padding: 2px 0;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-elevation-btn {
+  width: 28px;
+  height: 14px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #e8dcc4;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-elevation-btn:hover {
+  color: #f0ddb0;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-elevation-value {
+  min-width: 22px;
+  color: #f0ddb0;
+  font-family: "Signika", sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
 }
 
 /* Same face size/rim as avatar portrait */
@@ -1795,7 +1904,11 @@
 
 /* Target pick: hide rim chips so nothing sits above the confirm check. */
 .ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-status-btn,
-.ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-rest-btn {
+.ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-rest-btn,
+.ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-undo-move,
+.ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-flip-btn,
+.ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-move-btn,
+.ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-elevation {
   visibility: hidden;
   pointer-events: none;
 }

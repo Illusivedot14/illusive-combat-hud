@@ -10,7 +10,8 @@ import {
   buildIdleMovementData,
   getCombatantForToken,
   findCombatantForToken,
-  setMovementMode
+  setMovementMode,
+  undoLastTokenMovement
 } from "../../common/action-economy.mjs";
 import { canSpendEconomy, getEconomyAvailability, toggleEconomySpent, isItemsEconomySpent, toggleItemsEconomySpent } from "../../common/midi-qol.mjs";
 import { allowsExtraAttackSwing, shouldForceTargetPick } from "../../common/ability-utils.mjs";
@@ -94,8 +95,14 @@ import {
 import { toggleFavorite } from "./action-bar-prefs.mjs";
 import { applyActionBarMinimized, expandActionBarForSelection, toggleActionBarMinimized } from "./action-bar-minimize.mjs";
 import { handlePortraitHpContextMenu } from "./action-bar-hp-adjust.mjs";
-import { buildActionBarResources } from "../../common/actor-resources.mjs";
-import { panCanvasToToken, clearUserTargets } from "../../common/token-actions.mjs";
+import { adjustLegendaryResistance, buildActionBarResources, buildLegendaryResistance } from "../../common/actor-resources.mjs";
+import {
+  panCanvasToToken,
+  clearUserTargets,
+  getTokenElevation,
+  isTokenFlipped,
+  nudgeTokenElevation
+} from "../../common/token-actions.mjs";
 
 const ABILITIES_TEMPLATE = `${MODULE_PATH}/src/components/action-bar/action-bar-abilities.hbs`;
 const ECONOMY_KEYS = { standard: "S", action: "A", bonus: "B", reaction: "R", legendary: "L" };
@@ -607,6 +614,7 @@ function buildActionBarLabels(activeSectionLabel) {
     bonus: ich.section("bonus"),
     reaction: ich.section("reaction"),
     legendary: ich.section("legendary"),
+    legendaryResistance: ich.actionBar("legendaryResistance"),
     utilities: ich.actionBar("utilities"),
     vitals: ich.actionBar("vitals"),
     passiveScores: ich.actionBar("passiveScores"),
@@ -616,6 +624,10 @@ function buildActionBarLabels(activeSectionLabel) {
     toggleMovement: ich.actionBar("toggleMovement"),
     assignStatus: ich.actionBar("assignStatus"),
     toggleVisibility: ich.actionBar("toggleVisibility"),
+    flipToken: ich.actionBar("flipToken"),
+    elevation: ich.actionBar("elevation"),
+    elevationUp: ich.actionBar("elevationUp"),
+    elevationDown: ich.actionBar("elevationDown"),
     tempHp: ich.ui("tempHp"),
     favorite: ich.actionBar("favorite"),
     unfavorite: ich.actionBar("unfavorite"),
@@ -669,12 +681,7 @@ async function buildAbilitiesHtml(token, actor, combatActive, activeSection) {
       : ich.empty("noAbilitiesOoc", { section: activeSection.tabLabel ?? activeSection.label }),
     labels: {
       favorite: ich.actionBar("favorite"),
-      unfavorite: ich.actionBar("unfavorite"),
-      colName: ich.actionBar("colName"),
-      colRange: ich.actionBar("colRange"),
-      colHit: ich.actionBar("colHit"),
-      colEffect: ich.actionBar("colEffect"),
-      colNotes: ich.actionBar("colNotes")
+      unfavorite: ich.actionBar("unfavorite")
     }
   });
 }
@@ -690,7 +697,7 @@ function buildGemTip(label, available, inCombat) {
   return { title: label, detail };
 }
 
-function buildUiTips({ labels, inCombat, economy, economySelected, visionSummary, member, movement, movementTitle, utilityRestLabel, restDisabled, showLeaveCombat, combatButton, legendary }) {
+function buildUiTips({ labels, inCombat, economy, economySelected, visionSummary, member, movement, movementTitle, utilityRestLabel, restDisabled, showLeaveCombat, combatButton, legendary, resistance }) {
   const hpLine = member?.hp
     ? ich.actionBar("tipHpDetail", {
       current: member.hp.value,
@@ -714,6 +721,12 @@ function buildUiTips({ labels, inCombat, economy, economySelected, visionSummary
             max: legendary.max
           })
         ].filter(Boolean).join(" ")
+      }
+      : null,
+    gemResistance: resistance
+      ? {
+        title: labels.legendaryResistance,
+        detail: ich.actionBar("tipResistanceDetail", { remaining: resistance.remaining })
       }
       : null,
     sheet: {
@@ -747,6 +760,14 @@ function buildUiTips({ labels, inCombat, economy, economySelected, visionSummary
     visibility: {
       title: labels.toggleVisibility,
       detail: ich.actionBar("tipVisibilityDetail")
+    },
+    flip: {
+      title: labels.flipToken,
+      detail: ich.actionBar("tipFlipDetail")
+    },
+    elevation: {
+      title: labels.elevation,
+      detail: ich.actionBar("tipElevationDetail")
     },
     rest: {
       title: utilityRestLabel,
@@ -790,6 +811,10 @@ function buildUiTips({ labels, inCombat, economy, economySelected, visionSummary
       title: movementTitle || labels.movementRemaining,
       detail: buildMovementTipDetail(movement)
     },
+    undoMovement: {
+      title: ich.actionBar("movementUndo"),
+      detail: ich.actionBar("movementUndoHint")
+    },
     passivesGroup: {
       title: labels.passiveScores,
       detail: visionSummary || ich.actionBar("tipPassivesDetail")
@@ -825,6 +850,7 @@ async function buildActionBarContext(token) {
   const combatActive = combatStarted && Boolean(getCombatantForToken(token));
   const reactionCtx = getReactionContext();
   const legendaryPips = buildLegendaryPips(actor);
+  const resistance = buildLegendaryResistance(actor);
   const showTempHp = settingOn("showTokenTempHp");
   const { member, rings } = buildFullMember(token, {
     showResourceBar: settingOn("showResourceBar"),
@@ -888,7 +914,8 @@ async function buildActionBarContext(token) {
     restDisabled,
     showLeaveCombat,
     combatButton,
-    legendary: legendaryPips
+    legendary: legendaryPips,
+    resistance
   });
   const targetPick = buildTargetPickView();
 
@@ -901,6 +928,8 @@ async function buildActionBarContext(token) {
     configureDisabled,
     visibilityDisabled,
     lightOn,
+    tokenFlipped: isTokenFlipped(token),
+    elevation: getTokenElevation(token),
     resources,
     member,
     rings,
@@ -916,6 +945,8 @@ async function buildActionBarContext(token) {
     sectionTitle: activeSection?.tabLabel ?? activeSection?.label ?? "",
     showItemsGem: true,
     showLegendaryGem: Boolean(legendaryPips),
+    showResistanceGem: Boolean(resistance),
+    resistance: resistance ?? { remaining: 0, max: 0 },
     abilitiesHtml,
     passives: enrichPassives(buildPassiveScores(actor), visionSummary),
     visionSummary,
@@ -997,11 +1028,38 @@ function onEconomySelect(sectionId) {
   requestPanelRefresh();
 }
 
+async function spendOrRestoreResistance(token, delta) {
+  if (!token?.actor) return false;
+  const changed = await adjustLegendaryResistance(token.actor, delta);
+  if (changed) requestPanelRefresh();
+  return changed;
+}
+
 async function onEconomyContextMenu(event) {
   const dock = document.getElementById("ich-action-bar-dock");
   if (!dock?.contains(event.target)) return;
 
   if (handlePortraitHpContextMenu(event)) return;
+
+  const resistanceGem = event.target.closest("#ich-action-bar [data-action='legendary-resistance']");
+  if (resistanceGem) {
+    event.preventDefault();
+    event.stopPropagation();
+    await spendOrRestoreResistance(getActionBarToken(), 1);
+    return;
+  }
+
+  const movement = event.target.closest("#ich-action-bar [data-action='undo-movement']");
+  if (movement) {
+    event.preventDefault();
+    event.stopPropagation();
+    const token = getActionBarToken();
+    if (!token) return;
+    const undone = await undoLastTokenMovement(token);
+    if (!undone) ui.notifications.warn(ich.actionBar("movementUndoEmpty"));
+    requestPanelRefresh();
+    return;
+  }
 
   const gem = event.target.closest("#ich-action-bar .ich-mock-gem[data-economy]");
   if (!gem) return;
@@ -1141,10 +1199,39 @@ async function onActionBarClick(event) {
     return;
   }
 
+  const resistanceGem = event.target.closest("#ich-action-bar [data-action='legendary-resistance']");
+  if (resistanceGem) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (token) await spendOrRestoreResistance(token, -1);
+    return;
+  }
+
   if (event.target.closest("#ich-action-bar .ich-reaction-pass-btn")) {
     event.preventDefault();
     event.stopPropagation();
     passReaction();
+    requestPanelRefresh();
+    return;
+  }
+
+  const elevationBtn = event.target.closest("#ich-action-bar [data-action='elevation-up'], #ich-action-bar [data-action='elevation-down']");
+  if (elevationBtn) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!token) return;
+    const down = elevationBtn.dataset.action === "elevation-down";
+    if (await nudgeTokenElevation(token, down ? -1 : 1)) requestPanelRefresh();
+    return;
+  }
+
+  const undoMove = event.target.closest("#ich-action-bar [data-action='undo-movement']");
+  if (undoMove) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!token || undoMove.disabled) return;
+    const undone = await undoLastTokenMovement(token);
+    if (!undone) ui.notifications.warn(ich.actionBar("movementUndoEmpty"));
     requestPanelRefresh();
     return;
   }
@@ -1316,7 +1403,7 @@ async function onActionBarClick(event) {
   if (inCombat(token) && economyType && !canSpendEconomy(token.actor, economyType)) {
     const item = !isStandard ? token.actor.items.get(itemId) : null;
     const activity = item && activityId ? item.system?.activities?.get?.(activityId) : null;
-    if (isStandard || !allowsExtraAttackSwing(item, activity, economyType)) {
+    if (isStandard || !allowsExtraAttackSwing(item, activity, economyType, token.actor)) {
       ui.notifications.warn(ich.warning("economySpent", { type: ECONOMY_KEYS[economyType] ?? economyType }));
       return;
     }
@@ -1353,7 +1440,7 @@ async function onActionBarClick(event) {
         spellLevel = pick.level;
       }
 
-      const required = getRequiredTargetCount(item, activity);
+      const required = getRequiredTargetCount(item, activity, token.actor);
       const forcePick = shouldForceTargetPick(item, activity);
       if (required && (forcePick || (game.user.targets?.size ?? 0) === 0)) {
         await startTargetPick({

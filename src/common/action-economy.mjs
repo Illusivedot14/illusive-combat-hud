@@ -73,13 +73,73 @@ export function movementTypeLabel(key, config) {
 /** Font Awesome icon class for the active movement mode (no `fas` prefix). */
 export function movementModeIcon(mode) {
   switch (mode) {
-    case "fly": return "fa-dove";
+    case "fly": return "fa-person-fairy";
     case "swim": return "fa-person-swimming";
-    case "climb": return "fa-mountain";
-    case "burrow": return "fa-hill-rockslide";
+    case "climb": return "fa-person-through-window";
+    case "burrow": return "fa-person-digging";
+    case "crawl": return "fa-person-praying";
+    case "jump": return "fa-person-running-fast";
+    case "blink": return "fa-person-from-portal";
     case "walk": return "fa-person-walking";
-    default: return "fa-person-running";
+    default: return "fa-person-walking";
   }
+}
+
+const FALLBACK_MOVEMENT_ACTIONS = ["walk", "fly", "swim", "burrow", "crawl", "climb", "jump", "blink"];
+
+function toFaIcon(icon, fallbackId) {
+  if (typeof icon === "string") {
+    const name = icon.split(/\s+/).find((part) => (
+      part.startsWith("fa-") && !["fa-solid", "fa-regular", "fa-brands", "fa-fw"].includes(part)
+    ));
+    if (name) return name;
+  }
+  return movementModeIcon(fallbackId);
+}
+
+function canSelectMovementAction(token, action, config, current) {
+  if (action === current) return true;
+  const canSelect = config?.canSelect;
+  if (typeof canSelect === "function") return Boolean(canSelect(token.document));
+  if (canSelect === undefined) return true;
+  return Boolean(canSelect);
+}
+
+/** How the token moves — Foundry's list, not the speeds on the sheet. */
+export function listTokenMovementActions(token) {
+  const configured = CONFIG.Token?.movement?.actions;
+  const current = token?.document?._source?.movementAction ?? token?.document?.movementAction ?? null;
+  if (configured && Object.keys(configured).length) {
+    return Object.entries(configured)
+      .filter(([id, config]) => canSelectMovementAction(token, id, config, current))
+      .sort((a, b) => (a[1]?.order ?? 0) - (b[1]?.order ?? 0))
+      .map(([id, config]) => ({
+        id,
+        label: game.i18n?.localize?.(config.label) ?? config.label ?? id,
+        icon: toFaIcon(config.icon, id)
+      }));
+  }
+  return FALLBACK_MOVEMENT_ACTIONS.map((id) => ({
+    id,
+    label: movementTypeLabel(id, CONFIG.DND5E?.movementTypes?.[id]),
+    icon: movementModeIcon(id)
+  }));
+}
+
+export function getTokenMovementDisplay(token) {
+  const action = String(
+    token?.document?.movementAction
+    || CONFIG.Token?.movement?.defaultAction
+    || "walk"
+  );
+  const config = CONFIG.Token?.movement?.actions?.[action];
+  return {
+    mode: action,
+    modeLabel: config?.label
+      ? (game.i18n?.localize?.(config.label) ?? config.label)
+      : movementTypeLabel(action, CONFIG.DND5E?.movementTypes?.[action]),
+    modeIcon: toFaIcon(config?.icon, action)
+  };
 }
 
 /** Effective movement speed after derived data (armor, encumbrance, conditions). */
@@ -152,7 +212,8 @@ export function buildMovementData(token) {
   if (!movement) return null;
 
   const gridDistance = canvas.scene?.grid?.distance ?? canvas.scene?.dimensions?.distance ?? 5;
-  const mode = token.document.movementAction || "walk";
+  const pose = getTokenMovementDisplay(token);
+  const mode = pose.mode;
   const poolMax = getMovementPoolMax(movement);
   if (!poolMax) return null;
 
@@ -172,11 +233,12 @@ export function buildMovementData(token) {
     poolMax,
     percent,
     mode,
-    modeLabel: movementTypeLabel(mode, CONFIG.DND5E?.movementTypes?.[mode]),
-    modeIcon: movementModeIcon(mode),
+    modeLabel: pose.modeLabel,
+    modeIcon: pose.modeIcon,
     isDashing,
     isGestalt: poolMax > getMovementModeSpeed(movement, mode),
-    modes: shouldShowMovementModes(modes) ? modes : []
+    modes: shouldShowMovementModes(modes) ? modes : [],
+    canUndo: canUndoTokenMovement(token)
   };
 }
 
@@ -187,7 +249,8 @@ export function buildIdleMovementData(token) {
   const movement = token.actor.system?.attributes?.movement;
   if (!movement) return null;
 
-  const mode = token.document.movementAction || "walk";
+  const pose = getTokenMovementDisplay(token);
+  const mode = pose.mode;
   const poolMax = getMovementPoolMax(movement);
   if (!poolMax) return null;
 
@@ -200,11 +263,12 @@ export function buildIdleMovementData(token) {
     poolMax,
     percent: 100,
     mode,
-    modeLabel: movementTypeLabel(mode, CONFIG.DND5E?.movementTypes?.[mode]),
-    modeIcon: movementModeIcon(mode),
+    modeLabel: pose.modeLabel,
+    modeIcon: pose.modeIcon,
     isDashing: false,
     isGestalt: poolMax > getMovementModeSpeed(movement, mode),
-    modes: shouldShowMovementModes(modes) ? modes : []
+    modes: shouldShowMovementModes(modes) ? modes : [],
+    canUndo: canUndoTokenMovement(token)
   };
 }
 
@@ -317,4 +381,56 @@ function getMovementUsedFeet(token, history, gridDistance) {
 export async function setMovementMode(token, mode) {
   if (!token?.document) return;
   await token.document.update({ movementAction: mode });
+}
+
+/** Next Foundry movement action — same list as the token HUD. */
+export async function cycleMovementMode(token) {
+  if (!token?.document) return false;
+  const modes = listTokenMovementActions(token);
+  if (!modes.length) return false;
+  const current = token.document._source?.movementAction ?? token.document.movementAction ?? modes[0].id;
+  const index = modes.findIndex((entry) => entry.id === current);
+  const next = modes[(index < 0 ? 0 : index + 1) % modes.length];
+  if (!next || next.id === current) return false;
+  await token.document.update({ movementAction: next.id });
+  return true;
+}
+
+function getRecordedMovementHistory(token) {
+  return token?.document?._source?._movementHistory ?? token?.document?.movementHistory ?? [];
+}
+
+function getLastRecordedMovementId(token) {
+  const history = getRecordedMovementHistory(token);
+  for (let i = history.length - 1; i >= 0; i--) {
+    const id = history[i]?.movementId;
+    if (id) return id;
+  }
+  return null;
+}
+
+export function canUndoTokenMovement(token) {
+  return getRecordedMovementHistory(token).length > 1 && Boolean(getLastRecordedMovementId(token));
+}
+
+/** Put the token all the way back. Foundry often leaves a 10ft stub as a second record. */
+export async function undoLastTokenMovement(token) {
+  const doc = token?.document;
+  if (!doc) return false;
+  if (typeof doc.revertRecordedMovement !== "function") return false;
+  if (!canUndoTokenMovement(token)) return false;
+
+  let undone = false;
+  const seen = new Set();
+  for (let i = 0; i < 16 && canUndoTokenMovement(token); i++) {
+    const movementId = getLastRecordedMovementId(token);
+    if (!movementId || seen.has(movementId)) break;
+    seen.add(movementId);
+    const before = getRecordedMovementHistory(token).length;
+    const ok = await doc.revertRecordedMovement(movementId);
+    if (!ok) break;
+    undone = true;
+    if (getRecordedMovementHistory(token).length >= before) break;
+  }
+  return undone;
 }

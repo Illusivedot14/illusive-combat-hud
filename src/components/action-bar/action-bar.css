@@ -182,12 +182,16 @@
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-grid {
-  display: block;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 86px);
+  justify-content: start;
+  align-content: start;
+  gap: 8px;
   width: 100%;
-  margin: 6px 0 0;
-  padding: 0;
-  line-height: 0;
-  font-size: 0;
+  margin: 0;
+  padding: 2px 0 4px;
+  line-height: normal;
+  font-size: inherit;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-movement-chip {
@@ -251,46 +255,50 @@
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-btn {
   position: relative;
-  display: grid;
-  grid-template-columns:
-    40px
-    minmax(130px, 1.8fr)
-    minmax(60px, 0.7fr)
-    minmax(58px, 0.75fr)
-    minmax(88px, 1.15fr)
-    minmax(64px, 0.75fr);
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  column-gap: 10px;
+  justify-content: flex-start;
+  gap: 5px;
   box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  max-width: none;
-  height: auto;
-  min-height: 52px;
+  width: 86px;
+  min-width: 86px;
+  max-width: 86px;
+  height: 92px;
+  min-height: 92px;
   margin: 0;
-  padding: 8px 8px 8px 4px;
-  border: none;
-  border-bottom: 1px solid rgba(184, 154, 92, 0.18);
-  border-radius: 0;
-  background: transparent;
+  padding: 6px 4px 4px;
+  border: 1px solid rgba(210, 176, 104, 0.55);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(48, 34, 24, 0.98) 0%, rgba(18, 12, 16, 0.98) 100%);
+  box-shadow: inset 0 1px 0 rgba(240, 221, 176, 0.12), 0 2px 6px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   overflow: hidden;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-btn:hover {
-  border-color: transparent;
-  border-bottom-color: rgba(184, 154, 92, 0.28);
-  background: rgba(184, 154, 92, 0.1);
-  box-shadow: none;
+  border-color: #f0ddb0;
+  background: linear-gradient(180deg, rgba(68, 48, 28, 0.98) 0%, rgba(26, 16, 18, 0.98) 100%);
+  box-shadow: inset 0 1px 0 rgba(240, 221, 176, 0.28), 0 0 12px rgba(184, 154, 92, 0.4);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-ability-icon {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  border-radius: 6px;
+  background: rgba(8, 6, 12, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-btn img,
 #ich-action-bar-dock #ich-action-bar .ich-ability-img {
   display: block;
-  width: 32px;
-  height: 32px;
+  width: 46px;
+  height: 46px;
   flex: none;
-  border-radius: 4px;
+  border-radius: 6px;
   object-fit: cover;
   pointer-events: none;
 }
@@ -299,103 +307,39 @@
   display: none;
 }
 
-#ich-action-bar-dock #ich-action-bar .ich-ability-cell {
-  min-width: 0;
-  color: #cfc3ad;
-  font-family: "Signika", sans-serif;
-  font-size: 14px;
-  line-height: 1.25;
-  text-align: left;
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-ability-cell-name {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  align-items: flex-start;
-}
-
 #ich-action-bar-dock #ich-action-bar .ich-ability-name {
+  width: 100%;
   color: #f5efe2;
-  font-size: 16px;
+  font-family: "Signika", sans-serif;
+  font-size: 11px;
   font-weight: 700;
-  font-style: italic;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-ability-subtitle {
-  color: #b0a594;
-  font-size: 13px;
-  font-weight: 600;
   font-style: normal;
-  white-space: nowrap;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
 }
 
-#ich-action-bar-dock #ich-action-bar .ich-ability-cell-range,
-#ich-action-bar-dock #ich-action-bar .ich-ability-cell-notes {
-  color: #b8ae9c;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-ability-cell-hit,
-#ich-action-bar-dock #ich-action-bar .ich-ability-cell-effect {
-  color: #f0e4c8;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-ability-hit-stack {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  line-height: 1.05;
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-ability-hit-ability {
-  color: #d7c7a6;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-ability-hit-dc {
-  color: #f5efe2;
-  font-size: 14px;
-  font-weight: 800;
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-ability-cell-icon {
-  position: relative;
-  width: 32px;
-  height: 32px;
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-ability-cell-fav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+#ich-action-bar-dock #ich-action-bar .ich-ability-btn[data-section="action"] {
+  box-shadow: inset 0 2px 0 #d9534f, 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-btn[data-section="bonus"] {
-  box-shadow: inset 3px 0 0 rgba(146, 136, 194, 0.75);
+  box-shadow: inset 0 2px 0 #5b8fd9, 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-btn[data-section="reaction"] {
-  box-shadow: inset 3px 0 0 rgba(194, 136, 136, 0.75);
+  box-shadow: inset 0 2px 0 #e0b040, 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-btn[data-section="legendary"] {
-  box-shadow: inset 3px 0 0 rgba(200, 180, 90, 0.8);
+  box-shadow: inset 0 2px 0 #c8a030, 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-action-empty {
@@ -443,33 +387,34 @@
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-btn.is-disabled:hover {
-  background: rgba(184, 154, 92, 0.06);
-  box-shadow: none;
+  border-color: rgba(210, 176, 104, 0.35);
+  background: linear-gradient(180deg, rgba(48, 34, 24, 0.98) 0%, rgba(18, 12, 16, 0.98) 100%);
+  box-shadow: inset 0 1px 0 rgba(240, 221, 176, 0.08), 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-btn.needs-target:not(.has-target) {
-  box-shadow: inset 3px 0 0 rgba(194, 100, 100, 0.85);
+  border-color: rgba(194, 100, 100, 0.7);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-btn.has-target {
-  box-shadow: inset 3px 0 0 rgba(120, 200, 120, 0.75);
+  border-color: rgba(120, 200, 120, 0.75);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-target-badge {
   position: absolute;
-  right: -3px;
-  bottom: -3px;
+  right: -4px;
+  bottom: -4px;
   top: auto;
   left: auto;
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
   background: rgba(10, 7, 18, 0.92);
   border: 1px solid rgba(184, 154, 92, 0.55);
-  font-size: 7px;
+  font-size: 8px;
   color: #f0ddb0;
   pointer-events: none;
 }
@@ -480,7 +425,7 @@
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-ability-btn.out-of-range {
-  box-shadow: inset 3px 0 0 rgba(220, 120, 60, 0.9);
+  border-color: rgba(220, 120, 60, 0.9);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-movement-fill.is-dashing {
@@ -708,16 +653,16 @@
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-full-ability-grid .ich-ability-btn {
-  width: 100%;
-  min-width: 0;
-  max-width: none;
-  height: auto;
+  width: 86px;
+  min-width: 86px;
+  max-width: 86px;
+  height: 92px;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-full-ability-grid .ich-ability-btn img,
 #ich-action-bar-dock #ich-action-bar .ich-full-ability-grid .ich-ability-img {
-  width: 32px;
-  height: 32px;
+  width: 46px;
+  height: 46px;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-reaction-pass-btn {
@@ -965,34 +910,6 @@
 
 #ich-action-bar-dock .ich-group-grid {
   padding: 0;
-}
-
-#ich-action-bar-dock .ich-ability-cols {
-  display: grid;
-  grid-template-columns:
-    40px
-    minmax(130px, 1.8fr)
-    minmax(60px, 0.7fr)
-    minmax(58px, 0.75fr)
-    minmax(88px, 1.15fr)
-    minmax(64px, 0.75fr);
-  align-items: center;
-  column-gap: 10px;
-  padding: 4px 8px 6px 4px;
-  color: #a89c8c;
-  font-family: "Signika", sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border-bottom: 1px solid rgba(184, 154, 92, 0.22);
-}
-
-#ich-action-bar-dock .ich-ability-col {
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 #ich-action-bar-dock .ich-ability-btn {

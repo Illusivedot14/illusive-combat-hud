@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { installFoundry, makeActor } from "./helpers.mjs";
 import {
   getPactMagic,
   getClassResources,
   buildActionBarResources,
+  buildLegendaryResistance,
+  adjustLegendaryResistance,
   buildSpellSlotDiamondsForLevel,
   hasAvailableSpellSlot
 } from "../src/common/actor-resources.mjs";
@@ -124,5 +126,70 @@ describe("buildActionBarResources", () => {
       }
     });
     expect(buildActionBarResources(actor).map((r) => r.id)).toEqual(["primary"]);
+  });
+
+  it("keeps resistance off the spell-well strip", () => {
+    const actor = makeActor({
+      system: {
+        resources: {
+          primary: { label: "Ki", value: 1, max: 2 },
+          legres: { value: 2, max: 3 }
+        }
+      }
+    });
+    expect(buildActionBarResources(actor).map((r) => r.id)).toEqual(["primary"]);
+  });
+});
+
+describe("buildLegendaryResistance", () => {
+  beforeEach(() => installFoundry());
+
+  it("returns null when the creature has none", () => {
+    expect(buildLegendaryResistance(makeActor())).toBeNull();
+  });
+
+  it("reads leftover uses", () => {
+    const actor = makeActor({
+      system: { resources: { legres: { value: 2, max: 3 } } }
+    });
+    expect(buildLegendaryResistance(actor)).toMatchObject({ remaining: 2, max: 3 });
+  });
+});
+
+describe("adjustLegendaryResistance", () => {
+  beforeEach(() => installFoundry());
+
+  it("spends one use", async () => {
+    const actor = makeActor({
+      system: { resources: { legres: { value: 2, max: 3 } } }
+    });
+    actor.update = vi.fn(async () => true);
+    await expect(adjustLegendaryResistance(actor, -1)).resolves.toBe(true);
+    expect(actor.update).toHaveBeenCalledWith({ "system.resources.legres.value": 1 });
+  });
+
+  it("puts one use back", async () => {
+    const actor = makeActor({
+      system: { resources: { legres: { value: 1, max: 3 } } }
+    });
+    actor.update = vi.fn(async () => true);
+    await expect(adjustLegendaryResistance(actor, 1)).resolves.toBe(true);
+    expect(actor.update).toHaveBeenCalledWith({ "system.resources.legres.value": 2 });
+  });
+
+  it("does nothing at empty or full", async () => {
+    const empty = makeActor({
+      system: { resources: { legres: { value: 0, max: 3 } } }
+    });
+    empty.update = vi.fn(async () => true);
+    await expect(adjustLegendaryResistance(empty, -1)).resolves.toBe(false);
+    expect(empty.update).not.toHaveBeenCalled();
+
+    const full = makeActor({
+      system: { resources: { legres: { value: 3, max: 3 } } }
+    });
+    full.update = vi.fn(async () => true);
+    await expect(adjustLegendaryResistance(full, 1)).resolves.toBe(false);
+    expect(full.update).not.toHaveBeenCalled();
   });
 });

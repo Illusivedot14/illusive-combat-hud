@@ -109,7 +109,10 @@ describe("evaluateAbilityState", () => {
   });
 
   it("keeps weapons usable after Action is spent (Extra Attack)", () => {
-    const actor = makeActor({ flags: { "midi-qol": { actions: { action: true } } } });
+    const actor = makeActor({
+      flags: { "midi-qol": { actions: { action: true } } },
+      items: [{ name: "Extra Attack", type: "feat", system: { identifier: "extra-attack" } }]
+    });
     const state = evaluateAbilityState({
       item: { type: "weapon" },
       activity: { type: "attack" },
@@ -118,7 +121,20 @@ describe("evaluateAbilityState", () => {
       inCombat: true
     });
     expect(state.disabled).toBe(false);
-    expect(allowsExtraAttackSwing({ type: "weapon" }, { type: "attack" }, "action")).toBe(true);
+    expect(allowsExtraAttackSwing({ type: "weapon" }, { type: "attack" }, "action", actor)).toBe(true);
+  });
+
+  it("locks weapons after Action is spent when the actor has no Extra Attack", () => {
+    const actor = makeActor({ flags: { "midi-qol": { actions: { action: true } } } });
+    const state = evaluateAbilityState({
+      item: { type: "weapon" },
+      activity: { type: "attack" },
+      actor,
+      section: "action",
+      inCombat: true
+    });
+    expect(state.disabled).toBe(true);
+    expect(allowsExtraAttackSwing({ type: "weapon" }, { type: "attack" }, "action", actor)).toBe(false);
   });
 
   it("still locks spells after Action is spent", () => {

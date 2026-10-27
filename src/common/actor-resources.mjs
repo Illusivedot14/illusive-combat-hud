@@ -62,9 +62,8 @@ export function getPactMagic(actor) {
 }
 
 /**
- * Class / creature resources for the action bar strip.
- * Includes primary/secondary/tertiary, legendary resistance, and any other
- * numbered resource with a max — but not legendary actions (L gem).
+ * Class / creature resources (ki, sorcery, lair, resistance, …).
+ * Legendary actions stay off this list — they already have the gold gem.
  */
 export function getClassResources(actor) {
   const resources = actor?.system?.resources;
@@ -98,14 +97,45 @@ export function getClassResources(actor) {
   return out;
 }
 
+/** Leftover legendary resistance uses on this creature. Null if they have none. */
+export function buildLegendaryResistance(actor) {
+  const entry = normalizeResource(
+    "legres",
+    actor?.system?.resources?.legres,
+    ich.actionBar("legendaryResistance")
+  );
+  if (!entry) return null;
+  return {
+    ...entry,
+    kind: "resistance",
+    remaining: entry.value,
+    label: ich.actionBar("legendaryResistance")
+  };
+}
+
+/** Spend or put back one use. `delta` is usually -1 or +1. */
+export async function adjustLegendaryResistance(actor, delta) {
+  const current = buildLegendaryResistance(actor);
+  if (!current || typeof actor?.update !== "function") return false;
+  const step = Number(delta);
+  if (!Number.isFinite(step) || step === 0) return false;
+
+  const next = Math.max(0, Math.min(current.max, current.remaining + step));
+  if (next === current.remaining) return false;
+
+  await actor.update({ "system.resources.legres.value": next });
+  return true;
+}
+
 /**
  * Action-bar resource strip: class/creature resources (not pact — those show
  * on leveled spell group headers via the pact slot fallback).
+ * Resistance lives on the creature gem, not over the spells.
  * @returns {object[]}
  */
 export function buildActionBarResources(actor) {
   if (!actor) return [];
-  return getClassResources(actor);
+  return getClassResources(actor).filter((entry) => entry.id !== "legres");
 }
 
 /**

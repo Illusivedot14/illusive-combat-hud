@@ -5,7 +5,9 @@ import { refreshHud } from "../../common/render/core.mjs";
 import { ICH_RENDER } from "../../common/render/scopes.mjs";
 import {
   buildLegendaryPips,
-  toggleLegendarySpent
+  canUndoTokenMovement,
+  toggleLegendarySpent,
+  undoLastTokenMovement
 } from "../../common/action-economy.mjs";
 import {
   getEconomyAvailability,
@@ -294,6 +296,16 @@ async function onDropdownClick(event, type, token) {
   }
 
   if (type === "movement") {
+    const undo = event.target.closest("[data-movement-action='undo']");
+    if (undo) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeUtilDropdown();
+      const undone = await undoLastTokenMovement(token);
+      if (!undone) ui.notifications.warn(ich.actionBar("movementUndoEmpty"));
+      refreshHud(ICH_RENDER.ACTION_BAR);
+      return;
+    }
     const item = event.target.closest("[data-movement-id]");
     if (!item) return;
     event.preventDefault();
@@ -367,15 +379,12 @@ export async function toggleMovementDropdown(anchor, token) {
     return false;
   }
 
-  if (choices.length === 1) {
-    await token.document.update({ movementAction: choices[0].id });
-    refreshHud(ICH_RENDER.ACTION_BAR);
-    return true;
-  }
-
   const html = await ichRenderTemplate(
     `${MODULE_PATH}/src/components/action-bar/action-bar-movement-dropdown.hbs`,
-    { choices, title: ich.actionBar("movementTitle") }
+    {
+      choices,
+      title: ich.actionBar("movementTitle")
+    }
   );
   return openDropdown(anchor, "movement", token, html);
 }

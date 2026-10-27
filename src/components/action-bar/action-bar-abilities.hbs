@@ -16,14 +16,6 @@
       {{/if}}
     </div>
     {{/if}}
-    <div class="ich-ability-cols" aria-hidden="true">
-      <span class="ich-ability-col ich-ability-col-icon"></span>
-      <span class="ich-ability-col ich-ability-col-name">{{@root.labels.colName}}</span>
-      <span class="ich-ability-col ich-ability-col-range">{{@root.labels.colRange}}</span>
-      <span class="ich-ability-col ich-ability-col-hit">{{@root.labels.colHit}}</span>
-      <span class="ich-ability-col ich-ability-col-effect">{{@root.labels.colEffect}}</span>
-      <span class="ich-ability-col ich-ability-col-notes">{{@root.labels.colNotes}}</span>
-    </div>
     <div class="ich-ability-grid ich-group-grid">
       {{#each abilities}}
       <div
@@ -41,31 +33,13 @@
         data-disabled-reason="{{disabledReason}}"
         aria-label="{{title}}"
       >
-        <span class="ich-ability-cell ich-ability-cell-icon">
-          <img class="ich-ability-img" src="{{img}}" data-fallback="icons/svg/combat.svg" alt="" width="32" height="32" loading="lazy">
+        <span class="ich-ability-icon">
+          <img class="ich-ability-img" src="{{img}}" data-fallback="icons/svg/combat.svg" alt="" width="48" height="48" loading="lazy">
           {{#if needsTarget}}
           <span class="ich-target-badge" aria-hidden="true"><i class="fas fa-crosshairs"></i></span>
           {{/if}}
         </span>
-        <span class="ich-ability-cell ich-ability-cell-name">
-          <span class="ich-ability-name">{{name}}</span>
-          {{#if subtitle}}
-          <span class="ich-ability-subtitle">{{subtitle}}</span>
-          {{/if}}
-        </span>
-        <span class="ich-ability-cell ich-ability-cell-range">{{rangeLabel}}</span>
-        <span class="ich-ability-cell ich-ability-cell-hit{{#if hitKind}} is-{{hitKind}}{{/if}}">
-          {{#if hitAbility}}
-          <span class="ich-ability-hit-stack">
-            <span class="ich-ability-hit-ability">{{hitAbility}}</span>
-            <span class="ich-ability-hit-dc">{{hitDc}}</span>
-          </span>
-          {{else}}
-          <span class="ich-ability-hit-text">{{hitLabel}}</span>
-          {{/if}}
-        </span>
-        <span class="ich-ability-cell ich-ability-cell-effect">{{effectLabel}}</span>
-        <span class="ich-ability-cell ich-ability-cell-notes">{{notesLabel}}</span>
+        <span class="ich-ability-name">{{name}}</span>
       </div>
       {{/each}}
     </div>

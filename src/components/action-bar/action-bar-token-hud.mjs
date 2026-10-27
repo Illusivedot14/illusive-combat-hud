@@ -1,4 +1,9 @@
-import { getMovementModes } from "../../common/action-economy.mjs";
+import {
+  buildIdleMovementData,
+  buildMovementData,
+  listTokenMovementActions
+} from "../../common/action-economy.mjs";
+import { getViewedCombat } from "../../common/combat.mjs";
 import { ich } from "../../common/i18n.mjs";
 
 function resolveCanvasToken(token) {
@@ -19,15 +24,6 @@ function statusEffectVisibleOnHud(effect, actor) {
   return true;
 }
 
-function mapFoundryMovementChoices(choices, currentMode) {
-  return Object.values(choices).map((entry) => ({
-    id: entry.id,
-    label: entry.label,
-    speed: null,
-    isActive: entry.isActive ?? entry.id === currentMode
-  }));
-}
-
 function mapFoundryStatusChoices(choices) {
   return Object.values(choices).map((entry) => ({
     id: entry.id,
@@ -38,31 +34,41 @@ function mapFoundryStatusChoices(choices) {
   }));
 }
 
-/** Movement types from the actor sheet (walk / fly / swim), not Foundry locomotion actions (speed / crawl). */
+/** Foundry movement actions, with leftover feet when we know them. */
 export function collectMovementChoices(token) {
-  if (!token?.actor) return [];
+  if (!token) return [];
 
-  const current = token.document.movementAction || "walk";
-  const dndModes = getMovementModes(token.actor);
-  if (dndModes.length) {
-    return dndModes.map((entry) => ({
-      id: entry.id,
-      label: entry.label,
-      speed: entry.speed > 0 ? entry.speed : null,
-      hint: entry.baseSpeed
-        ? ich.movement("reducedFrom", { current: entry.speed, base: entry.baseSpeed })
-        : null,
-      isActive: current === entry.id
-    }));
-  }
+  const actions = listTokenMovementActions(token);
+  if (!actions.length) return [];
 
-  const placeable = resolveCanvasToken(token);
-  const fromToken = placeable?._getMovementActionChoices?.();
-  if (fromToken && Object.keys(fromToken).length) {
-    return mapFoundryMovementChoices(fromToken, current);
-  }
+  const inCombat = Boolean(getViewedCombat()?.started);
+  const movement = inCombat ? buildMovementData(token) : buildIdleMovementData(token);
+  const byId = Object.create(null);
+  for (const mode of movement?.modes ?? []) byId[mode.id] = mode;
 
-  return [];
+  const current = token.document?.movementAction || movement?.mode || "walk";
+  const poolLeft = Number.isFinite(movement?.remainingFeet) ? movement.remainingFeet : null;
+
+  return actions.map((action) => {
+    const mode = byId[action.id];
+    let leftover = null;
+    if (mode && Number.isFinite(mode.remaining)) {
+      leftover = inCombat && Number.isFinite(mode.max)
+        ? `${mode.remaining}/${mode.max}`
+        : String(mode.remaining);
+    } else if (inCombat && poolLeft !== null) {
+      leftover = String(poolLeft);
+    }
+
+    return {
+      id: action.id,
+      label: action.label,
+      icon: action.icon,
+      leftover,
+      speed: leftover,
+      isActive: action.id === current
+    };
+  });
 }
 
 async function restoreTokenHud(hud, previous, placeable, wasAlreadyBound) {

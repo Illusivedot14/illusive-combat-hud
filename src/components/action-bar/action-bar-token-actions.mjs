@@ -1,6 +1,7 @@
 import { ich } from "../../common/i18n.mjs";
 import { getCombatantForToken, findCombatantForToken } from "../../common/action-economy.mjs";
 import { getViewedCombat, getActiveCombatant } from "../../common/combat.mjs";
+import { flipToken } from "../../common/token-actions.mjs";
 import { toggleMovementDropdown, toggleStatusDropdown, toggleLightDropdown, toggleRollsDropdown } from "./action-bar-util-dropdown.mjs";
 
 export {
@@ -239,6 +240,8 @@ export async function handleUtilityButton(action, token) {
       return false;
     case "visibility":
       return toggleTokenVisibility(token);
+    case "flip":
+      return flipToken(token);
     case "rest": {
       if (findCombatantForToken(token)) {
         return leaveCombatWithToken(token);

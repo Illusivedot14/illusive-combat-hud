@@ -1,17 +1,19 @@
 <div class="ich-util-dropdown ich-util-dropdown-light" role="menu" aria-label="{{title}}">
   <div class="ich-util-dropdown-heading">{{title}}</div>
+  <div class="ich-util-tile-grid">
   {{#each choices}}
     <button
       type="button"
-      class="ich-util-dropdown-item{{#if isActive}} is-active{{/if}}{{#if disabled}} is-disabled{{/if}}"
+      class="ich-util-tile{{#if isActive}} is-active{{/if}}{{#if disabled}} is-disabled{{/if}}"
       data-light-preset="{{id}}"
       role="menuitem"
       {{#if disabled}}aria-disabled="true"{{/if}}
     >
-    <span class="ich-util-dropdown-item-label">{{label}}</span>
+    <span class="ich-util-tile-name">{{label}}</span>
     {{#if meta}}
-    <span class="ich-util-dropdown-item-meta">{{meta}}</span>
+    <span class="ich-util-tile-meta">{{meta}}</span>
     {{/if}}
   </button>
   {{/each}}
+  </div>
 </div>

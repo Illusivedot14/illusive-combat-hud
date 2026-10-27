@@ -1,17 +1,22 @@
 <div class="ich-util-dropdown ich-util-dropdown-movement" role="menu" aria-label="{{title}}">
   <div class="ich-util-dropdown-heading">{{title}}</div>
+  <div class="ich-util-tile-grid">
   {{#each choices}}
   <button
     type="button"
-    class="ich-util-dropdown-item{{#if isActive}} is-active{{/if}}"
+    class="ich-util-tile{{#if isActive}} is-active{{/if}}"
     data-movement-id="{{id}}"
     role="menuitem"
-    title="{{#if hint}}{{hint}}{{else}}{{label}}{{#if speed}} — {{speed}}{{/if}}{{/if}}"
+    title="{{label}}{{#if leftover}} — {{leftover}}{{/if}}"
   >
-    <span class="ich-util-dropdown-item-label">{{label}}</span>
-    {{#if speed}}
-    <span class="ich-util-dropdown-item-meta">{{speed}}</span>
+    {{#if icon}}
+    <span class="ich-util-tile-icon" aria-hidden="true"><i class="fas {{icon}}"></i></span>
+    {{/if}}
+    <span class="ich-util-tile-name">{{label}}</span>
+    {{#if leftover}}
+    <span class="ich-util-tile-meta">{{leftover}}</span>
     {{/if}}
   </button>
   {{/each}}
+  </div>
 </div>

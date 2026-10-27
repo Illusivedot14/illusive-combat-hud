@@ -35,21 +35,23 @@
       aria-labelledby="ich-rolls-tab-{{id}}"
       {{#unless @first}}hidden{{/unless}}
     >
+      <div class="ich-util-tile-grid">
       {{#each entries}}
       <button
         type="button"
-        class="ich-util-dropdown-item ich-rolls-item"
+        class="ich-util-tile ich-rolls-item"
         data-roll-type="{{type}}"
         data-roll-id="{{id}}"
         data-roll-label="{{label}}"
         role="menuitem"
       >
-        <span class="ich-util-dropdown-item-label">{{label}}</span>
+        <span class="ich-util-tile-name">{{label}}</span>
         {{#if modLabel}}
-        <span class="ich-util-dropdown-item-meta">{{modLabel}}</span>
+        <span class="ich-util-tile-meta">{{modLabel}}</span>
         {{/if}}
       </button>
       {{/each}}
+      </div>
     </section>
     {{/each}}
   </div>

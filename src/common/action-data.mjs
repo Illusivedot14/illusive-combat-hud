@@ -5,6 +5,12 @@ import { useReactionFromHud, getReactionContext } from "./reaction-context.mjs";
 import { isSuitcaseEntry, isFreeActivation, getInteractionActivationTypes } from "./item-interactions.mjs";
 import { useActivityFromHud } from "./midi-use.mjs";
 import { buildAbilityRowDisplay } from "./ability-display.mjs";
+import { clearUserTargets } from "./token-actions.mjs";
+import {
+  addWeaponSwings,
+  getAbilityAttackCount,
+  isRepeatedWeaponAttack
+} from "./attack-count.mjs";
 
 const ACTIVATION_GROUPS = {
   action: new Set(["action"]),
@@ -417,5 +423,31 @@ export async function useAbility(token, itemId, activityId, event, section, opti
   if (!item) return false;
 
   const activity = activityId ? item.system.activities?.get(activityId) : null;
-  return useActivityFromHud(token, item, activity, section, event, reactionCtx ?? {}, options);
+  const context = reactionCtx ?? {};
+
+  if (isRepeatedWeaponAttack(item, activity)) {
+    const swings = getAbilityAttackCount(actor, item, activity);
+    const targets = [...(game.user.targets ?? [])];
+    const uuids = targets.map((entry) => entry.document?.uuid ?? entry.uuid).filter(Boolean);
+    let usedAny = false;
+    for (let i = 0; i < swings; i++) {
+      const uuid = uuids[i] ?? uuids[0] ?? null;
+      const used = await useActivityFromHud(
+        token,
+        item,
+        activity,
+        section,
+        event,
+        { ...context, targetUuids: uuid ? [uuid] : [] },
+        { ...options, clearTargets: false }
+      );
+      if (used === false) break;
+      usedAny = true;
+      await addWeaponSwings(actor, 1);
+    }
+    if (options.clearTargets !== false) clearUserTargets();
+    return usedAny;
+  }
+
+  return useActivityFromHud(token, item, activity, section, event, context, options);
 }

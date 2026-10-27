@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { installFoundry, makeActor, makeToken, makeCombat, makeCombatant } from "./helpers.mjs";
 import {
   getCombatantForToken,
@@ -6,7 +6,9 @@ import {
   buildEconomyPips,
   buildLegendaryPips,
   getMovementModes,
-  buildMovementData
+  buildMovementData,
+  cycleMovementMode,
+  undoLastTokenMovement
 } from "../src/common/action-economy.mjs";
 
 describe("getCombatantForToken", () => {
@@ -112,6 +114,50 @@ describe("getMovementModes", () => {
   });
 });
 
+describe("cycleMovementMode", () => {
+  beforeEach(() => {
+    installFoundry();
+    globalThis.CONFIG.Token = {
+      movement: {
+        defaultAction: "walk",
+        actions: {
+          walk: { label: "Walk", icon: "fa-solid fa-person-walking", order: 0 },
+          fly: { label: "Fly", icon: "fa-solid fa-person-fairy", order: 1 },
+          swim: { label: "Swim", icon: "fa-solid fa-person-swimming", order: 2 },
+          displace: { label: "Displace", icon: "fa-solid fa-transporter-1", order: 8, canSelect: () => false }
+        }
+      }
+    };
+  });
+
+  it("switches to the next Foundry movement action", async () => {
+    const token = makeToken({
+      actor: makeActor({ movement: { walk: 30 } }),
+      movementAction: "walk"
+    });
+    await expect(cycleMovementMode(token)).resolves.toBe(true);
+    expect(token.document.update).toHaveBeenCalledWith({ movementAction: "fly" });
+  });
+
+  it("wraps back to walk after the last selectable action", async () => {
+    const token = makeToken({
+      actor: makeActor({ movement: { walk: 30 } }),
+      movementAction: "swim"
+    });
+    await expect(cycleMovementMode(token)).resolves.toBe(true);
+    expect(token.document.update).toHaveBeenCalledWith({ movementAction: "walk" });
+  });
+
+  it("can set fly even when the sheet has no fly speed", async () => {
+    const token = makeToken({
+      actor: makeActor({ movement: { walk: 30 } }),
+      movementAction: "walk"
+    });
+    await expect(cycleMovementMode(token)).resolves.toBe(true);
+    expect(token.document.update).toHaveBeenCalledWith({ movementAction: "fly" });
+  });
+});
+
 describe("buildMovementData", () => {
   it("returns null when out of combat", () => {
     installFoundry();
@@ -196,5 +242,30 @@ describe("buildMovementData", () => {
     const data = buildMovementData(token);
     expect(data.modes.find((m) => m.id === "fly")).toMatchObject({ remaining: 20, used: 40 });
     expect(data.modes.find((m) => m.id === "walk")).toMatchObject({ remaining: 0, used: 30 });
+  });
+});
+
+describe("undoLastTokenMovement", () => {
+  it("reverts every leftover recorded move, not just the last 10 feet", async () => {
+    installFoundry();
+    const history = [
+      { x: 0, y: 0 },
+      { x: 1, y: 0, movementId: "drag-1" },
+      { x: 2, y: 0, movementId: "drag-1" },
+      { x: 3, y: 0, movementId: "stub-10" }
+    ];
+    const token = makeToken({ movementHistory: history });
+    token.document._source = { _movementHistory: history };
+    token.document.revertRecordedMovement = vi.fn(async (id) => {
+      const src = token.document._source._movementHistory;
+      const next = src[0] ? [src[0], ...src.slice(1).filter((entry) => entry.movementId !== id)] : [];
+      token.document._source._movementHistory = next;
+      token.document.movementHistory = next;
+      return true;
+    });
+
+    await expect(undoLastTokenMovement(token)).resolves.toBe(true);
+    expect(token.document.revertRecordedMovement).toHaveBeenCalledTimes(2);
+    expect(token.document.movementHistory).toHaveLength(1);
   });
 });

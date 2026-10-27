@@ -4,6 +4,7 @@ import { ich } from "./i18n.mjs";
 import { getTargetConfig, requiresCanvasTargets } from "./ability-utils.mjs";
 import { checkAbilityRange } from "./range-utils.mjs";
 import { clearUserTargets } from "./token-actions.mjs";
+import { getAbilityAttackCount, isSingleUseMultiHit, padTargetUuids } from "./attack-count.mjs";
 
 /** Effective target type, including cast activities that inherit spell targeting. */
 export function getEffectiveTargetType(activity) {
@@ -48,10 +49,17 @@ export function resolveActivityTargetUuids(token, activity, context = {}, sectio
 
   if (section === "reaction" && triggerUuid) return [triggerUuid];
 
+  if (Array.isArray(context.targetUuids)) return [...context.targetUuids];
+
   const targets = [...(game.user.targets ?? [])];
   if (!targets.length) return [];
 
-  return targets.map((entry) => entry.document?.uuid ?? entry.uuid).filter(Boolean);
+  const uuids = targets.map((entry) => entry.document?.uuid ?? entry.uuid).filter(Boolean);
+  const item = activity?.item ?? activity?.parent;
+  if (isSingleUseMultiHit(item, activity)) {
+    return padTargetUuids(uuids, getAbilityAttackCount(token.actor, item, activity));
+  }
+  return uuids;
 }
 
 export function buildHudMidiOptions(token, activity, section, context = {}) {
