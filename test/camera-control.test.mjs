@@ -9,7 +9,12 @@ import {
   nextViewPosition,
   withLockViewUnlocked
 } from "../src/common/camera-control.mjs";
-import { shouldShowCameraPad } from "../src/common/hooks/touch-table.mjs";
+import { isTouchTableClient, shouldShowCameraPad } from "../src/common/hooks/touch-table.mjs";
+
+function asUser(name, { isGM = false } = {}) {
+  installFoundry({ isGM });
+  globalThis.game.user.name = name;
+}
 
 describe("clampStick", () => {
   it("leaves a short stick alone", () => {
@@ -101,20 +106,21 @@ describe("applyCanvasView", () => {
 });
 
 describe("shouldShowCameraPad", () => {
-  it("shows only on a non-GM account that turned it on", () => {
-    installFoundry({ isGM: false, settings: { touchTableClient: "on" } });
+  it("shows only for the Touchscreen account", () => {
+    asUser("Touchscreen");
     expect(shouldShowCameraPad()).toBe(true);
+    expect(isTouchTableClient()).toBe(true);
   });
 
-  it("hides on the GM even if the setting is on", () => {
-    installFoundry({ isGM: true, settings: { touchTableClient: "on" } });
+  it("hides for the GM and every other player", () => {
+    asUser("Gamemaster", { isGM: true });
     expect(shouldShowCameraPad()).toBe(false);
-  });
-
-  it("hides when the account left it off or auto", () => {
-    installFoundry({ isGM: false, settings: { touchTableClient: "off" } });
+    expect(isTouchTableClient()).toBe(false);
+    asUser("Vesper");
     expect(shouldShowCameraPad()).toBe(false);
-    installFoundry({ isGM: false, settings: { touchTableClient: "auto" } });
+    asUser("Broccoli");
+    expect(shouldShowCameraPad()).toBe(false);
+    asUser("Mirena");
     expect(shouldShowCameraPad()).toBe(false);
   });
 });

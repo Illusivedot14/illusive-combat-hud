@@ -2,6 +2,8 @@
 import { describe, it, expect } from "vitest";
 import {
   applyCameraPadChrome,
+  cameraPadBottomPx,
+  PAD_CLEARANCE_PX,
   PAD_CONTROL_PX,
   PAD_GRID_PX,
   PAD_HEIGHT_PX,
@@ -60,6 +62,30 @@ describe("camera pad layout", () => {
       expect(el.style.background).toBe("rgb(42, 28, 16)");
       expect(el.style.border).toContain("2px");
     }
+  });
+
+  it("lifts the pad above action-bar chrome in its column and leaves it when clear", () => {
+    const floor = 16;
+    const padLeft = 90;
+    const bar = { left: 40, right: 900, top: 700, width: 860, height: 180 };
+    const raised = cameraPadBottomPx({
+      floor,
+      padLeft,
+      padWidth: PAD_WIDTH_PX,
+      viewportHeight: 900,
+      obstacles: [bar]
+    });
+    expect(raised).toBe(Math.round(900 - 700 + PAD_CLEARANCE_PX));
+    expect(raised).toBeGreaterThan(floor);
+
+    const clear = cameraPadBottomPx({
+      floor,
+      padLeft,
+      padWidth: PAD_WIDTH_PX,
+      viewportHeight: 900,
+      obstacles: [{ left: 800, right: 1400, top: 700, width: 600, height: 180 }]
+    });
+    expect(clear).toBe(floor);
   });
 
   it("keeps the arrows in a compact 3x3 plus", () => {

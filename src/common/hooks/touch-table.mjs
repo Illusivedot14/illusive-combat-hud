@@ -8,17 +8,15 @@ import { MODULE_ID } from "../constants.mjs";
 let hudFocusTokenId = null;
 let hooksBound = false;
 
-/** Table / map-display account only. Never the GM. */
+/** Foundry user that drives the table. Not a setting. */
+const TOUCHSCREEN_USER = "touchscreen";
+
+/** Logged-in account is the Touchscreen user. */
 export function isTouchTableClient() {
-  if (game.user?.isGM) return false;
-  try {
-    return game.settings.get(MODULE_ID, "touchTableClient") === "on";
-  } catch {
-    return false;
-  }
+  return String(game.user?.name ?? "").trim().toLowerCase() === TOUCHSCREEN_USER;
 }
 
-/** True when this account should show the on-screen camera pad. */
+/** Camera pad is only for that one account. */
 export function shouldShowCameraPad() {
   return isTouchTableClient();
 }

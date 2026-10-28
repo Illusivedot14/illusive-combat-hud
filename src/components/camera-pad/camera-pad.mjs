@@ -16,6 +16,34 @@ const KEY_GAP_PX = 4;
 export const PAD_GRID_PX = PAD_CONTROL_PX * 3 + KEY_GAP_PX * 2;
 export const PAD_WIDTH_PX = PAD_GRID_PX + 8 + PAD_CONTROL_PX;
 export const PAD_HEIGHT_PX = PAD_GRID_PX;
+export const PAD_CLEARANCE_PX = 16;
+
+const OBSTACLE_SELECTOR = [
+  "#ich-action-bar-dock",
+  "#ich-action-bar-dock .ich-action-bar-minimize",
+  "#ich-action-bar-dock .ich-mock-side-left",
+  "#ich-action-bar-dock .ich-mock-combat-rail",
+  "#ich-token-statuses .ich-status-icon",
+  "#ich-party-status .ich-portrait-card",
+  "#ich-party-status .ich-party-minimize",
+  "#ich-party-status .ich-party-scroll-slider"
+].join(", ");
+
+/**
+ * Keep the pad's horizontal spot. Lift its bottom edge above anything in that
+ * column: action bar, its icons, collapse arrows, and the party portraits.
+ */
+export function cameraPadBottomPx({ floor, padLeft, padWidth, viewportHeight, obstacles }) {
+  let bottom = floor;
+  const padRight = padLeft + padWidth;
+  for (const box of obstacles ?? []) {
+    if (!box || box.width < 1 || box.height < 1) continue;
+    if (padLeft >= box.right || padRight <= box.left) continue;
+    const above = viewportHeight - box.top + PAD_CLEARANCE_PX;
+    if (above > bottom) bottom = above;
+  }
+  return Math.round(bottom);
+}
 
 const ARROWS = {
   up: { x: 0, y: -1 },
@@ -285,12 +313,77 @@ export function applyCameraPadChrome(root) {
   return root;
 }
 
+function obstacleVisible(el) {
+  if (el.hidden || el.closest("[hidden]")) return false;
+  const style = getComputedStyle(el);
+  if (style.display === "none" || style.visibility === "hidden") return false;
+  const clipped = el.closest(".ich-party-body, .ich-action-bar-motion");
+  if (clipped) {
+    const clip = clipped.getBoundingClientRect();
+    if (clip.width < 1 || clip.height < 1) return false;
+  }
+  return true;
+}
+
+function obstacleBoxes() {
+  return [...document.querySelectorAll(OBSTACLE_SELECTOR)]
+    .filter(obstacleVisible)
+    .map((el) => el.getBoundingClientRect());
+}
+
 function placePad(root) {
   applyCameraPadChrome(root);
   const board = document.getElementById("board") ?? document.getElementById("board-game");
   const rect = board?.getBoundingClientRect();
-  root.style.setProperty("left", `${rect ? Math.max(90, Math.round(rect.left + 90)) : 90}px`, "important");
-  root.style.setProperty("bottom", `${rect ? Math.max(16, Math.round(window.innerHeight - rect.bottom + 16)) : 16}px`, "important");
+  const left = rect ? Math.max(90, Math.round(rect.left + 90)) : 90;
+  const floor = rect ? Math.max(16, Math.round(window.innerHeight - rect.bottom + 16)) : 16;
+  const bottom = cameraPadBottomPx({
+    floor,
+    padLeft: left,
+    padWidth: PAD_WIDTH_PX,
+    viewportHeight: window.innerHeight,
+    obstacles: obstacleBoxes()
+  });
+  root.style.setProperty("left", `${left}px`, "important");
+  root.style.setProperty("bottom", `${bottom}px`, "important");
+}
+
+let placeRaf = 0;
+let obstacleWatch = null;
+
+function schedulePlace() {
+  if (placeRaf) return;
+  placeRaf = requestAnimationFrame(() => {
+    placeRaf = 0;
+    const root = rootEl();
+    if (root) placePad(root);
+  });
+}
+
+function watchObstacles() {
+  if (obstacleWatch || typeof ResizeObserver !== "function") return;
+  const observer = new ResizeObserver(() => schedulePlace());
+  const seen = new Set();
+  const attach = () => {
+    for (const el of document.querySelectorAll(OBSTACLE_SELECTOR)) {
+      if (seen.has(el)) continue;
+      seen.add(el);
+      observer.observe(el);
+    }
+  };
+  attach();
+  const overlay = document.getElementById("ich-hud-overlay") ?? document.body;
+  const mutations = new MutationObserver(() => {
+    attach();
+    schedulePlace();
+  });
+  mutations.observe(overlay, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ["class", "hidden"]
+  });
+  obstacleWatch = { observer, mutations };
 }
 
 function unmountPad() {
@@ -318,10 +411,8 @@ function bindPad() {
   document.addEventListener("pointerdown", onPointerDown, true);
   document.addEventListener("pointerup", onPointerUp, true);
   document.addEventListener("pointercancel", onPointerUp, true);
-  window.addEventListener("resize", () => {
-    const root = rootEl();
-    if (root) placePad(root);
-  });
+  window.addEventListener("resize", schedulePlace);
+  watchObstacles();
 }
 
 export function refreshCameraPad() {

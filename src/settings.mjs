@@ -14,7 +14,7 @@ import {
 } from "./common/i18n.mjs";
 import { applyLayoutVariables } from "./common/layout.mjs";
 import { DISPLAY_PROFILE_CHOICES } from "./common/hud-bounds.mjs";
-const DISPLAY_KEYS = ["displayProfile", "mobileClientMode", "touchTableClient"];
+const DISPLAY_KEYS = ["displayProfile", "mobileClientMode"];
 
 const PARTY_KEYS = [
   "partyMaxPortraits",
@@ -373,18 +373,6 @@ export function registerSettings() {
       import("./common/mobile-client.mjs")
         .then((m) => m.syncMobileClientSettings())
         .catch((err) => console.error(`${MODULE_ID} | mobile mode change failed`, err));
-    }
-  });
-
-  registerHidden("touchTableClient", {
-    type: String,
-    default: "off",
-    scope: "user",
-    choices: ichSettingChoices("touchTableClient", ["auto", "on", "off"]),
-    onChange: () => {
-      import("./components/camera-pad/camera-pad.mjs")
-        .then((m) => m.refreshCameraPad())
-        .catch((err) => console.error(`${MODULE_ID} | camera pad toggle failed`, err));
     }
   });
 
