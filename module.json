@@ -73,6 +73,7 @@
     "src/components/action-bar/action-bar.css",
     "src/components/turn-tracker/turn-tracker.css",
     "src/components/camera-pad/camera-pad.css",
+    "src/components/token-aura/token-aura.css",
     "src/components/boss-bar/boss-bar.css",
     "src/styles/panel-polish.css"
   ]

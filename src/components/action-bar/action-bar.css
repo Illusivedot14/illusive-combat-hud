@@ -1,4 +1,5 @@
 @import "./action-bar-mock.css";
+@import "../token-aura/token-aura.css";
 
 #ich-hud-overlay #ich-action-bar-dock {
   position: fixed;

@@ -2,7 +2,7 @@ import { ich } from "../../common/i18n.mjs";
 import { getCombatantForToken, findCombatantForToken } from "../../common/action-economy.mjs";
 import { getViewedCombat, getActiveCombatant } from "../../common/combat.mjs";
 import { flipToken } from "../../common/token-actions.mjs";
-import { toggleMovementDropdown, toggleStatusDropdown, toggleLightDropdown, toggleRollsDropdown } from "./action-bar-util-dropdown.mjs";
+import { toggleMovementDropdown, toggleStatusDropdown, toggleLightDropdown, toggleAuraDropdown, toggleRollsDropdown } from "./action-bar-util-dropdown.mjs";
 
 export {
   LIGHT_PRESETS,
@@ -12,9 +12,17 @@ export {
   toggleTokenLight
 } from "./action-bar-light.mjs";
 
+export { isTokenAuraOn } from "../token-aura/token-aura.mjs";
+
 export async function openActorSheet(actor) {
   if (!actor) return false;
-  await actor.sheet?.render(true);
+  const sheet = actor.sheet;
+  if (!sheet) return false;
+  if (sheet.rendered) {
+    await sheet.close();
+    return true;
+  }
+  await sheet.render(true);
   return true;
 }
 
@@ -76,6 +84,10 @@ export async function showStatusOptions(anchor, token) {
 
 export async function showLightOptions(anchor, token) {
   return toggleLightDropdown(anchor, token);
+}
+
+export async function showAuraOptions(anchor, token) {
+  return toggleAuraDropdown(anchor, token);
 }
 
 export async function showRollsOptions(anchor, token) {
@@ -231,6 +243,8 @@ export async function handleUtilityButton(action, token) {
     case "sheet":
       return openActorSheet(token.actor);
     case "light":
+      return false;
+    case "aura":
       return false;
     case "rolls":
       return false;

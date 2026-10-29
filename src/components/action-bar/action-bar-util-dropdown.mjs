@@ -24,7 +24,14 @@ import {
   applyLightPreset,
   collectLightPresetChoices
 } from "./action-bar-light.mjs";
+import {
+  bindAuraPickerFields,
+  fillAuraDropdown,
+  handleAuraPickerClick,
+  openAuraPickerHtml
+} from "../token-aura/token-aura-picker.mjs";
 import { buildDrawerEntries, rollDrawerEntry } from "./action-bar-drawer.mjs";
+import { hideActionBarUiTooltip } from "./action-bar-ui-tooltip.mjs";
 
 let activeDropdown = null;
 let activeAnchor = null;
@@ -37,19 +44,28 @@ export function closeUtilDropdown() {
   activeAnchor = null;
 }
 
+function keepDropdownOpen(type) {
+  return type === "status" || type === "aura";
+}
+
+function isKeepOpenDropdownOpen() {
+  return Boolean(keepDropdownOpen(activeDropdown?.dataset?.type) && activeDropdown?.isConnected);
+}
+
 /** Keep the apply-status menu open across action-bar re-renders (effect toggles). */
 export function isStatusDropdownOpen() {
   return Boolean(activeDropdown?.dataset?.type === "status" && activeDropdown.isConnected);
 }
 
 export function closeUtilDropdownUnlessStatus() {
-  if (isStatusDropdownOpen()) return;
+  if (isKeepOpenDropdownOpen()) return;
   closeUtilDropdown();
 }
 
 export function relinkStatusDropdownAnchor(root) {
-  if (!isStatusDropdownOpen() || !root) return;
-  const nextAnchor = root.querySelector("[data-util='status']");
+  if (!isKeepOpenDropdownOpen() || !root) return;
+  const type = activeDropdown.dataset.type;
+  const nextAnchor = root.querySelector(`[data-util='${type}']`);
   if (!nextAnchor) return;
   activeAnchor?.classList.remove("is-dropdown-open");
   activeAnchor = nextAnchor;
@@ -66,8 +82,9 @@ function bindOutsideClick() {
 function onOutsideClick(event) {
   if (!activeDropdown) return;
   if (event.target.closest(".ich-util-dropdown")) return;
-  if (event.target.closest("[data-util='movement'], [data-util='status'], [data-util='light'], [data-util='rolls']")) return;
+  if (event.target.closest("[data-util='movement'], [data-util='status'], [data-util='light'], [data-util='aura'], [data-util='rolls']")) return;
   if (event.target.closest(".ich-mock-gem[data-economy]")) return;
+  if (document.activeElement?.closest?.("[data-aura-feet-input], [data-aura-color-input]")) return;
   closeUtilDropdown();
 }
 
@@ -81,7 +98,7 @@ function onOutsideContextMenu(event) {
 function positionDropdown(anchor, dropdown, point = null, type = null) {
   const gap = 6;
   dropdown.style.position = "fixed";
-  // Above #ich-hud-overlay (1000) / target-pick dock (1100); match status menus.
+  // Body-level, above Foundry windows (--z-index-window: 100); match status menus.
   dropdown.style.zIndex = "10000";
 
   document.body.appendChild(dropdown);
@@ -95,13 +112,19 @@ function positionDropdown(anchor, dropdown, point = null, type = null) {
     top = point.y;
   } else {
     const rect = anchor.getBoundingClientRect();
-    left = rect.right + gap;
-    if (left + dropdownRect.width > window.innerWidth - 8) {
+    // Aura sits on the right rail — open to the left so it does not cover the combat button.
+    if (type === "aura") {
       left = rect.left - gap - dropdownRect.width;
+      if (left < 8) left = rect.right + gap;
+    } else {
+      left = rect.right + gap;
+      if (left + dropdownRect.width > window.innerWidth - 8) {
+        left = rect.left - gap - dropdownRect.width;
+      }
     }
     // Light menu sits beside the bulb near the bottom of the vitals column —
     // bottom-align so it grows upward instead of hanging below the HUD.
-    top = (type === "light" || type === "rolls")
+    top = (type === "light" || type === "aura" || type === "rolls" || type === "status")
       ? rect.bottom - dropdownRect.height
       : rect.top;
   }
@@ -134,6 +157,7 @@ async function openDropdown(anchor, type, token, html, point = null) {
 
   dropdown.dataset.type = type;
   positionDropdown(anchor, dropdown, point, type);
+  hideActionBarUiTooltip();
 
   activeDropdown = dropdown;
   activeAnchor = anchor;
@@ -142,6 +166,7 @@ async function openDropdown(anchor, type, token, html, point = null) {
 
   dropdown.addEventListener("click", (event) => onDropdownClick(event, type, token));
   if (type === "status") bindStatusSearch(dropdown);
+  if (type === "aura") bindAuraPickerFields(dropdown, token);
   if (type === "rolls") {
     bindRollsSearch(dropdown);
     bindRollsTabs(dropdown);
@@ -328,6 +353,17 @@ async function onDropdownClick(event, type, token) {
     return;
   }
 
+  if (type === "aura") {
+    const changed = await handleAuraPickerClick(event, token);
+    if (changed) {
+      await fillAuraDropdown(activeDropdown, token);
+      if (activeAnchor && activeDropdown) {
+        positionDropdown(activeAnchor, activeDropdown, null, "aura");
+      }
+    }
+    return;
+  }
+
   if (type === "rolls") {
     const tab = event.target.closest("[data-rolls-tab]");
     if (tab) {
@@ -355,10 +391,43 @@ async function onDropdownClick(event, type, token) {
   event.stopPropagation();
   const statusId = statusBtn.dataset.statusId;
   await toggleTokenStatusEffect(token, statusId);
-  const isActive = Boolean(token.document.hasStatusEffect?.(statusId));
-  statusBtn.classList.toggle("is-active", isActive);
-  statusBtn.setAttribute("aria-pressed", String(isActive));
+  const picker = statusBtn.closest(".ich-token-status-picker");
+  syncStatusPicker(picker, token);
   refreshHud(ICH_RENDER.EFFECTS);
+}
+
+function statusIsActiveOnToken(token, statusId) {
+  if (token?.document?.hasStatusEffect?.(statusId)) return true;
+  if (token?.actor?.statuses?.has?.(statusId)) return true;
+  return false;
+}
+
+function syncStatusPicker(picker, token) {
+  if (!picker) return;
+  for (const btn of picker.querySelectorAll("[data-status-id]")) {
+    const on = statusIsActiveOnToken(token, btn.dataset.statusId);
+    btn.classList.toggle("is-active", on);
+    btn.setAttribute("aria-pressed", String(on));
+  }
+  reorderStatusPicker(picker);
+}
+
+function reorderStatusPicker(picker) {
+  if (!picker) return;
+  const scrollTop = picker.scrollTop;
+  if (picker.contains(document.activeElement)) document.activeElement.blur();
+  const buttons = [...picker.querySelectorAll("[data-status-id]")];
+  buttons.sort((a, b) => {
+    const aOn = a.classList.contains("is-active") ? 1 : 0;
+    const bOn = b.classList.contains("is-active") ? 1 : 0;
+    if (aOn !== bOn) return bOn - aOn;
+    return (Number(a.dataset.statusSort) || 0) - (Number(b.dataset.statusSort) || 0);
+  });
+  for (const btn of buttons) picker.appendChild(btn);
+  picker.scrollTop = scrollTop;
+  requestAnimationFrame(() => {
+    picker.scrollTop = scrollTop;
+  });
 }
 
 function ensureControl(token) {
@@ -423,6 +492,12 @@ export async function toggleLightDropdown(anchor, token) {
   return openDropdown(anchor, "light", token, html);
 }
 
+export async function toggleAuraDropdown(anchor, token) {
+  if (!ensureControl(token)) return false;
+  const html = await openAuraPickerHtml(token);
+  return openDropdown(anchor, "aura", token, html);
+}
+
 export async function toggleRollsDropdown(anchor, token) {
   if (!ensureControl(token)) return false;
   if (!token?.actor) return false;
@@ -432,7 +507,7 @@ export async function toggleRollsDropdown(anchor, token) {
     {
       id: "checks",
       label: ich.actionBar("tabChecks"),
-      entries: entries.checks
+      entries: [...entries.checks, ...entries.tools]
     },
     {
       id: "skills",

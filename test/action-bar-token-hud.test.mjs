@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from "vitest";
 import { installFoundry } from "./helpers.mjs";
-import { collectMovementChoices, collectStatusChoices } from "../src/components/action-bar/action-bar-token-hud.mjs";
+import { collectMovementChoices, collectStatusChoices, sortStatusChoices } from "../src/components/action-bar/action-bar-token-hud.mjs";
 
 describe("action-bar-token-hud", () => {
   beforeEach(() => {
@@ -109,5 +109,20 @@ describe("action-bar-token-hud", () => {
 
     const choices = await collectStatusChoices(token);
     expect(choices.map((entry) => entry.id)).toEqual(["prone"]);
+  });
+
+  it("pins active statuses to the top, then restores catalog order", () => {
+    const sorted = sortStatusChoices([
+      { id: "a", isActive: false, sortIndex: 0 },
+      { id: "b", isActive: true, sortIndex: 1 },
+      { id: "c", isActive: false, sortIndex: 2 },
+      { id: "d", isActive: true, sortIndex: 3 }
+    ]);
+    expect(sorted.map((entry) => entry.id)).toEqual(["b", "d", "a", "c"]);
+
+    const restored = sortStatusChoices(sorted.map((entry) => (
+      entry.id === "b" ? { ...entry, isActive: false } : entry
+    )));
+    expect(restored.map((entry) => entry.id)).toEqual(["d", "a", "b", "c"]);
   });
 });

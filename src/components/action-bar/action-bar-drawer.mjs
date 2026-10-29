@@ -29,6 +29,55 @@ function abilityLabel(id) {
   return CONFIG.DND5E?.abilities?.[id]?.label ?? id.toUpperCase();
 }
 
+function toolLabel(id, fallback = null) {
+  const lookup = CONFIG.DND5E?.enrichmentLookup?.tools?.[id]?.label
+    ?? CONFIG.DND5E?.toolProficiencies?.[id]
+    ?? CONFIG.DND5E?.vehicleTypes?.[id]
+    ?? CONFIG.DND5E?.tools?.[id];
+  if (typeof lookup === "string" && !lookup.startsWith("Compendium.")) {
+    const loc = game.i18n?.localize?.(lookup);
+    if (loc && loc !== lookup) return loc;
+    if (!lookup.includes(".")) return lookup;
+  }
+  return fallback || id;
+}
+
+function collectToolEntries(actor) {
+  const seen = new Set();
+  const tools = [];
+
+  for (const [id, data] of Object.entries(actor.system?.tools ?? {})) {
+    if (!id || data == null) continue;
+    seen.add(id);
+    const total = data.total ?? data.mod;
+    tools.push({
+      id,
+      type: "tool",
+      label: toolLabel(id),
+      mod: total,
+      modLabel: formatMod(total)
+    });
+  }
+
+  for (const item of actor.items ?? []) {
+    if (item?.type !== "tool") continue;
+    const key = item.system?.type?.baseItem || item.id;
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    const total = item.system?.total ?? actor.system?.tools?.[key]?.total;
+    tools.push({
+      id: key,
+      type: "tool",
+      label: item.name || toolLabel(key),
+      mod: total,
+      modLabel: formatMod(total)
+    });
+  }
+
+  tools.sort((a, b) => String(a.label).localeCompare(String(b.label), undefined, { sensitivity: "base" }));
+  return tools;
+}
+
 function formatMod(value) {
   if (!Number.isFinite(Number(value))) return null;
   const n = Math.floor(Number(value));
@@ -68,15 +117,7 @@ export function buildDrawerEntries(actor) {
     )
   }));
 
-  const tools = actor.items
-    ?.filter?.((item) => item.type === "tool")
-    ?.map((item) => ({
-      id: item.id,
-      type: "tool",
-      label: item.name,
-      mod: item.system?.proficient ? "+" : "",
-      modLabel: item.system?.proficient ? "+" : null
-    })) ?? [];
+  const tools = collectToolEntries(actor);
 
   return { checks, skills, saves, tools };
 }
@@ -125,11 +166,14 @@ export async function rollDrawerEntry(actor, entry, event = null) {
   }
 
   if (entry.type === "tool") {
-    const item = actor.items.get(entry.id);
+    if (typeof actor.rollToolCheck === "function") {
+      await actor.rollToolCheck({ tool: entry.id, event }, dialog, message);
+      return true;
+    }
+    const item = actor.items?.get?.(entry.id);
     if (!item) return false;
-    const toolKey = item.system?.type?.baseItem ?? item.id;
     if (typeof item.rollToolCheck === "function") {
-      await item.rollToolCheck({ tool: toolKey, event }, dialog, message);
+      await item.rollToolCheck({ tool: entry.id, event }, dialog, message);
     } else {
       await item.roll?.({ event }, dialog, message);
     }

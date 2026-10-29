@@ -100,6 +100,42 @@ describe("action-bar-drawer rolls", () => {
     );
   });
 
+  it("lists tool proficiencies on the checks list", () => {
+    const actor = makeActor({
+      system: {
+        abilities: { str: { mod: 1 } },
+        tools: {
+          thief: { total: 7 },
+          herb: { total: 4 }
+        }
+      },
+      items: []
+    });
+    globalThis.CONFIG.DND5E.tools = { thief: "Thieves' Tools", herb: "Herbalism Kit" };
+
+    const entries = buildDrawerEntries(actor);
+    expect(entries.tools.map((e) => e.id).sort()).toEqual(["herb", "thief"]);
+    expect(entries.tools.find((e) => e.id === "thief")).toMatchObject({
+      type: "tool",
+      label: "Thieves' Tools",
+      modLabel: "+7"
+    });
+  });
+
+  it("routes tool rolls to rollToolCheck", async () => {
+    const actor = {
+      isOwner: true,
+      rollToolCheck: vi.fn(async () => {})
+    };
+    const event = { type: "click" };
+    await rollDrawerEntry(actor, { type: "tool", id: "thief" }, event);
+    expect(actor.rollToolCheck).toHaveBeenCalledWith(
+      { tool: "thief", event },
+      { configure: true },
+      { create: true }
+    );
+  });
+
   it("skips configure dialog when dnd5e skip-dialog keys are held", async () => {
     globalThis.game = {
       ...(globalThis.game ?? {}),

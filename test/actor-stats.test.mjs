@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { installFoundry, makeActor } from "./helpers.mjs";
-import { statPercent, getHpBarData, getTokenCombatStats, buildPassiveScores, getDamageWashCssPct, buildVisionSummary } from "../src/common/actor-stats.mjs";
+import { statPercent, getHpBarData, getTokenCombatStats, buildPassiveScores, getDamageWashCssPct, buildVisionSummary, buildDefenseTraits, buildLanguageSummary } from "../src/common/actor-stats.mjs";
 
 describe("getDamageWashCssPct", () => {
   it("returns remaining HP percent for the party-style wash", () => {
@@ -194,5 +194,76 @@ describe("buildVisionSummary", () => {
       }
     });
     expect(summary).toBe("Darkvision 120 ft\nTremorsense 60 ft");
+  });
+});
+
+describe("buildDefenseTraits", () => {
+  it("lists damage immunities, condition immunities, and resistances", () => {
+    installFoundry();
+    globalThis.CONFIG = {
+      DND5E: {
+        damageTypes: {
+          fire: { label: "DND5E.DAMAGE.Type.Fire" },
+          cold: { label: "DND5E.DAMAGE.Type.Cold" }
+        },
+        conditionTypes: {
+          poisoned: { name: "DND5E.ConPoisoned" }
+        }
+      }
+    };
+    globalThis.game.i18n.localize = (key) => ({
+      "DND5E.DAMAGE.Type.Fire": "Fire",
+      "DND5E.DAMAGE.Type.Cold": "Cold",
+      "DND5E.ConPoisoned": "Poisoned"
+    }[key] ?? key);
+
+    const traits = buildDefenseTraits({
+      system: {
+        traits: {
+          di: { value: new Set(["fire"]), custom: "" },
+          ci: { value: ["poisoned"] },
+          dr: { value: ["cold"], custom: "thunder from laughs" }
+        }
+      }
+    });
+    expect(traits.immunities).toEqual(["Fire", "Poisoned"]);
+    expect(traits.resistances).toEqual(["Cold", "thunder from laughs"]);
+  });
+});
+
+describe("buildLanguageSummary", () => {
+  it("uses prepared language labels when present", () => {
+    installFoundry();
+    expect(buildLanguageSummary({
+      system: {
+        traits: {
+          languages: {
+            labels: { languages: ["Common", "Elvish"], ranged: ["Telepathy 60 ft"] }
+          }
+        }
+      }
+    })).toBe("Common, Elvish, Telepathy 60 ft");
+  });
+
+  it("falls back to language keys and custom text", () => {
+    installFoundry();
+    globalThis.CONFIG = {
+      DND5E: {
+        languages: {
+          standard: { children: { common: { label: "DND5E.Language.Common" } } }
+        }
+      }
+    };
+    globalThis.game.i18n.localize = (key) => (
+      key === "DND5E.Language.Common" ? "Common" : key
+    );
+
+    expect(buildLanguageSummary({
+      system: {
+        traits: {
+          languages: { value: new Set(["common"]), custom: "Thieves' Cant" }
+        }
+      }
+    })).toBe("Common, Thieves' Cant");
   });
 });

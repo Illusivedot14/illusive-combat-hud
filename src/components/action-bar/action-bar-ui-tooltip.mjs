@@ -78,7 +78,13 @@ function formatTipDetailHtml(detail) {
     .split(/\n+/)
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => `<span class="ich-ui-tip-detail-line">${foundry.utils.escapeHTML(line)}</span>`)
+    .map((line) => {
+      const heading = line.startsWith("**");
+      const text = foundry.utils.escapeHTML(heading ? line.slice(2).trim() : line);
+      const cls = heading ? "ich-ui-tip-detail-line ich-ui-tip-detail-heading" : "ich-ui-tip-detail-line";
+      const tag = heading ? "strong" : "span";
+      return `<${tag} class="${cls}">${text}</${tag}>`;
+    })
     .join("");
 }
 
@@ -134,6 +140,7 @@ function scheduleHide() {
 function onPointerOver(event) {
   const el = tipFromNode(event.target);
   if (!el) return;
+  if (el.classList.contains("is-dropdown-open")) return;
   if (el.contains(event.relatedTarget)) return;
   scheduleShow(el);
 }

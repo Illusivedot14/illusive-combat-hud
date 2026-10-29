@@ -1,7 +1,9 @@
 /* Full-viewport HUD layer.
  * position:fixed keeps it out of Foundry's flex HUD (never pushes ui-left/right),
  * inset:0 makes it a full-screen positioning context so children never collapse to (0,0),
- * pointer-events:none lets clicks fall through to the canvas (children opt back in). */
+ * pointer-events:none lets clicks fall through to the canvas (children opt back in).
+ * Sit just above the canvas and under Foundry chrome (--z-index-app: 30), windows
+ * (100), and the game menu so those stay clickable on top of the HUD. */
 #ich-hud-overlay {
   position: fixed;
   inset: 0;
@@ -11,7 +13,7 @@
   padding: 0;
   overflow: visible;
   pointer-events: none;
-  z-index: 1000;
+  z-index: calc(var(--z-index-app, 30) - 1);
 }
 
 /*

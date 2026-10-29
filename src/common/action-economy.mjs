@@ -405,6 +405,14 @@ function getRecordedMovementHistory(token) {
   return token?.document?._source?._movementHistory ?? token?.document?.movementHistory ?? [];
 }
 
+function getFirstRecordedMovementId(token) {
+  const history = getRecordedMovementHistory(token);
+  for (const entry of history) {
+    if (entry?.movementId) return entry.movementId;
+  }
+  return null;
+}
+
 function getLastRecordedMovementId(token) {
   const history = getRecordedMovementHistory(token);
   for (let i = history.length - 1; i >= 0; i--) {
@@ -428,24 +436,13 @@ export async function undoOneTokenMovement(token) {
   return Boolean(await doc.revertRecordedMovement(movementId));
 }
 
-/** Put the token all the way back. Foundry often leaves a 10ft stub as a second record. */
+/** Put the token all the way back in one move, not square-by-square. */
 export async function undoLastTokenMovement(token) {
   const doc = token?.document;
   if (!doc) return false;
   if (typeof doc.revertRecordedMovement !== "function") return false;
   if (!canUndoTokenMovement(token)) return false;
-
-  let undone = false;
-  const seen = new Set();
-  for (let i = 0; i < 16 && canUndoTokenMovement(token); i++) {
-    const movementId = getLastRecordedMovementId(token);
-    if (!movementId || seen.has(movementId)) break;
-    seen.add(movementId);
-    const before = getRecordedMovementHistory(token).length;
-    const ok = await doc.revertRecordedMovement(movementId);
-    if (!ok) break;
-    undone = true;
-    if (getRecordedMovementHistory(token).length >= before) break;
-  }
-  return undone;
+  const movementId = getFirstRecordedMovementId(token);
+  if (!movementId) return false;
+  return Boolean(await doc.revertRecordedMovement(movementId));
 }

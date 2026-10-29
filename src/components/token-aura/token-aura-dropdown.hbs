@@ -1,0 +1,75 @@
+<div class="ich-util-dropdown ich-util-dropdown-aura" role="menu" aria-label="{{title}}">
+  <div class="ich-util-dropdown-heading">{{title}}</div>
+  <div class="ich-aura-slots">
+    {{#each slots}}
+    <button
+      type="button"
+      class="ich-aura-slot{{#if isActive}} is-active{{/if}}"
+      data-aura-slot="{{index}}"
+      style="--ich-aura-swatch: {{color}}"
+    >
+      <span class="ich-aura-slot-swatch" aria-hidden="true"></span>
+      <span class="ich-aura-slot-label">{{label}}</span>
+    </button>
+    {{/each}}
+    {{#if canAdd}}
+    <button type="button" class="ich-aura-slot ich-aura-slot-add" data-aura-add="true">
+      <span class="ich-aura-slot-label">{{addLabel}}</span>
+    </button>
+    {{/if}}
+  </div>
+  <div class="ich-aura-feet-row">
+    <button
+      type="button"
+      class="ich-util-tile ich-aura-off{{#if offActive}} is-active{{/if}}"
+      data-aura-feet="0"
+    >
+      <span class="ich-util-tile-name">{{offLabel}}</span>
+    </button>
+    <label class="ich-aura-feet-field">
+      <input
+        type="number"
+        inputmode="numeric"
+        min="0"
+        max="{{maxFeet}}"
+        step="1"
+        value="{{feetValue}}"
+        data-aura-feet-input
+        aria-label="{{title}}"
+      >
+      <span>{{feetUnit}}</span>
+    </label>
+  </div>
+  <div class="ich-util-tile-grid">
+  {{#each feet}}
+    <button
+      type="button"
+      class="ich-util-tile{{#if isActive}} is-active{{/if}}"
+      data-aura-feet="{{feet}}"
+      role="menuitem"
+    >
+      <span class="ich-util-tile-name">{{label}}</span>
+    </button>
+  {{/each}}
+  </div>
+  <div class="ich-util-dropdown-heading">{{colorTitle}}</div>
+  <div class="ich-aura-swatches">
+  {{#each colors}}
+    <button
+      type="button"
+      class="ich-aura-swatch{{#if isActive}} is-active{{/if}}"
+      data-aura-color="{{color}}"
+      style="--ich-aura-swatch: {{color}}"
+      aria-label="{{color}}"
+    ></button>
+  {{/each}}
+    <label class="ich-aura-color-pick{{#if customColor}} is-active{{/if}}" title="{{pickColorLabel}}">
+      <input
+        type="color"
+        value="{{colorValue}}"
+        data-aura-color-input
+        aria-label="{{pickColorLabel}}"
+      >
+    </label>
+  </div>
+</div>

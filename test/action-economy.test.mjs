@@ -246,7 +246,7 @@ describe("buildMovementData", () => {
 });
 
 describe("undoLastTokenMovement", () => {
-  it("reverts every leftover recorded move, not just the last 10 feet", async () => {
+  it("reverts to the start in one call, not square by square", async () => {
     installFoundry();
     const history = [
       { x: 0, y: 0 },
@@ -258,14 +258,16 @@ describe("undoLastTokenMovement", () => {
     token.document._source = { _movementHistory: history };
     token.document.revertRecordedMovement = vi.fn(async (id) => {
       const src = token.document._source._movementHistory;
-      const next = src[0] ? [src[0], ...src.slice(1).filter((entry) => entry.movementId !== id)] : [];
+      const index = src.findIndex((entry) => entry.movementId === id);
+      const next = src.slice(0, Math.max(index, 1));
       token.document._source._movementHistory = next;
       token.document.movementHistory = next;
       return true;
     });
 
     await expect(undoLastTokenMovement(token)).resolves.toBe(true);
-    expect(token.document.revertRecordedMovement).toHaveBeenCalledTimes(2);
+    expect(token.document.revertRecordedMovement).toHaveBeenCalledTimes(1);
+    expect(token.document.revertRecordedMovement).toHaveBeenCalledWith("drag-1");
     expect(token.document.movementHistory).toHaveLength(1);
   });
 });

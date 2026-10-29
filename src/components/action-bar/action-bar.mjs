@@ -1,7 +1,7 @@
 import { MODULE_ID, MODULE_PATH, ichRenderTemplate } from "../../common/constants.mjs";
 import { buildMemberData, isTokenTurn } from "../../common/actor-data.mjs";
 import { applyActorPortrait } from "../../common/portrait-thumb.mjs";
-import { buildPassiveScores, buildVisionSummary } from "../../common/actor-stats.mjs";
+import { buildPassiveScores, buildVisionSummary, buildDefenseTraits, buildLanguageSummary } from "../../common/actor-stats.mjs";
 import { buildCombatToolbarSections, useAbility } from "../../common/action-data.mjs";
 import {
   buildEconomyPips,
@@ -57,8 +57,10 @@ import {
   showMovementOptions,
   showStatusOptions,
   showLightOptions,
+  showAuraOptions,
   showRollsOptions,
-  isTokenLightOn
+  isTokenLightOn,
+  isTokenAuraOn
 } from "./action-bar-token-actions.mjs";
 import { closeUtilDropdownUnlessStatus, relinkStatusDropdownAnchor, toggleEconomySpentDropdown } from "./action-bar-util-dropdown.mjs";
 import { buildAbilityGroups } from "./action-bar-groups.mjs";
@@ -620,6 +622,7 @@ function buildActionBarLabels(activeSectionLabel) {
     passiveScores: ich.actionBar("passiveScores"),
     hotbar: ich.actionBar("hotbar"),
     toggleLight: ich.actionBar("toggleLight"),
+    toggleAura: ich.actionBar("toggleAura"),
     rolls: ich.actionBar("rolls"),
     toggleMovement: ich.actionBar("toggleMovement"),
     assignStatus: ich.actionBar("assignStatus"),
@@ -636,29 +639,38 @@ function buildActionBarLabels(activeSectionLabel) {
   };
 }
 
-function buildMovementTitle(movement, inCombat) {
+function buildMovementTitle(movement) {
   if (!movement) return "";
-  const parts = [ich.movement("remaining")];
-  if (movement.isGestalt) parts.push(ich.movement("gestalt"));
-  if (movement.isDashing) parts.push(ich.movement("dashing"));
-  if (inCombat) parts.push(`${movement.remainingFeet}/${movement.maxFeet} ${movement.modeLabel}`);
-  else parts.push(`${movement.poolMax ?? movement.maxFeet} ${movement.modeLabel}`);
-  return parts.join(" — ");
+  return movement.modeLabel || ich.movement("remaining");
 }
 
-function buildMovementTipDetail(movement) {
-  const lines = [
-    movement?.modeLabel ? `${movement.modeLabel}.` : null,
-    movement?.isGestalt ? ich.movement("gestalt") : null,
-    ich.actionBar("tipMovementUtilDetail")
-  ].filter(Boolean);
+function formatMovementFeet(left, max) {
+  if (!Number.isFinite(left)) return "";
+  if (!Number.isFinite(max)) return `${left} ft`;
+  return `${left} / ${max}`;
+}
 
-  if (movement?.modes?.length) {
-    for (const mode of movement.modes) {
-      lines.push(`${mode.label}: ${mode.remaining}/${mode.max}`);
+function buildMovementTipDetail(movement, inCombat) {
+  if (!movement) return "";
+  const lines = [];
+  const modes = movement.modes?.length ? movement.modes : null;
+  if (modes) {
+    for (const mode of modes) {
+      const left = inCombat ? mode.remaining : mode.max;
+      const feet = formatMovementFeet(left, mode.max);
+      lines.push(feet ? `${mode.label}  ${feet}` : mode.label);
     }
+  } else {
+    const left = inCombat ? movement.remainingFeet : (movement.poolMax ?? movement.maxFeet);
+    const max = inCombat ? movement.maxFeet : (movement.poolMax ?? movement.maxFeet);
+    const feet = formatMovementFeet(left, max);
+    const label = movement.modeLabel;
+    if (label && feet) lines.push(`${label}  ${feet}`);
+    else if (feet) lines.push(feet);
+    else if (label) lines.push(label);
   }
-  return lines.join(" ");
+  if (movement.isDashing) lines.push(ich.movement("dashing"));
+  return lines.join("\n");
 }
 
 async function buildAbilitiesHtml(token, actor, combatActive, activeSection) {
@@ -697,7 +709,12 @@ function buildGemTip(label, available, inCombat) {
   return { title: label, detail };
 }
 
-function buildUiTips({ labels, inCombat, economy, economySelected, visionSummary, member, movement, movementTitle, utilityRestLabel, restDisabled, showLeaveCombat, combatButton, legendary, resistance }) {
+function formatTraitBlock(title, values) {
+  if (!values?.length) return "";
+  return [`**${title}`, ...values].join("\n");
+}
+
+function buildUiTips({ labels, inCombat, economy, economySelected, visionSummary, member, movement, movementTitle, utilityRestLabel, restDisabled, showLeaveCombat, combatButton, legendary, resistance, defenseTraits, languageSummary }) {
   const hpLine = member?.hp
     ? ich.actionBar("tipHpDetail", {
       current: member.hp.value,
@@ -741,21 +758,21 @@ function buildUiTips({ labels, inCombat, economy, economySelected, visionSummary
       title: labels.toggleLight,
       detail: ich.actionBar("tipLightDetail")
     },
+    aura: {
+      title: labels.toggleAura,
+      detail: ich.actionBar("tipAuraDetail")
+    },
     rolls: {
       title: labels.rolls,
       detail: ich.actionBar("tipRollsDetail")
     },
     movementUtil: {
-      title: movement?.modeLabel
-        ? `${labels.toggleMovement} — ${movement.modeLabel}`
-        : labels.toggleMovement,
-      detail: movement?.modeLabel
-        ? `${movement.modeLabel}. ${ich.actionBar("tipMovementUtilDetail")}`
-        : ich.actionBar("tipMovementUtilDetail")
+      title: movement?.modeLabel || labels.toggleMovement,
+      detail: ich.actionBar("tipMovementUtilDetail")
     },
     status: {
       title: labels.assignStatus,
-      detail: ich.actionBar("statusPickerPrompt")
+      detail: ""
     },
     visibility: {
       title: labels.toggleVisibility,
@@ -797,9 +814,15 @@ function buildUiTips({ labels, inCombat, economy, economySelected, visionSummary
     },
     ac: {
       title: labels.armorClass,
-      detail: member?.stats?.ac != null
-        ? ich.actionBar("tipAcDetail", { ac: member.stats.ac })
-        : ""
+      detail: [
+        member?.stats?.ac != null ? ich.actionBar("tipAcDetail", { ac: member.stats.ac }) : "",
+        formatTraitBlock(ich.actionBar("immunities"), defenseTraits?.immunities),
+        formatTraitBlock(ich.actionBar("resistances"), defenseTraits?.resistances)
+      ].filter(Boolean).join("\n")
+    },
+    languages: {
+      title: ich.actionBar("languages"),
+      detail: languageSummary || ich.actionBar("languagesNone")
     },
     tempHp: {
       title: labels.tempHp,
@@ -809,7 +832,7 @@ function buildUiTips({ labels, inCombat, economy, economySelected, visionSummary
     },
     movement: {
       title: movementTitle || labels.movementRemaining,
-      detail: buildMovementTipDetail(movement)
+      detail: buildMovementTipDetail(movement, inCombat)
     },
     undoMovement: {
       title: ich.actionBar("movementUndo"),
@@ -885,10 +908,11 @@ async function buildActionBarContext(token) {
   const showLeaveCombat = Boolean(findCombatantForToken(token));
   const utilityRestLabel = showLeaveCombat ? ich.actionBar("leaveCombat") : ich.actionBar("rest");
   const restDisabled = combatStarted && !showLeaveCombat;
-  const movementTitle = buildMovementTitle(movement, combatActive);
+  const movementTitle = buildMovementTitle(movement);
   const configureDisabled = !canOpenTokenConfig(token);
   const visibilityDisabled = !game.user?.isGM;
   const lightOn = isTokenLightOn(token);
+  const auraOn = isTokenAuraOn(token);
   const resources = settingOn("showActionResourceStrip")
     ? buildActionBarResources(actor)
     : [];
@@ -901,6 +925,10 @@ async function buildActionBarContext(token) {
     legendary: selected === "legendary"
   };
   const visionSummary = buildVisionSummary(token);
+  const languageSummary = buildLanguageSummary(actor);
+  const languageCount = languageSummary
+    ? languageSummary.split(/\s*,\s*/).filter(Boolean).length
+    : 0;
   const tips = buildUiTips({
     labels,
     inCombat: combatActive,
@@ -915,7 +943,9 @@ async function buildActionBarContext(token) {
     showLeaveCombat,
     combatButton,
     legendary: legendaryPips,
-    resistance
+    resistance,
+    defenseTraits: buildDefenseTraits(actor),
+    languageSummary
   });
   const targetPick = buildTargetPickView();
 
@@ -928,6 +958,7 @@ async function buildActionBarContext(token) {
     configureDisabled,
     visibilityDisabled,
     lightOn,
+    auraOn,
     tokenFlipped: isTokenFlipped(token),
     elevation: getTokenElevation(token),
     resources,
@@ -949,7 +980,9 @@ async function buildActionBarContext(token) {
     resistance: resistance ?? { remaining: 0, max: 0 },
     abilitiesHtml,
     passives: enrichPassives(buildPassiveScores(actor), visionSummary),
+    languageCount,
     visionSummary,
+    feetUnit: ich.actionBar("auraFeetUnit"),
     tips,
     legendary: legendaryPips ?? { remaining: 0, max: 0 },
     combatButton,
@@ -1271,6 +1304,10 @@ async function onActionBarClick(event) {
     }
     if (util === "light") {
       await showLightOptions(utilBtn, token);
+      return;
+    }
+    if (util === "aura") {
+      await showAuraOptions(utilBtn, token);
       return;
     }
     if (util === "rolls") {

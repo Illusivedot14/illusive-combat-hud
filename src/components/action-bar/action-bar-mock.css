@@ -14,6 +14,15 @@
 }
 
 .ich-mock-bar {
+  --ich-hud-top: 28px;
+  --ich-hud-ring: 171px;
+  --ich-hud-icon: 36px;
+  --ich-hud-side: 42px;
+  --ich-hud-glyph: 18px;
+  --ich-hud-row: 232px;
+  --ich-hud-readout-side: 22px;
+  --ich-hud-readout-gap: 6px;
+  --ich-hud-readout-width: 124px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -41,32 +50,34 @@
   flex-wrap: nowrap;
   width: max-content;
   max-width: none;
-  height: 28px;
-  min-height: 28px;
+  height: var(--ich-hud-top);
+  min-height: var(--ich-hud-top);
   position: relative;
   z-index: 2;
 }
 
 .ich-mock-side-left {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: var(--ich-hud-top) minmax(0, 1fr);
+  grid-template-columns: var(--ich-hud-side);
+  justify-items: center;
   align-items: center;
-  align-self: stretch;
-  gap: 0;
-  flex: 0 0 auto;
-  padding-top: 0;
+  width: var(--ich-hud-side);
+  min-width: var(--ich-hud-side);
+  height: calc(var(--ich-hud-top) + var(--ich-hud-ring));
+  padding: 0;
   position: relative;
-  min-width: 36px;
 }
 
 .ich-mock-side-left .ich-mock-config-btn {
   position: static;
   transform: none;
-  width: 27px;
-  height: 28px;
-  min-width: 27px;
-  min-height: 28px;
-  font-size: 16px;
+  width: var(--ich-hud-icon);
+  max-width: var(--ich-hud-icon);
+  height: var(--ich-hud-icon);
+  min-width: var(--ich-hud-icon);
+  min-height: var(--ich-hud-icon);
+  font-size: var(--ich-hud-glyph);
   border: none;
   border-radius: 0;
   background: transparent;
@@ -74,7 +85,6 @@
   box-shadow: none;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
   line-height: 1;
-  flex: 0 0 28px;
   z-index: 2;
 }
 
@@ -88,26 +98,6 @@
   visibility: hidden;
   pointer-events: none;
   cursor: default;
-  width: 27px;
-  height: 28px;
-  min-width: 27px;
-  min-height: 28px;
-  flex: 0 0 28px;
-}
-
-.ich-mock-side-left .ich-mock-passives {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  /* Same avatar-tall zone as the sheet/light/visibility column. */
-  height: 171px;
-  min-height: 171px;
-  max-height: 171px;
-  padding-top: 0;
-  margin: 0;
-  box-sizing: content-box;
 }
 
 .ich-mock-gem {
@@ -307,13 +297,14 @@
 }
 
 .ich-mock-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: stretch;
-  gap: 6px;
+  column-gap: 6px;
   width: 100%;
-  height: 232px;
-  min-height: 232px;
-  max-height: 232px;
+  height: var(--ich-hud-row);
+  min-height: var(--ich-hud-row);
+  max-height: var(--ich-hud-row);
   overflow: visible;
 }
 
@@ -325,60 +316,38 @@
   overflow: visible;
 }
 
-/* Left: [passives] [portrait column] [utility column] */
+/* Left: [icons] [portrait] [icons] — same 3-column grid as the combat cluster. */
 .ich-mock-left {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
-  height: 100%;
-  min-height: 0;
+  display: grid;
   width: fit-content;
   max-width: 100%;
 }
 
 .ich-mock-vitals {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
+  display: grid;
+  grid-template-columns: var(--ich-hud-side) var(--ich-hud-ring) var(--ich-hud-side);
+  align-items: start;
   overflow: visible;
-  flex: 1 1 auto;
-  min-height: 0;
   width: fit-content;
 }
 
 .ich-mock-passives {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  justify-items: center;
   align-items: center;
-  align-self: center;
-  gap: 0;
-  padding-top: 0;
-  min-width: 36px;
-  height: auto;
-}
-
-.ich-mock-passive-triangle {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  flex: 0 0 auto;
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-.ich-mock-passive-triangle .ich-mock-passive {
-  position: relative;
+  width: var(--ich-hud-side);
+  min-width: var(--ich-hud-side);
+  height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .ich-mock-config-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
+  display: grid;
+  place-items: center;
+  width: var(--ich-hud-icon);
+  height: var(--ich-hud-icon);
   padding: 0;
   margin: 0;
   border: none;
@@ -386,7 +355,7 @@
   background: transparent;
   color: #b4bbc6;
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--ich-hud-glyph);
   flex-shrink: 0;
   line-height: 1;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
@@ -398,9 +367,10 @@
 }
 
 .ich-mock-passive {
-  display: block;
-  width: 34px;
-  height: 36px;
+  display: grid;
+  place-items: center;
+  width: var(--ich-hud-icon);
+  height: var(--ich-hud-icon);
   border: none;
   border-radius: 0;
   background: transparent;
@@ -408,7 +378,6 @@
   cursor: help;
   line-height: 1;
   overflow: visible;
-  flex: 0 0 auto;
   position: relative;
   z-index: 1;
 }
@@ -417,13 +386,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: var(--ich-hud-icon);
+  height: var(--ich-hud-icon);
   border-radius: 0;
   border: none;
   background: transparent;
   color: inherit;
-  font-size: 17px;
+  font-size: var(--ich-hud-glyph);
   pointer-events: none;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
 }
@@ -440,48 +409,53 @@
   color: #e0c070;
 }
 
+.ich-mock-passive-lang {
+  color: #8ec8e8;
+}
+
 .ich-mock-passive-value {
   position: absolute;
-  right: -5px;
-  bottom: -4px;
-  min-width: 18px;
-  height: 16px;
+  left: 50%;
+  right: auto;
+  bottom: -2px;
+  transform: translateX(-50%);
+  min-width: 16px;
+  height: 15px;
   padding: 0 3px;
   border-radius: 4px;
   border: 1px solid rgba(20, 14, 28, 0.85);
   background: rgba(10, 7, 18, 0.94);
   color: #f0e8d8;
   font-family: "Signika", sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
-  line-height: 16px;
+  line-height: 15px;
   text-align: center;
   pointer-events: none;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 .ich-mock-portrait-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  flex: 0 0 auto;
+  display: grid;
+  grid-template-rows: var(--ich-hud-top) var(--ich-hud-ring) auto;
+  grid-template-columns: var(--ich-hud-ring);
+  justify-items: center;
+  align-items: start;
+  width: var(--ich-hud-ring);
+  min-width: var(--ich-hud-ring);
   overflow: visible;
-  min-width: 171px;
 }
 
 .ich-mock-portrait-block {
   position: relative;
-  width: 171px;
-  height: 171px;
+  width: var(--ich-hud-ring);
+  height: var(--ich-hud-ring);
   overflow: visible;
   margin-bottom: 14px;
-  flex-shrink: 0;
-  flex: 0 0 auto;
 }
 
 .ich-mock-char-name {
-  max-width: 171px;
+  max-width: var(--ich-hud-ring);
   margin: 4px 0 0;
   padding: 0 4px;
   color: #f0e8d8;
@@ -755,37 +729,43 @@
 }
 
 .ich-mock-util {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  justify-items: center;
   align-items: center;
-  flex: 0 0 auto;
-  padding-top: 0;
 }
 
 .ich-mock-vitals > .ich-mock-util {
-  /* Gem row (28) + offset so sheet/rolls/light share the 3-passive axis. */
-  display: flex;
-  flex-direction: column;
-  padding-top: calc(28px + 32px);
-  gap: 2px;
-  align-self: flex-start;
-  justify-content: flex-start;
-  height: auto;
-  min-height: 171px;
-  max-height: none;
-  box-sizing: content-box;
+  display: grid;
+  grid-template-rows: var(--ich-hud-top) repeat(4, minmax(0, 1fr));
+  grid-template-columns: var(--ich-hud-side);
+  justify-items: center;
+  align-items: center;
+  width: var(--ich-hud-side);
+  height: calc(var(--ich-hud-top) + var(--ich-hud-ring));
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.ich-mock-vitals > .ich-mock-util::before {
+  content: "";
+  width: var(--ich-hud-icon);
+  height: var(--ich-hud-top);
 }
 
 .ich-mock-vitals > .ich-mock-util .ich-mock-util-btn {
-  width: 34px;
-  height: 34px;
+  width: var(--ich-hud-icon);
+  max-width: var(--ich-hud-icon);
+  height: var(--ich-hud-icon);
   border: none;
   border-radius: 0;
   background: transparent;
-  font-size: 16px;
+  font-size: var(--ich-hud-glyph);
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
-  flex: 0 0 34px;
+  justify-self: center;
+}
+
+.ich-mock-vitals > .ich-mock-util .ich-mock-util-btn i {
+  font-size: var(--ich-hud-glyph);
 }
 
 .ich-mock-vitals > .ich-mock-util .ich-mock-util-btn:hover {
@@ -823,24 +803,22 @@
   visibility: hidden;
   pointer-events: none;
   cursor: default;
-  flex: 0 0 34px;
-  width: 34px;
-  height: 34px;
+  width: var(--ich-hud-icon);
+  height: var(--ich-hud-icon);
 }
 
 .ich-mock-util-btn {
-  width: 34px;
-  height: 34px;
+  width: var(--ich-hud-icon);
+  height: var(--ich-hud-icon);
   padding: 0;
   border-radius: 50%;
   border: 1px solid rgba(184, 154, 92, 0.45);
   background: rgba(240, 232, 216, 0.92);
   color: #2a2038;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
+  display: grid;
+  place-items: center;
+  font-size: var(--ich-hud-glyph);
   flex-shrink: 0;
 }
 
@@ -1151,8 +1129,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: min(248px, calc(100vw - 24px));
-  max-height: min(320px, calc(100vh - 24px));
+  width: min(240px, calc(100vw - 24px));
+  max-height: min(420px, calc(100vh - 24px));
   overflow: hidden;
   padding: 8px;
   box-sizing: border-box;
@@ -1199,10 +1177,9 @@
 }
 
 .ich-util-dropdown-status .ich-token-status-picker {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 4px;
-  justify-content: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -1211,41 +1188,60 @@
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
+  overflow-anchor: none;
   scrollbar-width: thin;
   scrollbar-color: #c9a962 rgba(8, 6, 14, 0.95);
 }
 
 .ich-util-dropdown-status .ich-token-status-picker-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
   width: 100%;
-  aspect-ratio: 1;
   height: auto;
+  min-height: 32px;
+  aspect-ratio: auto;
+  padding: 4px 6px;
+  box-sizing: border-box;
+}
+
+.ich-util-dropdown-status .ich-token-status-picker-btn img {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.ich-util-dropdown-status .ich-token-status-picker-name {
+  flex: 1 1 auto;
   min-width: 0;
-  padding: 2px;
-  transition: opacity 0.16s ease, filter 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  color: #f0e6d2;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ich-util-dropdown-status .ich-token-status-picker-btn.is-filtered-out {
-  opacity: 0.16;
-  filter: grayscale(0.7) brightness(0.7);
-  pointer-events: none;
-  box-shadow: none;
+  display: none;
 }
 
 /* Ability well */
 .ich-mock-center {
-  flex: 1 1 auto;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
-  gap: 6px;
-  align-self: stretch;
 }
 
 .ich-mock-center-body {
   position: relative;
-  flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1358,52 +1354,46 @@
   display: none !important;
 }
 
-/* Right: mirror left portrait geometry (171 ring / 141 face) */
+/* Right: same 3-column grid as the portrait cluster. */
 .ich-mock-right {
   position: relative;
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-start;
-  gap: 0;
+  display: grid;
   min-width: 0;
   width: fit-content;
-  padding-right: 2px;
+  padding-right: 0;
   box-sizing: border-box;
 }
 
 .ich-mock-right-cluster {
-  display: flex;
-  align-items: stretch;
-  gap: 0;
+  display: grid;
+  grid-template-columns: var(--ich-hud-side) var(--ich-hud-ring) var(--ich-hud-side);
+  align-items: start;
+  justify-items: center;
   overflow: visible;
   width: fit-content;
 }
 
 .ich-mock-combat-column {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1px;
-  flex: 0 0 auto;
-  min-width: 171px;
+  display: grid;
+  grid-template-rows: var(--ich-hud-top) var(--ich-hud-ring);
+  grid-template-columns: var(--ich-hud-ring);
+  justify-items: center;
+  min-width: var(--ich-hud-ring);
   overflow: visible;
-  /* Match left economy strip so both circles share the same horizontal axis. */
-  padding-top: 28px;
-  box-sizing: border-box;
+}
+
+.ich-mock-combat-column .ich-mock-elevation {
+  justify-self: center;
+  align-self: center;
 }
 
 .ich-mock-combat-block {
   position: relative;
-  width: 171px;
-  height: 171px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
+  width: var(--ich-hud-ring);
+  height: var(--ich-hud-ring);
+  display: grid;
+  place-items: center;
   overflow: visible;
-  margin-bottom: 42px;
 }
 
 .ich-mock-speed-ring {
@@ -1463,10 +1453,12 @@
   bottom: -34px;
   transform: translateX(-50%);
   z-index: 4;
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: var(--ich-hud-readout-side) minmax(0, 1fr) var(--ich-hud-readout-side);
+  column-gap: var(--ich-hud-readout-gap);
   align-items: center;
-  justify-content: center;
-  gap: 5px;
+  justify-items: center;
+  width: var(--ich-hud-readout-width);
   margin: 0;
   padding: 0;
   border: none;
@@ -1479,7 +1471,8 @@
   letter-spacing: 0.01em;
   white-space: nowrap;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.75);
-  cursor: pointer;
+  cursor: default;
+  pointer-events: none;
 }
 
 .ich-mock-speed-readout.is-static {
@@ -1492,22 +1485,60 @@
 }
 
 .ich-mock-speed-readout:hover {
-  color: #fff;
+  color: #f0e8d8;
 }
 
-.ich-mock-speed-readout i {
-  font-size: 18px;
-  line-height: 1;
-  color: #9ec5f0;
-  position: relative;
-  top: 0;
+.ich-mock-speed-readout .ich-mock-undo-slot {
+  width: var(--ich-hud-readout-side);
+  height: var(--ich-hud-readout-side);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.ich-mock-speed-readout span {
+.ich-mock-speed-readout .ich-mock-speed-feet {
   font-size: 21px;
   font-weight: 800;
   line-height: inherit;
-  vertical-align: baseline;
+}
+
+.ich-mock-speed-readout .ich-mock-speed-unit {
+  font-size: 13px;
+  font-weight: 700;
+  color: #c9a962;
+  letter-spacing: 0.04em;
+}
+
+.ich-mock-speed-readout .ich-mock-undo-move {
+  position: static;
+  margin: 0;
+  padding: 0;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: #e8dcc4;
+  font-size: 16px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+.ich-mock-speed-readout .ich-mock-undo-move:hover {
+  color: #f0e8d8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)) brightness(1.15);
+}
+
+.ich-mock-speed-readout .ich-mock-undo-move i {
+  pointer-events: none;
+  font-size: 16px;
+  color: inherit;
 }
 
 .ich-mock-speed-modes {
@@ -1650,18 +1681,30 @@
 }
 
 .ich-mock-combat-rail {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: var(--ich-hud-top) repeat(3, minmax(0, 1fr));
+  grid-template-columns: var(--ich-hud-side);
+  justify-items: center;
   align-items: center;
-  justify-content: flex-start;
-  gap: 2px;
-  flex: 0 0 auto;
-  min-width: 36px;
-  padding-top: calc(28px + 32px);
-  box-sizing: content-box;
+  width: var(--ich-hud-side);
+  min-width: var(--ich-hud-side);
+  height: calc(var(--ich-hud-top) + var(--ich-hud-ring));
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.ich-mock-combat-rail::before {
+  content: "";
+  width: var(--ich-hud-icon);
+  height: var(--ich-hud-top);
+}
+
+.ich-mock-combat-rail-right .ich-mock-rest-btn {
+  grid-row: 4;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-flip-btn,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-aura-btn,
 #ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-move-btn,
 #ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-undo-move,
 #ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-status-btn,
@@ -1670,24 +1713,39 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  min-height: 34px;
+  width: var(--ich-hud-icon);
+  max-width: var(--ich-hud-icon);
+  height: var(--ich-hud-icon);
+  min-width: var(--ich-hud-icon);
+  min-height: var(--ich-hud-icon);
+  justify-self: center;
+  align-self: center;
   border: none;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
-  font-size: 16px;
+  font-size: var(--ich-hud-glyph);
   line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
   cursor: pointer;
   outline: none;
   appearance: none;
+  -webkit-appearance: none;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail button i,
+.ich-mock-side-left i,
+.ich-mock-passives i,
+.ich-mock-vitals > .ich-mock-util .ich-mock-util-btn i {
+  display: block;
+  width: 1em;
+  height: 1em;
+  font-size: var(--ich-hud-glyph);
+  line-height: 1;
+  text-align: center;
+  pointer-events: none;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-move-btn {
@@ -1706,6 +1764,17 @@
 #ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-flip-btn:hover,
 #ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-flip-btn.is-active {
   color: #f0ddb0;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)) brightness(1.15);
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-aura-btn {
+  color: #70c8e8;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-aura-btn:hover,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-aura-btn.is-active,
+#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-aura-btn.is-dropdown-open {
+  color: #9ee0f8;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85)) brightness(1.15);
 }
 
@@ -1761,44 +1830,68 @@
   color: #f0ddb0;
 }
 
-#ich-action-bar-dock #ich-action-bar .ich-mock-combat-rail .ich-mock-elevation {
+#ich-action-bar-dock #ich-action-bar .ich-mock-elevation {
   position: static;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: var(--ich-hud-readout-side) minmax(0, 1fr) var(--ich-hud-readout-side);
+  column-gap: var(--ich-hud-readout-gap);
   align-items: center;
-  justify-content: center;
-  gap: 0;
-  min-width: 34px;
-  padding: 2px 0;
+  justify-items: center;
+  width: var(--ich-hud-readout-width);
+  min-width: var(--ich-hud-readout-width);
+  max-width: var(--ich-hud-readout-width);
+  height: 26px;
+  padding: 0 2px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 169, 98, 0.32);
+  background: linear-gradient(180deg, rgba(28, 20, 16, 0.92) 0%, rgba(10, 7, 14, 0.94) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(240, 221, 176, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-elevation-btn {
-  width: 28px;
-  height: 14px;
+  width: var(--ich-hud-readout-side);
+  min-width: var(--ich-hud-readout-side);
+  max-width: var(--ich-hud-readout-side);
+  height: var(--ich-hud-readout-side);
   padding: 0;
+  margin: 0;
   border: none;
+  border-radius: 50%;
   background: transparent;
-  color: #e8dcc4;
+  color: #d8c8a0;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  line-height: 1;
+  filter: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+#ich-action-bar-dock #ich-action-bar .ich-mock-elevation-btn i {
+  font-size: 11px;
+  width: 1em;
+  height: 1em;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-elevation-btn:hover {
   color: #f0ddb0;
+  background: rgba(240, 221, 176, 0.1);
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-elevation-value {
-  min-width: 22px;
+  min-width: 0;
   color: #f0ddb0;
   font-family: "Signika", sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1;
   text-align: center;
+  letter-spacing: 0.02em;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
 }
 
@@ -1907,6 +2000,7 @@
 .ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-rest-btn,
 .ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-undo-move,
 .ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-flip-btn,
+.ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-aura-btn,
 .ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-move-btn,
 .ich-mock-bar:has(.ich-mock-center.is-target-pick) .ich-mock-elevation {
   visibility: hidden;
@@ -2052,23 +2146,7 @@ body.ich-target-picking #board {
   font-size: 15px;
 }
 
-.ich-util-dropdown-status .ich-token-status-picker-btn {
-  width: 34px;
-  height: 34px;
-  padding: 2px;
-}
-
-.ich-token-status-picker {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  max-width: 360px;
-  padding: 4px 0;
-}
-
 .ich-token-status-picker-btn {
-  width: 40px;
-  height: 40px;
   padding: 2px;
   border-radius: 6px;
   border: 2px solid rgba(120, 110, 100, 0.45);
@@ -2103,12 +2181,6 @@ body.ich-target-picking #board {
 
 .ich-token-status-picker-btn:hover:not(.is-filtered-out) {
   filter: brightness(1.1);
-}
-
-.ich-token-status-picker-btn.is-filtered-out {
-  opacity: 0.16;
-  filter: grayscale(0.7) brightness(0.7);
-  pointer-events: none;
 }
 
 #ich-action-bar-ui-tooltip {
@@ -2147,4 +2219,14 @@ body.ich-target-picking #board {
 
 #ich-action-bar-ui-tooltip .ich-ui-tip-detail-line {
   display: block;
+}
+
+#ich-action-bar-ui-tooltip .ich-ui-tip-detail-heading {
+  margin-top: 6px;
+  font-weight: 800;
+  color: #f0ddb0;
+}
+
+#ich-action-bar-ui-tooltip .ich-ui-tip-detail-heading:first-child {
+  margin-top: 0;
 }

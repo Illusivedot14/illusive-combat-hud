@@ -147,3 +147,98 @@ export function buildVisionSummary(token) {
 
   return parts.filter(Boolean).join("\n");
 }
+
+function asList(value) {
+  if (!value) return [];
+  if (value instanceof Set) return [...value];
+  if (Array.isArray(value)) return value;
+  return [value];
+}
+
+function splitCustom(value) {
+  return String(value ?? "")
+    .split(";")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function configLabel(entry, labelKey = "label") {
+  if (!entry) return "";
+  if (typeof entry === "string") return ichCore(entry) !== entry ? ichCore(entry) : (entry.includes(".") ? "" : entry);
+  const raw = entry[labelKey] ?? entry.label ?? entry.name;
+  if (typeof raw !== "string" || !raw) return "";
+  const text = ichCore(raw);
+  return text && text !== raw ? text : (raw.includes(".") ? "" : raw);
+}
+
+function damageTypeLabel(key) {
+  if (key === "ALL") {
+    const all = ichCore("DND5E.DAMAGE.All");
+    return all !== "DND5E.DAMAGE.All" ? all : "All";
+  }
+  return configLabel(globalThis.CONFIG?.DND5E?.damageTypes?.[key]) || key;
+}
+
+function conditionLabel(key) {
+  return configLabel(globalThis.CONFIG?.DND5E?.conditionTypes?.[key], "name")
+    || configLabel(globalThis.CONFIG?.DND5E?.conditionTypes?.[key])
+    || key;
+}
+
+function collectTraitLabels(trait, labelFn) {
+  const labels = asList(trait?.value).map((key) => labelFn(key)).filter(Boolean);
+  labels.push(...splitCustom(trait?.custom));
+  return labels;
+}
+
+/** Resistances and immunities for the AC tooltip. */
+export function buildDefenseTraits(actor) {
+  const traits = actor?.system?.traits;
+  if (!traits) return { immunities: [], resistances: [] };
+  return {
+    immunities: [
+      ...collectTraitLabels(traits.di, damageTypeLabel),
+      ...collectTraitLabels(traits.ci, conditionLabel)
+    ],
+    resistances: collectTraitLabels(traits.dr, damageTypeLabel)
+  };
+}
+
+function flattenLanguageConfig(config, out = {}) {
+  for (const [key, data] of Object.entries(config ?? {})) {
+    if (data?.children && typeof data.children === "object") {
+      flattenLanguageConfig(data.children, out);
+    }
+    const label = configLabel(data);
+    if (label) out[key] = label;
+  }
+  return out;
+}
+
+function languageLabel(key, lookup) {
+  if (key === "ALL") {
+    const all = ichCore("DND5E.Language.All");
+    return all !== "DND5E.Language.All" ? all : "All";
+  }
+  return lookup[key] || key;
+}
+
+/** Spoken languages for the speak-icon tooltip. */
+export function buildLanguageSummary(actor) {
+  const langs = actor?.system?.traits?.languages;
+  const prepared = langs?.labels?.languages;
+  const ranged = langs?.labels?.ranged;
+  const names = [];
+
+  if (Array.isArray(prepared) && prepared.length) {
+    names.push(...prepared.filter(Boolean));
+  } else {
+    const lookup = flattenLanguageConfig(globalThis.CONFIG?.DND5E?.languages);
+    names.push(...asList(langs?.value).map((key) => languageLabel(key, lookup)));
+    names.push(...splitCustom(langs?.custom));
+  }
+
+  if (Array.isArray(ranged)) names.push(...ranged.filter(Boolean));
+
+  return names.filter(Boolean).join(", ");
+}

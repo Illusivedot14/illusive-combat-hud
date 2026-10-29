@@ -5,6 +5,7 @@
  * hooks/scene-selection    No mass token select on world join / scene load
  * hooks/touch-table        Touchscreen account only
  * hooks/spell-regions      GM: delete instant spell areas, tie concentration areas to their effect
+ * token-aura               Colored circles on tokens from HUD (up to three, ICH flags)
  *
  * render/hooks.mjs         HUD repaint (party, action bar, combat) — bindRenderHooks()
  * main.mjs                 init / setup / ready lifecycle only
@@ -17,6 +18,7 @@ import { bindSceneLoadDeselect } from "./scene-selection.mjs";
 import { bindTouchTableClient } from "./touch-table.mjs";
 import { bindSpellRegionCleanup } from "./spell-regions.mjs";
 import { bindCameraPad } from "../../components/camera-pad/camera-pad.mjs";
+import { bindTokenAuras } from "../../components/token-aura/token-aura.mjs";
 
 export { bindSceneLoadDeselect } from "./scene-selection.mjs";
 export {
@@ -34,4 +36,5 @@ export function bindCanvasHooks() {
   bindTouchTableClient();
   bindSpellRegionCleanup();
   bindCameraPad();
+  bindTokenAuras();
 }

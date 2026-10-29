@@ -17,11 +17,12 @@
       class="ich-token-status-picker-btn{{#if isActive}} is-active{{/if}}{{#if isOverlay}} is-overlay{{/if}}"
       data-status-id="{{id}}"
       data-status-name="{{title}}"
-      data-ich-tip-title="{{title}}"
+      data-status-sort="{{sortIndex}}"
       aria-label="{{title}}"
       aria-pressed="{{isActive}}"
     >
-      <img src="{{src}}" alt="" width="32" height="32" loading="lazy">
+      <img src="{{src}}" alt="" width="24" height="24" loading="lazy">
+      <span class="ich-token-status-picker-name">{{title}}</span>
     </button>
     {{/each}}
   </div>

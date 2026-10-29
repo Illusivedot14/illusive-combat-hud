@@ -25,13 +25,23 @@ function statusEffectVisibleOnHud(effect, actor) {
 }
 
 function mapFoundryStatusChoices(choices) {
-  return Object.values(choices).map((entry) => ({
+  return Object.values(choices).map((entry, index) => ({
     id: entry.id,
     title: entry.title ?? entry.name ?? entry.id,
     src: entry.src ?? entry.img ?? "icons/svg/aura.svg",
     isActive: Boolean(entry.isActive),
-    isOverlay: Boolean(entry.isOverlay)
+    isOverlay: Boolean(entry.isOverlay),
+    sortIndex: index
   }));
+}
+
+export function sortStatusChoices(effects) {
+  return [...(effects ?? [])]
+    .map((effect, index) => ({
+      ...effect,
+      sortIndex: Number.isFinite(Number(effect.sortIndex)) ? Number(effect.sortIndex) : index
+    }))
+    .sort((a, b) => Number(Boolean(b.isActive)) - Number(Boolean(a.isActive)) || a.sortIndex - b.sortIndex);
 }
 
 /** Foundry movement actions, with leftover feet when we know them. */
@@ -106,19 +116,22 @@ async function readHudStatusChoices(placeable) {
 export async function collectStatusChoices(token) {
   const placeable = resolveCanvasToken(token);
   const fromHud = await readHudStatusChoices(placeable);
-  if (fromHud?.length) return fromHud;
+  if (fromHud?.length) return sortStatusChoices(fromHud);
 
   if (!token?.actor) return [];
 
-  return (CONFIG.statusEffects ?? [])
-    .filter((effect) => statusEffectVisibleOnHud(effect, token.actor))
-    .map((effect) => ({
-      id: effect.id,
-      title: effect.name ?? effect.label ?? effect.id,
-      src: effect.img ?? effect.icon ?? "icons/svg/aura.svg",
-      isActive: Boolean(token.document.hasStatusEffect?.(effect.id)),
-      isOverlay: Boolean(effect.overlay)
-    }));
+  return sortStatusChoices(
+    (CONFIG.statusEffects ?? [])
+      .filter((effect) => statusEffectVisibleOnHud(effect, token.actor))
+      .map((effect, index) => ({
+        id: effect.id,
+        title: effect.name ?? effect.label ?? effect.id,
+        src: effect.img ?? effect.icon ?? "icons/svg/aura.svg",
+        isActive: Boolean(token.document.hasStatusEffect?.(effect.id)),
+        isOverlay: Boolean(effect.overlay),
+        sortIndex: index
+      }))
+  );
 }
 
 export async function toggleTokenStatusEffect(token, statusId) {

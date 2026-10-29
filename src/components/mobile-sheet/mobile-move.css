@@ -73,16 +73,17 @@
 
 #ich-mobile-move .ich-move-feet {
   min-height: 52px;
-  padding: 0 12px;
-  border: 2px solid var(--mobile-btn-border, var(--mobile-accent-50, #b794f6));
-  border-radius: 10px;
-  background: var(--mobile-bg-secondary, #1f1830);
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
   color: var(--mobile-text-primary, #fff);
   font-weight: 700;
   font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
 }
 
 #ich-mobile-move .ich-move-feet[hidden],
@@ -120,6 +121,7 @@
 
 #ich-mobile-move .ich-move-pad [data-move] i,
 #ich-mobile-move .ich-move-mode i,
+#ich-mobile-move .ich-move-undo i,
 #ich-mobile-move .ich-move-flip i {
   pointer-events: none;
 }

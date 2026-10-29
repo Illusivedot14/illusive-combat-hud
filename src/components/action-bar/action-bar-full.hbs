@@ -31,16 +31,20 @@
           </button>
           {{/if}}
           <div class="ich-mock-passives" role="group" aria-label="{{labels.passiveScores}}">
-            <div class="ich-mock-passive-triangle">
-              {{#each passives}}
-              <span class="ich-mock-passive ich-mock-passive-{{id}}" data-passive="{{id}}" data-ich-tip-title="{{tipTitle}}" data-ich-tip-detail="{{tipDetail}}" aria-label="{{tipTitle}}">
-                <span class="ich-mock-passive-glyph" aria-hidden="true">
-                  <i class="fas {{icon}}"></i>
-                </span>
-                <span class="ich-mock-passive-value">{{value}}</span>
+            {{#each passives}}
+            <span class="ich-mock-passive ich-mock-passive-{{id}}" data-passive="{{id}}" data-ich-tip-title="{{tipTitle}}" data-ich-tip-detail="{{tipDetail}}" aria-label="{{tipTitle}}">
+              <span class="ich-mock-passive-glyph" aria-hidden="true">
+                <i class="fas {{icon}}"></i>
               </span>
-              {{/each}}
-            </div>
+              <span class="ich-mock-passive-value">{{value}}</span>
+            </span>
+            {{/each}}
+            <span class="ich-mock-passive ich-mock-passive-lang" data-ich-tip-title="{{tips.languages.title}}" data-ich-tip-detail="{{tips.languages.detail}}" aria-label="{{tips.languages.title}}">
+              <span class="ich-mock-passive-glyph" aria-hidden="true">
+                <i class="fas fa-comment"></i>
+              </span>
+              <span class="ich-mock-passive-value">{{languageCount}}</span>
+            </span>
           </div>
         </div>
 
@@ -274,9 +278,43 @@
           >
             <i class="fas fa-left-right" aria-hidden="true"></i>
           </button>
+          <button
+            type="button"
+            class="ich-mock-aura-btn{{#if auraOn}} is-active{{/if}}"
+            data-util="aura"
+            data-ich-tip-title="{{tips.aura.title}}"
+            data-ich-tip-detail="{{tips.aura.detail}}"
+            aria-label="{{labels.toggleAura}}"
+            aria-pressed="{{auraOn}}"
+          >
+            <i class="fas fa-circle" aria-hidden="true"></i>
+          </button>
         </div>
 
         <div class="ich-mock-combat-column">
+          <div class="ich-mock-elevation" role="group" aria-label="{{labels.elevation}}">
+            <button
+              type="button"
+              class="ich-mock-elevation-btn"
+              data-action="elevation-down"
+              data-ich-tip-title="{{labels.elevationDown}}"
+              data-ich-tip-detail="{{tips.elevation.detail}}"
+              aria-label="{{labels.elevationDown}}"
+            >
+              <i class="fas fa-caret-down" aria-hidden="true"></i>
+            </button>
+            <span class="ich-mock-elevation-value" data-ich-tip-title="{{tips.elevation.title}}" data-ich-tip-detail="{{tips.elevation.detail}}">{{elevation}}</span>
+            <button
+              type="button"
+              class="ich-mock-elevation-btn"
+              data-action="elevation-up"
+              data-ich-tip-title="{{labels.elevationUp}}"
+              data-ich-tip-detail="{{tips.elevation.detail}}"
+              aria-label="{{labels.elevationUp}}"
+            >
+              <i class="fas fa-caret-up" aria-hidden="true"></i>
+            </button>
+          </div>
           <div class="ich-mock-combat-block">
             {{#if targetPick}}
             <button
@@ -322,18 +360,24 @@
             </button>
 
             {{#if movement}}
-            <button
-              type="button"
-              class="ich-mock-speed-readout{{#unless movement.canUndo}} is-static{{/unless}}"
-              {{#if movement.canUndo}}
-              data-action="undo-movement"
-              data-ich-tip-title="{{tips.undoMovement.title}}"
-              data-ich-tip-detail="{{tips.undoMovement.detail}}"
-              {{/if}}
-              aria-label="{{#if movement.canUndo}}{{tips.undoMovement.title}}{{else}}{{tips.movement.title}}{{/if}}"
-            >
-              <span>{{movement.remainingFeet}}{{#if inCombat}}/{{movement.maxFeet}}{{/if}}</span>
-            </button>
+            <div class="ich-mock-speed-readout is-static" aria-label="{{tips.movement.title}}">
+              <span class="ich-mock-undo-slot">
+                {{#if movement.canUndo}}
+                <button
+                  type="button"
+                  class="ich-mock-undo-move"
+                  data-action="undo-movement"
+                  data-ich-tip-title="{{tips.undoMovement.title}}"
+                  data-ich-tip-detail="{{tips.undoMovement.detail}}"
+                  aria-label="{{tips.undoMovement.title}}"
+                >
+                  <i class="fas fa-undo" aria-hidden="true"></i>
+                </button>
+                {{/if}}
+              </span>
+              <span class="ich-mock-speed-feet">{{movement.remainingFeet}}{{#if inCombat}}/{{movement.maxFeet}}{{/if}}<span class="ich-mock-speed-unit"> {{feetUnit}}</span></span>
+              <span class="ich-mock-undo-slot" aria-hidden="true"></span>
+            </div>
             {{/if}}
             {{/if}}
           </div>
@@ -350,29 +394,6 @@
           >
             <i class="fas fa-tags" aria-hidden="true"></i>
           </button>
-          <div class="ich-mock-elevation" role="group" aria-label="{{labels.elevation}}">
-            <button
-              type="button"
-              class="ich-mock-elevation-btn"
-              data-action="elevation-up"
-              data-ich-tip-title="{{labels.elevationUp}}"
-              data-ich-tip-detail="{{tips.elevation.detail}}"
-              aria-label="{{labels.elevationUp}}"
-            >
-              <i class="fas fa-caret-up" aria-hidden="true"></i>
-            </button>
-            <span class="ich-mock-elevation-value" data-ich-tip-title="{{tips.elevation.title}}" data-ich-tip-detail="{{tips.elevation.detail}}">{{elevation}}</span>
-            <button
-              type="button"
-              class="ich-mock-elevation-btn"
-              data-action="elevation-down"
-              data-ich-tip-title="{{labels.elevationDown}}"
-              data-ich-tip-detail="{{tips.elevation.detail}}"
-              aria-label="{{labels.elevationDown}}"
-            >
-              <i class="fas fa-caret-down" aria-hidden="true"></i>
-            </button>
-          </div>
           <button
             type="button"
             class="ich-mock-util-btn ich-mock-rest-btn{{#if showLeaveCombat}} is-leave{{/if}}{{#if restDisabled}} is-disabled{{/if}}"

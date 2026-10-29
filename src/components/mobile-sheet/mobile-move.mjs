@@ -94,8 +94,14 @@ function ensureRoot() {
       <div class="ich-move-status">
         <div role="button" tabindex="0" class="ich-move-mode" data-move="mode"></div>
         <span class="ich-move-feet" data-move="feet"></span>
-        <div role="button" tabindex="0" class="ich-move-undo" data-move="undo-one" hidden></div>
-        <div role="button" tabindex="0" class="ich-move-undo" data-move="undo-all" hidden></div>
+        <div role="button" tabindex="0" class="ich-move-undo" data-move="undo-one" hidden>
+          <i class="fas fa-undo" aria-hidden="true"></i>
+          <span></span>
+        </div>
+        <div role="button" tabindex="0" class="ich-move-undo" data-move="undo-all" hidden>
+          <i class="fas fa-rotate-left" aria-hidden="true"></i>
+          <span></span>
+        </div>
       </div>
       <div class="ich-move-pad">
         <div role="button" tabindex="0" data-move="upLeft"><i class="fas fa-arrow-up" style="transform:rotate(-45deg)" aria-hidden="true"></i></div>
@@ -325,13 +331,17 @@ function paintPad() {
 
   const undoOne = root.querySelector("[data-move='undo-one']");
   if (undoOne) {
-    undoOne.textContent = showUndo ? ich.mobileMove("undoOne") : "";
-    undoOne.setAttribute("aria-label", ich.mobileMove("undoOne"));
+    const label = ich.mobileMove("undoOne");
+    const caption = undoOne.querySelector("span");
+    if (caption) caption.textContent = showUndo ? label : "";
+    undoOne.setAttribute("aria-label", label);
   }
   const undoAll = root.querySelector("[data-move='undo-all']");
   if (undoAll) {
-    undoAll.textContent = showUndo ? ich.mobileMove("undoAll") : "";
-    undoAll.setAttribute("aria-label", ich.mobileMove("undoAll"));
+    const label = ich.mobileMove("undoAll");
+    const caption = undoAll.querySelector("span");
+    if (caption) caption.textContent = showUndo ? label : "";
+    undoAll.setAttribute("aria-label", label);
   }
 
   const flip = root.querySelector("[data-move='flip']");
