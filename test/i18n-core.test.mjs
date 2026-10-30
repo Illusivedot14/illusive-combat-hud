@@ -42,7 +42,7 @@ describe("ichLocalize", () => {
   });
 
   it("uses the last meaningful segment, dropping name/hint suffixes", () => {
-    expect(ichLocalize("settings.showEnemyHp.name")).toBe("Show Enemy Hp");
+    expect(ichLocalize("settings.showResourceBar.name")).toBe("Show Resource Bar");
   });
 
   it("substitutes {data} tokens into the resolved string", () => {

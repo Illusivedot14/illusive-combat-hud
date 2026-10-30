@@ -1,29 +1,15 @@
-/**
- * Mobile client helpers — detection + owned list + noCanvas mirror Swipe VTT.
- * Source patterns taken from swipe-vtt.js DeviceUtils / MobileSheetDrawer._initOwnedCharacters
- * and the init/ready noCanvas sync + reload.
- */
-
 import { MODULE_ID } from "./constants.mjs";
 import { settingOn } from "./hud-settings.mjs";
 import { applyEarlyMobileBootClass, persistMobileBootFlag } from "./mobile-boot.mjs";
 
 const RELOAD_GUARD = "ich-mobile-client-reload";
 
-/** Swipe: DeviceUtils.isNativeMobile() */
+/** Real phones/tablets only. A Windows touch table is still a desktop canvas. */
 export function isNativeMobile() {
-  const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
     .test(navigator.userAgent ?? "");
-  const coarse = navigator.maxTouchPoints > 0
-    && typeof matchMedia === "function"
-    && matchMedia("(pointer: coarse)").matches;
-  return Boolean(uaMobile || coarse);
 }
 
-/**
- * Swipe: DeviceUtils.isMobile()
- * (desktopModeEnabled forced-true path omitted — we use mobileClientMode instead)
- */
 export function detectMobileDevice() {
   const mode = getMobileClientMode();
   if (mode === "forceMobile") return true;
@@ -33,7 +19,7 @@ export function detectMobileDevice() {
 
 export function getMobileClientMode() {
   try {
-    return game.settings.get(MODULE_ID, "mobileClientMode") ?? "auto";
+    return game.settings.get(MODULE_ID, "mobileClientMode") ?? "forceDesktop";
   } catch {
     return "auto";
   }
@@ -55,10 +41,7 @@ function applyBodyClass(active) {
   persistMobileBootFlag(active);
 }
 
-/**
- * Swipe sheets-only: if disableCanvas/noCanvas mismatch → set core.noCanvas and reload.
- * Returns true when a reload was triggered.
- */
+/** Returns true when a reload was triggered. */
 export async function syncMobileClientSettings() {
   if (!game.settings) return false;
 
@@ -88,7 +71,7 @@ export async function syncMobileClientSettings() {
     return false;
   }
 
-  // Enter sheets-only (Swipe: set noCanvas + location.reload)
+  // Enter sheets-only: set noCanvas and reload.
   if (wantNoCanvas && !haveNoCanvas) {
     const guard = sessionStorage.getItem(RELOAD_GUARD);
     if (guard === "enter") {
@@ -115,8 +98,8 @@ export async function syncMobileClientSettings() {
     }
   }
 
-  // Leave sheets-only only if Illusive turned it on
-  if (!wantNoCanvas && haveNoCanvas && managed) {
+  // Desktop always gets the map back, even if some other client left noCanvas on.
+  if (!wantNoCanvas && haveNoCanvas) {
     try {
       persistMobileBootFlag(false);
       await game.settings.set("core", "noCanvas", false);
@@ -136,7 +119,6 @@ export async function syncMobileClientSettings() {
 
 /**
  * Owned mobile carousel actors.
- * Ownership check matches Swipe (`testUserPermission(..., "OWNER")`).
  * Includes every owned character (not only scene tokens) so the full party
  * stays visible, plus any other OWNER actor that has a token on the current scene.
  */
@@ -163,7 +145,7 @@ export function getMobileSheetActors() {
     return String(a.name ?? "").localeCompare(String(b.name ?? ""), game.i18n?.lang);
   });
 
-  const max = 16; // Swipe: oc+1 with oc=15
+  const max = 16;
   return sorted.length > max ? sorted.slice(0, max) : sorted;
 }
 

@@ -1,5 +1,7 @@
 import { ich } from "../../common/i18n.mjs";
 import {
+  applyActorDamage,
+  applyActorHealing,
   applyDamageDeathRules,
   setActorDefeatedState
 } from "../../common/party-combat.mjs";
@@ -52,75 +54,13 @@ function focusInputAtEnd(input) {
 async function applyDamageAmount(actor, amount) {
   amount = coerceHpAmount(amount);
   if (amount == null) return;
-
-  if (typeof actor.applyDamage === "function") {
-    try {
-      await actor.applyDamage([{ value: amount }]);
-      return;
-    } catch {
-      try {
-        await actor.applyDamage(amount);
-        return;
-      } catch {
-        /* fall through to direct update */
-      }
-    }
-  }
-
-  const hp = actor.system?.attributes?.hp;
-  if (!hp) return;
-  let remaining = amount;
-  let temp = Number(hp.temp) || 0;
-  let value = Number(hp.value) || 0;
-  if (temp > 0) {
-    const used = Math.min(temp, remaining);
-    temp -= used;
-    remaining -= used;
-  }
-  value = Math.max(0, value - remaining);
-  await actor.update({
-    "system.attributes.hp.value": value,
-    "system.attributes.hp.temp": temp
-  });
+  await applyActorDamage(actor, amount);
 }
 
 async function applyHealAmount(actor, amount) {
   amount = coerceHpAmount(amount);
   if (amount == null) return;
-
-  if (typeof actor.applyDamage === "function") {
-    try {
-      await actor.applyDamage([{ value: amount, type: "healing" }]);
-      return;
-    } catch {
-      try {
-        await actor.applyDamage(-amount);
-        return;
-      } catch {
-        /* fall through */
-      }
-    }
-  }
-
-  if (typeof actor.applyHealing === "function") {
-    try {
-      await actor.applyHealing(amount);
-      return;
-    } catch {
-      try {
-        await actor.applyHealing([{ value: amount }]);
-        return;
-      } catch {
-        /* fall through */
-      }
-    }
-  }
-
-  const hp = actor.system?.attributes?.hp;
-  if (!hp) return;
-  const max = Number(hp.max) || 0;
-  const value = Math.min(max, (Number(hp.value) || 0) + amount);
-  await actor.update({ "system.attributes.hp.value": value });
+  await applyActorHealing(actor, amount);
 }
 
 /** Apply temp HP using 5e non-stacking rules (keep the higher amount). */

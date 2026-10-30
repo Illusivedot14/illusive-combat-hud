@@ -1,12 +1,33 @@
 import { MODULE_ID } from "./constants.mjs";
 import { ich } from "./i18n.mjs";
 import { hasAvailableSpellSlot } from "./actor-resources.mjs";
-import { canSpendEconomy } from "./midi-qol.mjs";
-import { checkAbilityRange } from "./range-utils.mjs";
+import { checkAbilityRange, isEconomyAvailable } from "./midi.mjs";
 import { getViewedCombat, getActiveCombatant } from "./combat.mjs";
 import { getWeaponAttackCount, remainingWeaponAttacks } from "./attack-count.mjs";
 
 const ECONOMY_SECTIONS = new Set(["action", "bonus", "reaction"]);
+
+/** Same lookup as action-data.mjs getLinkedSpell and midi.mjs getEffectiveTargetType. */
+export function getLinkedSpell(activity) {
+  if (!activity || activity.type !== "cast") return null;
+  return activity.cachedSpell
+    ?? (activity.spell?.uuid ? foundry.utils.fromUuidSync(activity.spell.uuid, { strict: false }) : null);
+}
+
+/** Shared activity list. Mobile sheet copy handled array / Collection / iterator / values. */
+export function listActivities(item) {
+  const acts = item?.system?.activities;
+  if (!acts) return [];
+  if (Array.isArray(acts)) return acts.filter(Boolean);
+  if (acts.contents) return [...acts.contents].filter(Boolean);
+  if (typeof acts[Symbol.iterator] === "function") {
+    try { return [...acts].filter(Boolean); } catch { /* fall through */ }
+  }
+  if (typeof acts.values === "function") {
+    try { return [...acts.values()].filter(Boolean); } catch { /* fall through */ }
+  }
+  return [];
+}
 
 function resolveEconomySection(section, activationType) {
   if (ECONOMY_SECTIONS.has(section)) return section;
@@ -40,10 +61,8 @@ export function getTargetConfig(item, activity) {
   }
 
   if (activity?.type === "cast") {
-    const spell = activity.cachedSpell
-      ?? (activity.spell?.uuid ? foundry.utils.fromUuidSync(activity.spell.uuid, { strict: false }) : null);
-    const spellActivities = spell?.system?.activities?.contents ?? spell?.system?.activities ?? [];
-    const spellActivity = spellActivities.find?.((entry) => entry.canUse !== false) ?? spellActivities[0];
+    const spellActivities = listActivities(getLinkedSpell(activity));
+    const spellActivity = spellActivities.find((entry) => entry.canUse !== false) ?? spellActivities[0];
     if (spellActivity?.target) return spellActivity.target;
   }
 
@@ -238,7 +257,7 @@ export function evaluateAbilityState({
   if (
     inCombat
     && economySection
-    && !canSpendEconomy(actor, economySection)
+    && !isEconomyAvailable(actor, economySection)
     && !allowsExtraAttackSwing(item, activity, economySection, actor)
   ) {
     disabled = true;
@@ -314,7 +333,7 @@ export function evaluateStandardActionState(action, actor, inCombat) {
     reasons.push(ich.reason("notInCombat"));
   }
 
-  if (inCombat && !canSpendEconomy(actor, "action")) {
+  if (inCombat && !isEconomyAvailable(actor, "action")) {
     disabled = true;
     reasons.push(ich.warning("economySpent", { type: "action" }));
   }

@@ -1,5 +1,8 @@
 import { canControlToken, panCanvasToToken, pingCanvasAtToken } from "../../common/token-actions.mjs";
 import { getViewedCombat } from "../../common/combat.mjs";
+import { combatantToken } from "../../common/actor-data.mjs";
+
+export { combatantToken };
 
 /** Combatant ids a card represents: a single combatant, or every member of a group. */
 export function cardMemberIds(combat, card) {
@@ -11,10 +14,6 @@ export function cardMemberIds(combat, card) {
 	}
 	const id = card.dataset.combatantId;
 	return id ? [id] : [];
-}
-
-export function combatantToken(combatant) {
-	return combatant?.token?.object ?? canvas.tokens?.get(combatant?.tokenId) ?? null;
 }
 
 /**
@@ -59,7 +58,7 @@ export function jumpToCombatantTurn(combat, combatant) {
 export function focusGroupTokens(group) {
 	if (!group) return;
 	const tokens = [...group.members]
-		.map((member) => member.token?.object ?? canvas.tokens?.get(member.tokenId))
+		.map((member) => combatantToken(member))
 		.filter(Boolean);
 	if (!tokens.length) return;
 

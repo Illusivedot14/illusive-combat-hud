@@ -23,6 +23,7 @@ import { ich } from "../../common/i18n.mjs";
 import { getMobileFocusedActor } from "./mobile-focus.mjs";
 import { getMobileSheetActor, isMobileSheetOpen, MOBILE_SHEET_STATE_HOOK } from "./mobile-sheet.mjs";
 import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
+import { ensureDomRoot, setImportant } from "../../common/viewport.mjs";
 
 const ROOT_ID = "ich-mobile-move";
 const KEY_PX = 64;
@@ -35,12 +36,6 @@ let bound = false;
 let stepping = false;
 let holdTimer = null;
 let holdAction = null;
-
-function setImportant(el, props) {
-  for (const [name, value] of Object.entries(props)) {
-    el.style.setProperty(name, value, "important");
-  }
-}
 
 function paintKeyFace(el, extra = {}) {
   setImportant(el, {
@@ -81,12 +76,9 @@ function inCombat() {
 }
 
 function ensureRoot() {
-  let root = rootEl();
-  if (root) return root;
-  root = document.createElement("div");
-  root.id = ROOT_ID;
-  root.className = "ich-mobile-move";
-  root.innerHTML = `
+  return ensureDomRoot(ROOT_ID, {
+    className: "ich-mobile-move",
+    html: `
     <div role="button" tabindex="0" class="ich-move-flip" data-move="flip" aria-label="">
       <i class="fas fa-left-right" aria-hidden="true"></i>
     </div>
@@ -115,10 +107,8 @@ function ensureRoot() {
         <div role="button" tabindex="0" data-move="downRight"><i class="fas fa-arrow-down" style="transform:rotate(-45deg)" aria-hidden="true"></i></div>
       </div>
     </div>
-  `;
-  document.body.appendChild(root);
-  applyMoveChrome(root);
-  return root;
+  `
+  });
 }
 
 function hideChrome(el) {

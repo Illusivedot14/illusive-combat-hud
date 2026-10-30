@@ -25,7 +25,7 @@ flowchart TB
 
   subgraph ic [In combat]
     tokenIc["same token resolver"]
-    spend["canSpendEconomy()"]
+    spend["isEconomyAvailable()"]
     feet["buildMovementData()"]
     undo["undoLastTokenMovement()"]
     barClick["onActionBarClick"]
@@ -80,7 +80,7 @@ Whose turn: `getActiveCombatant()` reads `combat.turns[combat.turn]`, not `comba
 | Piece | Behavior | Where |
 |---|---|---|
 | Action bar token | First controlled token (or touch-table focus) | `resolveActionBarToken()` in `src/common/action-bar-token.mjs` |
-| Abilities | Shown if “Abilities Outside Combat” is on | `buildCombatToolbarSections()` / `buildAbilitiesHtml()` |
+| Abilities | Shown in and out of combat | `buildCombatToolbarSections()` / `buildAbilitiesHtml()` |
 | Economy | Display only, not spent | `buildSectionData(..., combatActive)` |
 | Movement | Full speed, no budget, no undo | `buildIdleMovementData()` in `src/common/action-economy.mjs` |
 | Combat button | Join this token to the encounter | `handleCombatFlowButton()` → `enterCombatWithToken()` in `action-bar-token-actions.mjs` |
@@ -94,7 +94,7 @@ D&D Beyond is **not** HUD code. Sheet refresh is `DDBImporter.updateAllPCs.found
 
 | Piece | Behavior | Where |
 |---|---|---|
-| Economy | Action / bonus / reaction spent through Midi | `canSpendEconomy()`; clicks in `onActionBarClick` |
+| Economy | Action / bonus / reaction spent through Midi | `isEconomyAvailable()`; clicks in `onActionBarClick` |
 | Movement | Feet from `token.document.movementHistory` | `buildMovementData()` |
 | Undo move | Last recorded drag via Foundry `revertRecordedMovement` | `undoLastTokenMovement()` |
 | Combat button | End turn if it is this token’s turn | `handleCombatFlowButton()` → `combat.nextTurn()` |
@@ -110,7 +110,7 @@ Click path: `onActionBarClick` in `action-bar.mjs`.
 3. Targeting:
    - Needs canvas targets and none selected (or `shouldForceTargetPick` for weapons/attacks) → `startTargetPick()` in `action-bar-target-picker.mjs`.
    - Confirm requires **exact** count (`confirmTargetPick`).
-4. Fire: `useAbility()` → `useActivityFromHud()` in `src/common/midi-use.mjs` → Midi `completeActivityUse`.
+4. Fire: `useAbility()` → `useActivityFromHud()` in `src/common/midi.mjs` → Midi `completeActivityUse`.
 
 Intended split (not fully how `shouldForceTargetPick` works today): one target already selected should fire; several targets keep the picker.
 

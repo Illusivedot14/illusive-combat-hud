@@ -33,8 +33,6 @@ export const HUD_COMBAT_CHROME_SCALE = 1.15;
  * tuning passes). Applied after band-cap so it always shows.
  */
 export const HUD_ACTION_BAR_VIZIO_SCALE = 0.88;
-/** @deprecated Band-width curve replaced by viewport/reference factor. */
-export const HUD_FIT_REFERENCE_WIDTH = 1100;
 export const HUD_FIT_MIN_SCALE = 0.7;
 export const HUD_FIT_MIN_FACTOR = 0.5;
 export const HUD_FIT_MAX_FACTOR = 2.0;

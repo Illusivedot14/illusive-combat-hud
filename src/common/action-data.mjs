@@ -1,9 +1,14 @@
-import { evaluateAbilityState, evaluateStandardActionState } from "./ability-utils.mjs";
+import {
+  evaluateAbilityState,
+  evaluateStandardActionState,
+  getLinkedSpell,
+  listActivities
+} from "./ability-utils.mjs";
 import { ich } from "./i18n.mjs";
 import { buildStandardActions } from "./standard-actions.mjs";
 import { useReactionFromHud, getReactionContext } from "./reaction-context.mjs";
 import { isSuitcaseEntry, isFreeActivation, getInteractionActivationTypes } from "./item-interactions.mjs";
-import { useActivityFromHud } from "./midi-use.mjs";
+import { useActivityFromHud } from "./midi.mjs";
 import { buildAbilityRowDisplay } from "./ability-display.mjs";
 import { clearUserTargets } from "./token-actions.mjs";
 import {
@@ -37,12 +42,6 @@ function normalizeActivationType(type) {
   return key;
 }
 
-function getLinkedSpell(activity) {
-  if (!activity || activity.type !== "cast") return null;
-  return activity.cachedSpell
-    ?? (activity.spell?.uuid ? foundry.utils.fromUuidSync(activity.spell.uuid, { strict: false }) : null);
-}
-
 function getActivationType(item, activity) {
   const fromActivity = normalizeActivationType(activity?.activation?.type);
   if (fromActivity) return fromActivity;
@@ -65,14 +64,6 @@ function getActivationType(item, activity) {
 function itemIsUsable(item) {
   if (!item || item.disabled) return false;
   return true;
-}
-
-function listActivities(item) {
-  const activities = item.system?.activities;
-  if (!activities) return [];
-  if (typeof activities[Symbol.iterator] === "function") return [...activities];
-  if (activities.contents) return [...activities.contents];
-  return [];
 }
 
 const PRIMARY_LAUNCH_TYPES = new Set(["cast", "attack", "save", "heal", "summon"]);
@@ -254,13 +245,8 @@ function buildAbilityButton({ item, activity, activationType }, actor, section, 
   };
 }
 
-export function getAbilitiesForTypes(actor, typeKeys, sectionId, context = {}) {
+function collectAbilityButtons(actor, allowedTypes, sectionId, context, { suitcaseOnly = false } = {}) {
   if (!actor) return [];
-
-  const allowedTypes = new Set();
-  for (const key of typeKeys) {
-    for (const type of ACTIVATION_GROUPS[key] ?? []) allowedTypes.add(type);
-  }
 
   const abilities = [];
   const seen = new Set();
@@ -270,42 +256,33 @@ export function getAbilitiesForTypes(actor, typeKeys, sectionId, context = {}) {
     if (isCachedSpellItem(item)) continue;
 
     for (const entry of collectActivations(item, allowedTypes)) {
-      if (isSuitcaseEntry(item, entry.activity, entry.activationType)) continue;
+      const suitcase = isSuitcaseEntry(item, entry.activity, entry.activationType);
+      if (suitcaseOnly ? !suitcase : suitcase) continue;
 
       const key = `${entry.item.id}:${entry.activity?.id ?? "item"}:${entry.activationType}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      abilities.push(buildAbilityButton(entry, actor, sectionId, context));
+      const ability = buildAbilityButton(entry, actor, sectionId, context);
+      if (suitcaseOnly) ability.isFree = isFreeActivation(entry.activationType);
+      abilities.push(ability);
     }
   }
 
   return abilities.sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
 }
 
-export function getItemInteractionAbilities(actor, context = {}) {
-  if (!actor) return [];
-
-  const allowedTypes = getInteractionActivationTypes();
-  const abilities = [];
-  const seen = new Set();
-
-  for (const item of actor.items) {
-    if (!itemIsUsable(item)) continue;
-    if (isCachedSpellItem(item)) continue;
-
-    for (const entry of collectActivations(item, allowedTypes)) {
-      if (!isSuitcaseEntry(item, entry.activity, entry.activationType)) continue;
-
-      const key = `${entry.item.id}:${entry.activity?.id ?? "item"}:${entry.activationType}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const ability = buildAbilityButton(entry, actor, "standard", context);
-      ability.isFree = isFreeActivation(entry.activationType);
-      abilities.push(ability);
-    }
+export function getAbilitiesForTypes(actor, typeKeys, sectionId, context = {}) {
+  const allowedTypes = new Set();
+  for (const key of typeKeys) {
+    for (const type of ACTIVATION_GROUPS[key] ?? []) allowedTypes.add(type);
   }
+  return collectAbilityButtons(actor, allowedTypes, sectionId, context);
+}
 
-  return abilities.sort((a, b) => a.name.localeCompare(b.name, game.i18n.lang));
+export function getItemInteractionAbilities(actor, context = {}) {
+  return collectAbilityButtons(actor, getInteractionActivationTypes(), "standard", context, {
+    suitcaseOnly: true
+  });
 }
 
 function enrichStandardActions(actor, context) {
@@ -399,12 +376,6 @@ export function buildCombatToolbarSections(actor, context = {}) {
       abilities: []
     };
   });
-}
-
-export function buildAbilityList(actor, context = {}) {
-  return buildActionBarSections(actor, context).flatMap((section) =>
-    section.abilities.map((ability) => ({ ...ability, section: section.id }))
-  );
 }
 
 export async function useAbility(token, itemId, activityId, event, section, options = {}) {

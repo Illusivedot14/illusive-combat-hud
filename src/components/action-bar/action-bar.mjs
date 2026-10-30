@@ -13,10 +13,9 @@ import {
   setMovementMode,
   undoLastTokenMovement
 } from "../../common/action-economy.mjs";
-import { canSpendEconomy, getEconomyAvailability, toggleEconomySpent, isItemsEconomySpent, toggleItemsEconomySpent } from "../../common/midi-qol.mjs";
+import { isEconomyAvailable, getEconomyAvailability, getMidiApi, toggleEconomySpent, isItemsEconomySpent, toggleItemsEconomySpent, buildTargetListLabel } from "../../common/midi.mjs";
 import { allowsExtraAttackSwing, shouldForceTargetPick } from "../../common/ability-utils.mjs";
 import { ich } from "../../common/i18n.mjs";
-import { buildTargetListLabel } from "../../common/range-utils.mjs";
 import { executeStandardAction, clearTurnFlags } from "../../common/standard-actions.mjs";
 import { dropConcentrationFromHud } from "../../common/combat-actions.mjs";
 import {
@@ -54,11 +53,11 @@ import {
   handleCombatFlowButton,
   handleUtilityButton,
   canOpenTokenConfig,
-  showMovementOptions,
-  showStatusOptions,
-  showLightOptions,
-  showAuraOptions,
-  showRollsOptions,
+  toggleMovementDropdown,
+  toggleStatusDropdown,
+  toggleLightDropdown,
+  toggleAuraDropdown,
+  toggleRollsDropdown,
   isTokenLightOn,
   isTokenAuraOn
 } from "./action-bar-token-actions.mjs";
@@ -66,17 +65,6 @@ import { closeUtilDropdownUnlessStatus, relinkStatusDropdownAnchor, toggleEconom
 import { buildAbilityGroups } from "./action-bar-groups.mjs";
 import { bindAbilityTooltips } from "./ability-tooltip.mjs";
 import { bindActionBarUiTooltips, hideActionBarUiTooltip } from "./action-bar-ui-tooltip.mjs";
-import {
-  buildDrawerEntries,
-  isDrawerOpen,
-  rollDrawerEntry,
-  toggleDrawer
-} from "./action-bar-drawer.mjs";
-import {
-  activateWeaponSet,
-  buildWeaponSetContext,
-  snapshotWeaponSet
-} from "./action-bar-weapon-sets.mjs";
 import { pickCastSlotLevel } from "./action-bar-cast-picker.mjs";
 import {
   buildTargetPickView,
@@ -89,12 +77,7 @@ import {
   startTargetPick
 } from "./action-bar-target-picker.mjs";
 import { bindActionBarDialogHijacks } from "./action-bar-dialogs.mjs";
-import {
-  isTokenPinned,
-  rememberActionBarToken,
-  setPinnedTokenId
-} from "../../common/action-bar-token.mjs";
-import { toggleFavorite } from "./action-bar-prefs.mjs";
+import { rememberActionBarToken } from "../../common/action-bar-token.mjs";
 import { applyActionBarMinimized, expandActionBarForSelection, toggleActionBarMinimized } from "./action-bar-minimize.mjs";
 import { handlePortraitHpContextMenu } from "./action-bar-hp-adjust.mjs";
 import { adjustLegendaryResistance, buildActionBarResources, buildLegendaryResistance } from "../../common/actor-resources.mjs";
@@ -125,7 +108,6 @@ let selectedSection = null;
 let selectedTokenId = null;
 let renderedSectionIds = new Set();
 let renderedSectionTokenId = null;
-let favoritesOnly = false;
 
 export function positionActionBar() {
   const dock = document.getElementById("ich-action-bar-dock");
@@ -592,16 +574,13 @@ function buildEconomyMap(token, inCombat = false) {
   };
 }
 
-function buildActionBarLabels(activeSectionLabel) {
+function buildActionBarLabels() {
   return {
     movementRemaining: ich.movement("remaining"),
     movementDashing: ich.movement("dashing"),
     movementMode: ich.movement("mode"),
     movementGestalt: ich.movement("gestalt"),
     reactionPass: ich.reaction("pass"),
-    noAbilities: ich.empty("noAbilities", { section: activeSectionLabel }),
-    noSections: ich.empty("noAbilities", { section: ich.ui("actionEconomy") }),
-    outOfCombatEmpty: ich.empty("outOfCombat"),
     notInCombat: ich.empty("notInCombat"),
     actionEconomy: ich.ui("actionEconomy"),
     openSheet: ich.ui("openSheet"),
@@ -620,7 +599,6 @@ function buildActionBarLabels(activeSectionLabel) {
     utilities: ich.actionBar("utilities"),
     vitals: ich.actionBar("vitals"),
     passiveScores: ich.actionBar("passiveScores"),
-    hotbar: ich.actionBar("hotbar"),
     toggleLight: ich.actionBar("toggleLight"),
     toggleAura: ich.actionBar("toggleAura"),
     rolls: ich.actionBar("rolls"),
@@ -632,8 +610,6 @@ function buildActionBarLabels(activeSectionLabel) {
     elevationUp: ich.actionBar("elevationUp"),
     elevationDown: ich.actionBar("elevationDown"),
     tempHp: ich.ui("tempHp"),
-    favorite: ich.actionBar("favorite"),
-    unfavorite: ich.actionBar("unfavorite"),
     targetPickCanvasHint: ich.actionBar("targetPickCanvasHint"),
     resources: ich.actionBar("resources")
   };
@@ -681,8 +657,7 @@ async function buildAbilitiesHtml(token, actor, combatActive, activeSection) {
   const abilityGroups = buildAbilityGroups(
     activeSection.abilities,
     actor,
-    activeSection.id,
-    { favoritesOnly }
+    activeSection.id
   );
 
   return ichRenderTemplate(ABILITIES_TEMPLATE, {
@@ -690,11 +665,7 @@ async function buildAbilitiesHtml(token, actor, combatActive, activeSection) {
     selectedSection: activeSection.id,
     emptyLabel: combatActive
       ? ich.empty("noAbilities", { section: activeSection.label })
-      : ich.empty("noAbilitiesOoc", { section: activeSection.tabLabel ?? activeSection.label }),
-    labels: {
-      favorite: ich.actionBar("favorite"),
-      unfavorite: ich.actionBar("unfavorite")
-    }
+      : ich.empty("noAbilitiesOoc", { section: activeSection.tabLabel ?? activeSection.label })
   });
 }
 
@@ -902,7 +873,7 @@ async function buildActionBarContext(token) {
   const movement = combatActive ? buildMovementData(token) : buildIdleMovementData(token);
   const speedRing = buildSpeedRingData(movement);
   const abilitiesHtml = await buildAbilitiesHtml(token, actor, combatActive, activeSection);
-  const labels = buildActionBarLabels(activeSection?.tabLabel ?? activeSection?.label ?? "");
+  const labels = buildActionBarLabels();
   const combatButton = buildCombatButtonState(token, combatStarted, combatActive);
   // Leave Combat as soon as this token is on the initiative list (even before Start Combat).
   const showLeaveCombat = Boolean(findCombatantForToken(token));
@@ -1152,7 +1123,7 @@ async function rollDeathSaveFromHud(token, event) {
   // players see chat + Dice So Nice (GM clients often default to gmroll/blind,
   // and Midi-QOL can mark death saves as blind).
   const publicMode = CONST.DICE_ROLL_MODES?.PUBLIC ?? "publicroll";
-  const midiConfig = globalThis.MidiQOL?.configSettings?.();
+  const midiConfig = getMidiApi()?.configSettings?.();
   const priorBlind = midiConfig?.rollSavesBlind;
   if (Array.isArray(priorBlind)) {
     midiConfig.rollSavesBlind = priorBlind.filter((entry) => entry !== "death" && entry !== "all");
@@ -1295,23 +1266,23 @@ async function onActionBarClick(event) {
 
     const util = utilBtn.dataset.util;
     if (util === "movement") {
-      await showMovementOptions(utilBtn, token);
+      await toggleMovementDropdown(utilBtn, token);
       return;
     }
     if (util === "status") {
-      await showStatusOptions(utilBtn, token);
+      await toggleStatusDropdown(utilBtn, token);
       return;
     }
     if (util === "light") {
-      await showLightOptions(utilBtn, token);
+      await toggleLightDropdown(utilBtn, token);
       return;
     }
     if (util === "aura") {
-      await showAuraOptions(utilBtn, token);
+      await toggleAuraDropdown(utilBtn, token);
       return;
     }
     if (util === "rolls") {
-      await showRollsOptions(utilBtn, token);
+      await toggleRollsDropdown(utilBtn, token);
       return;
     }
 
@@ -1335,86 +1306,6 @@ async function onActionBarClick(event) {
     return;
   }
 
-  if (event.target.closest("#ich-action-bar .ich-full-tab-sheet")) {
-    event.preventDefault();
-    event.stopPropagation();
-    const actorId = event.target.closest("#ich-action-bar [data-actor-id]")?.dataset.actorId;
-    game.actors.get(actorId)?.sheet?.render(true);
-    return;
-  }
-
-  if (event.target.closest("#ich-action-bar .ich-pin-btn")) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!token) return;
-    await setPinnedTokenId(isTokenPinned(token) ? "" : token.id);
-    requestPanelRefresh();
-    return;
-  }
-
-  if (event.target.closest("#ich-action-bar .ich-favorites-filter")) {
-    event.preventDefault();
-    event.stopPropagation();
-    favoritesOnly = !favoritesOnly;
-    requestPanelRefresh();
-    return;
-  }
-
-  if (event.target.closest("#ich-action-bar .ich-drawer-toggle")) {
-    event.preventDefault();
-    event.stopPropagation();
-    toggleDrawer();
-    requestPanelRefresh();
-    return;
-  }
-
-  const drawerBtn = event.target.closest("#ich-action-bar .ich-drawer-btn");
-  if (drawerBtn) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (token?.actor) {
-      await rollDrawerEntry(token.actor, {
-        type: drawerBtn.dataset.drawerType,
-        id: drawerBtn.dataset.drawerId
-      }, event);
-    }
-    return;
-  }
-
-  const weaponSetBtn = event.target.closest("#ich-action-bar .ich-weapon-set-btn");
-  if (weaponSetBtn) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (token?.actor) {
-      await activateWeaponSet(token.actor, Number(weaponSetBtn.dataset.weaponSet));
-      requestPanelRefresh();
-    }
-    return;
-  }
-
-  const weaponSaveBtn = event.target.closest("#ich-action-bar .ich-weapon-set-save");
-  if (weaponSaveBtn) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (token?.actor) {
-      await snapshotWeaponSet(token.actor, Number(weaponSaveBtn.dataset.weaponSetSave));
-      requestPanelRefresh();
-    }
-    return;
-  }
-
-
-  const favToggle = event.target.closest("#ich-action-bar .ich-favorite-toggle");
-  if (favToggle) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (token?.actor) {
-      await toggleFavorite(token.actor, favToggle.dataset.favoriteKey);
-      requestPanelRefresh();
-    }
-    return;
-  }
-
   const button = event.target.closest("#ich-action-bar .ich-ability-btn");
   if (!button || button.dataset.disabled === "true") return;
 
@@ -1432,12 +1323,12 @@ async function onActionBarClick(event) {
     ? section
     : (ECONOMY_TYPES.has(activationType) ? activationType : null);
 
-  if (isStandard && inCombat(token) && !canSpendEconomy(token.actor, "action")) {
+  if (isStandard && inCombat(token) && !isEconomyAvailable(token.actor, "action")) {
     ui.notifications.warn(ich.warning("economySpent", { type: "A" }));
     return;
   }
 
-  if (inCombat(token) && economyType && !canSpendEconomy(token.actor, economyType)) {
+  if (inCombat(token) && economyType && !isEconomyAvailable(token.actor, economyType)) {
     const item = !isStandard ? token.actor.items.get(itemId) : null;
     const activity = item && activityId ? item.system?.activities?.get?.(activityId) : null;
     if (isStandard || !allowsExtraAttackSwing(item, activity, economyType, token.actor)) {

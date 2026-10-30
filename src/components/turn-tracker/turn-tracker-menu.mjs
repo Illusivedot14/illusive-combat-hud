@@ -1,7 +1,7 @@
 import { getViewedCombat } from "../../common/combat.mjs";
 import { focusTokenOnCanvas } from "../../common/token-actions.mjs";
 import { handleTurnTrackerAction } from "./turn-tracker-controls.mjs";
-import { cardMemberIds, focusGroupTokens } from "./turn-tracker-combatant.mjs";
+import { cardMemberIds, combatantToken, focusGroupTokens } from "./turn-tracker-combatant.mjs";
 import { getTurnTrackerMenuItems } from "./turn-tracker-menu-items.mjs";
 
 function handleToolbarClick(event) {
@@ -41,7 +41,7 @@ function handleCardClick(event) {
 	}
 
 	const combatant = combat?.combatants.get(card.dataset.combatantId);
-	const token = combatant?.token?.object ?? canvas.tokens?.get(combatant?.tokenId);
+	const token = combatantToken(combatant);
 	focusTokenOnCanvas(token);
 	return true;
 }

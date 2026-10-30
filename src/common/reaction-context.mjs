@@ -1,8 +1,8 @@
-import { getMidiApi } from "./midi-qol.mjs";
-import { buildHudMidiOptions } from "./midi-use.mjs";
+import { getReactionTimeoutMs, resolveTriggerTokenUuid, useActivityFromHud } from "./midi.mjs";
 import { MODULE_ID } from "./constants.mjs";
 import { resolveActionBarToken } from "./action-bar-token.mjs";
 import { getTargetPickState } from "../components/action-bar/action-bar-target-picker.mjs";
+import { findActorTokenDoc, findTokenViewById, tokenViewFromDoc } from "./token-step.mjs";
 
 let reactionContext = null;
 let reactionPromptTimer = null;
@@ -29,14 +29,16 @@ export function buildReactionKeys(activities) {
 }
 
 export function findTokenForActor(actor, { preferControlled = true } = {}) {
-  if (!actor || !canvas?.tokens) return null;
+  if (!actor) return null;
 
   if (preferControlled) {
-    const controlled = canvas.tokens.controlled?.find((token) => token.actor?.id === actor.id);
+    const controlled = canvas?.tokens?.controlled?.find((token) => token.actor?.id === actor.id);
     if (controlled) return controlled;
   }
 
-  return canvas.tokens.placeables.find((token) => token.actor?.id === actor.id) ?? null;
+  const placeable = canvas?.tokens?.placeables?.find((token) => token.actor?.id === actor.id);
+  if (placeable) return placeable;
+  return tokenViewFromDoc(findActorTokenDoc(actor));
 }
 
 export function isReactionActorForUser(actor) {
@@ -47,28 +49,16 @@ export function getActionBarToken() {
   // Keep the casting token on the HUD while the target picker is open.
   const pick = getTargetPickState();
   if (pick?.tokenId) {
-    const casting = canvas?.tokens?.get(pick.tokenId);
+    const casting = findTokenViewById(pick.tokenId);
     if (casting) return casting;
   }
   return resolveActionBarToken(reactionContext);
 }
 
-function resolveTriggerTokenUuid(options = {}, existing = null) {
-  return options.workflow?.tokenUuid
-    ?? options.triggerTokenUuid
-    ?? existing?.triggerTokenUuid
-    ?? null;
-}
-
 export function startReactionPrompt(actor, activities, triggerType, options = {}) {
   if (!actor?.id) return;
 
-  let timeoutMs = 12000;
-  try {
-    timeoutMs = (game.settings.get("midi-qol", "reactionTimeout") ?? 12) * 1000;
-  } catch {
-    timeoutMs = 12000;
-  }
+  const timeoutMs = getReactionTimeoutMs();
 
   setReactionContext({
     actorId: actor.id,
@@ -128,19 +118,7 @@ export async function useReactionFromHud(token, itemId, activityId) {
     return true;
   }
 
-  const midi = getMidiApi();
-  const midiOptions = buildHudMidiOptions(token, activity, "reaction", context);
-  if (midi?.completeActivityUse) {
-    await midi.completeActivityUse(
-      activity,
-      { midiOptions },
-      {},
-      { systemCard: false }
-    );
-  } else {
-    await activity.use({ midiOptions }, {});
-  }
-
-  clearReactionPrompt();
-  return true;
+  const used = await useActivityFromHud(token, item, activity, "reaction", {}, context);
+  if (used) clearReactionPrompt();
+  return used;
 }

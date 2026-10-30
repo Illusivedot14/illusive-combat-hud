@@ -19,7 +19,9 @@
   --ich-hud-icon: 36px;
   --ich-hud-side: 42px;
   --ich-hud-glyph: 18px;
-  --ich-hud-row: 232px;
+  --ich-hud-name-gap: 16px;
+  --ich-hud-name: 20px;
+  --ich-hud-row: calc(var(--ich-hud-top) + var(--ich-hud-ring) + var(--ich-hud-name-gap) + var(--ich-hud-name));
   --ich-hud-readout-side: 22px;
   --ich-hud-readout-gap: 6px;
   --ich-hud-readout-width: 124px;
@@ -451,25 +453,31 @@
   width: var(--ich-hud-ring);
   height: var(--ich-hud-ring);
   overflow: visible;
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 
 .ich-mock-char-name {
-  max-width: var(--ich-hud-ring);
-  margin: 4px 0 0;
-  padding: 0 4px;
+  width: calc(var(--ich-hud-ring) + var(--ich-hud-side) * 2);
+  max-width: calc(var(--ich-hud-ring) + var(--ich-hud-side) * 2);
+  height: var(--ich-hud-name);
+  margin: var(--ich-hud-name-gap) 0 0;
+  padding: 0 6px;
+  box-sizing: border-box;
   color: #f0e8d8;
   font-family: "Signika", sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.2;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.15;
   text-align: center;
   letter-spacing: 0.01em;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95), 0 0 6px rgba(0, 0, 0, 0.75);
-  white-space: nowrap;
+  white-space: normal;
   overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: break-word;
+  word-break: break-word;
   position: relative;
   z-index: 4;
 }
@@ -1302,7 +1310,7 @@
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-group-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, 86px);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   justify-content: start;
   align-content: start;
   gap: 8px;
@@ -1313,19 +1321,13 @@
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-btn {
   display: flex;
-  width: 86px;
-  min-width: 86px;
-  max-width: 86px;
-  height: 92px;
-  min-height: 92px;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  height: auto;
+  min-height: 88px;
   margin: 0;
   flex: 0 0 auto;
-}
-
-#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-btn .ich-ability-img,
-#ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-btn img {
-  width: 46px;
-  height: 46px;
 }
 
 #ich-action-bar-dock #ich-action-bar .ich-mock-ability-well .ich-ability-group {
@@ -1348,10 +1350,6 @@
   color: #b8a898;
   font-size: 16px;
   text-align: center;
-}
-
-.ich-hotbar-well {
-  display: none !important;
 }
 
 /* Right: same 3-column grid as the portrait cluster. */

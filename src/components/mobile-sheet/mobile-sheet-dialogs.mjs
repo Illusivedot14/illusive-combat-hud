@@ -1,8 +1,28 @@
 /**
- * Swipe/Amethyst-style mobile overlays (not Foundry DialogV2).
+ * Mobile overlays (not Foundry DialogV2).
  */
 
+import { applyActorDamage as applyDamage, applyActorHealing } from "../../common/party-combat.mjs";
+
 const OVERLAY_Z = "100060";
+const SHEET_BEHIND = "ich-mobile-sheet-behind-dialog";
+
+function dropSheetForDialog() {
+  document.getElementById("ich-mobile-sheet-root")?.classList.add(SHEET_BEHIND);
+}
+
+function raiseSheetAfterDialog() {
+  document.getElementById("ich-mobile-sheet-root")?.classList.remove(SHEET_BEHIND);
+}
+
+export async function withSheetDropped(fn) {
+  dropSheetForDialog();
+  try {
+    return await fn();
+  } finally {
+    raiseSheetAfterDialog();
+  }
+}
 
 function closeOverlays(selector) {
   document.querySelectorAll(selector).forEach((el) => el.remove());
@@ -20,7 +40,7 @@ function bindOverlayActions(overlay, onAction) {
   const activate = (ev, action) => {
     ev.preventDefault();
     ev.stopPropagation();
-    finish(action === "cancel" ? null : action);
+    finish(action === "cancel" || action === "close" ? null : action);
   };
 
   overlay.addEventListener("pointerup", (ev) => {
@@ -34,17 +54,15 @@ function bindOverlayActions(overlay, onAction) {
   requestAnimationFrame(() => overlay.classList.add("visible"));
 }
 
-/**
- * @param {string} title
- * @returns {Promise<"advantage"|"normal"|"disadvantage"|null>}
- */
-export function pickRollModeOverlay(title) {
-  closeOverlays(".ich-ms-roll-overlay");
-
+function openChoiceOverlay(className, title, actions) {
+  closeOverlays(`.${className}`);
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
-    overlay.className = "roll-dialog-overlay ich-ms-overlay ich-ms-roll-overlay";
+    overlay.className = `roll-dialog-overlay ich-ms-overlay ${className}`;
     overlay.style.zIndex = OVERLAY_Z;
+    const buttons = actions.map(([action, label]) =>
+      `<button type="button" class="roll-btn" data-action="${action}">${label}</button>`
+    ).join("");
     overlay.innerHTML = `
       <div class="standalone-roll-dialog">
         <div class="roll-dialog-header">
@@ -53,16 +71,24 @@ export function pickRollModeOverlay(title) {
             <i class="fas fa-times"></i>
           </button>
         </div>
-        <div class="roll-dialog-buttons">
-          <button type="button" class="roll-btn" data-action="advantage">Advantage</button>
-          <button type="button" class="roll-btn" data-action="normal">Normal</button>
-          <button type="button" class="roll-btn" data-action="disadvantage">Disadvantage</button>
-        </div>
+        <div class="roll-dialog-buttons">${buttons}</div>
       </div>
     `;
     document.body.appendChild(overlay);
     bindOverlayActions(overlay, resolve);
   });
+}
+
+/**
+ * @param {string} title
+ * @returns {Promise<"advantage"|"normal"|"disadvantage"|null>}
+ */
+export function pickRollModeOverlay(title) {
+  return openChoiceOverlay("ich-ms-roll-overlay", title, [
+    ["advantage", "Advantage"],
+    ["normal", "Normal"],
+    ["disadvantage", "Disadvantage"]
+  ]);
 }
 
 /**
@@ -71,33 +97,14 @@ export function pickRollModeOverlay(title) {
  * @returns {Promise<"attack"|"damage"|null>}
  */
 export function pickAttackOrDamageOverlay(title) {
-  closeOverlays(".ich-ms-weapon-overlay");
-
-  return new Promise((resolve) => {
-    const overlay = document.createElement("div");
-    overlay.className = "roll-dialog-overlay ich-ms-overlay ich-ms-weapon-overlay";
-    overlay.style.zIndex = OVERLAY_Z;
-    overlay.innerHTML = `
-      <div class="standalone-roll-dialog">
-        <div class="roll-dialog-header">
-          <span class="roll-dialog-title">${escapeHtml(title)}</span>
-          <button type="button" class="roll-dialog-close" data-action="cancel" aria-label="Close">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <div class="roll-dialog-buttons">
-          <button type="button" class="roll-btn" data-action="attack">Attack</button>
-          <button type="button" class="roll-btn" data-action="damage">Damage</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    bindOverlayActions(overlay, resolve);
-  });
+  return openChoiceOverlay("ich-ms-weapon-overlay", title, [
+    ["attack", "Attack"],
+    ["damage", "Damage"]
+  ]);
 }
 
 /**
- * Swipe HP dialog: +/- amount, Heal / Damage via applyDamage, temp field apply.
+ * HP dialog: +/- amount, Heal / Damage via applyDamage, temp field apply.
  * @param {Actor} actor
  * @returns {Promise<boolean>} whether HP changed
  */
@@ -193,7 +200,7 @@ export async function openHpDialogOverlay(actor) {
       ui.notifications.warn("Enter an amount of at least 1.");
       return;
     }
-    await applyDamageLikeSwipe(actor, -amount);
+    await applyActorDamage(actor, -amount);
     changed = true;
     refreshHeader();
   });
@@ -206,7 +213,7 @@ export async function openHpDialogOverlay(actor) {
       ui.notifications.warn("Enter an amount of at least 1.");
       return;
     }
-    await applyDamageLikeSwipe(actor, amount);
+    await applyActorDamage(actor, amount);
     changed = true;
     refreshHeader();
   });
@@ -270,53 +277,11 @@ export async function openHpDialogOverlay(actor) {
   return changed;
 }
 
-/** Same as Swipe: applyDamage(n) damage, applyDamage(-n) heal. */
-async function applyDamageLikeSwipe(actor, amount) {
+async function applyActorDamage(actor, amount) {
   amount = Math.floor(Number(amount));
   if (!Number.isFinite(amount) || amount === 0) return;
-
-  if (typeof actor.applyDamage === "function") {
-    try {
-      if (amount < 0) {
-        await actor.applyDamage([{ value: Math.abs(amount), type: "healing" }]);
-      } else {
-        await actor.applyDamage([{ value: amount }]);
-      }
-      return;
-    } catch {
-      try {
-        await actor.applyDamage(amount);
-        return;
-      } catch {
-        /* fall through */
-      }
-    }
-  }
-
-  const hp = actor.system?.attributes?.hp ?? {};
-  if (amount < 0) {
-    const heal = Math.abs(amount);
-    const max = Number(hp.max) || 0;
-    const tempmax = Number(hp.tempmax) || 0;
-    const effectiveMax = Math.max(0, max + tempmax);
-    await actor.update({
-      "system.attributes.hp.value": Math.min(effectiveMax, (Number(hp.value) || 0) + heal)
-    });
-    return;
-  }
-
-  let remaining = amount;
-  let temp = Number(hp.temp) || 0;
-  let value = Number(hp.value) || 0;
-  if (temp > 0) {
-    const used = Math.min(temp, remaining);
-    temp -= used;
-    remaining -= used;
-  }
-  await actor.update({
-    "system.attributes.hp.value": Math.max(0, value - remaining),
-    "system.attributes.hp.temp": temp
-  });
+  if (amount < 0) return applyActorHealing(actor, Math.abs(amount));
+  return applyDamage(actor, amount);
 }
 
 function escapeHtml(text) {
@@ -480,31 +445,7 @@ export async function openItemDetailOverlay(item, options = {}) {
       </div>
     `;
     document.body.appendChild(overlay);
-
-    let done = false;
-    const finish = (value) => {
-      if (done) return;
-      done = true;
-      overlay.remove();
-      resolve(value);
-    };
-
-    overlay.addEventListener("pointerup", (ev) => {
-      if (ev.target === overlay) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        finish(null);
-      }
-    });
-    overlay.querySelectorAll("[data-action]").forEach((btn) => {
-      btn.addEventListener("pointerup", (ev) => {
-        ev.preventDefault();
-        ev.stopPropagation();
-        const action = btn.dataset.action;
-        finish(action === "close" || action === "cancel" ? null : action);
-      });
-    });
-    requestAnimationFrame(() => overlay.classList.add("visible"));
+    bindOverlayActions(overlay, resolve);
   });
 }
 
@@ -560,7 +501,6 @@ export async function openMobileSettingsMenu() {
     `;
     document.body.appendChild(overlay);
     bindOverlayActions(overlay, resolve);
-    requestAnimationFrame(() => overlay.classList.add("visible"));
   });
 }
 

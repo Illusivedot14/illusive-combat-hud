@@ -4,17 +4,21 @@ import {
   swipeStyleEvaluateAndToMessage,
   broadcastDiceSoNiceToOthers
 } from "./mobile-sheet-dsn.mjs";
-import { pickRollModeOverlay, pickAttackOrDamageOverlay, openHpDialogOverlay, openItemDetailOverlay, openAccentColorOverlay, openDiceSoNiceSettings, openMobileSettingsMenu } from "./mobile-sheet-dialogs.mjs";
+import {
+  pickRollModeOverlay,
+  pickAttackOrDamageOverlay,
+  openHpDialogOverlay,
+  openItemDetailOverlay,
+  openAccentColorOverlay,
+  openDiceSoNiceSettings,
+  openMobileSettingsMenu,
+  withSheetDropped
+} from "./mobile-sheet-dialogs.mjs";
 import { canUseItem } from "./mobile-sheet-data.mjs";
 import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
-
-function dropSheetForDialog() {
-  document.getElementById("ich-mobile-sheet-root")?.classList.add("ich-mobile-sheet-behind-dialog");
-}
-
-function raiseSheetAfterDialog() {
-  document.getElementById("ich-mobile-sheet-root")?.classList.remove("ich-mobile-sheet-behind-dialog");
-}
+import { useActivityFromHud } from "../../common/midi.mjs";
+import { listActivities } from "../../common/ability-utils.mjs";
+import { findTokenForActor } from "../../common/reaction-context.mjs";
 
 function signed(n) {
   const v = Number(n) || 0;
@@ -23,22 +27,12 @@ function signed(n) {
 
 async function pickRollMode(title) {
   ensureMobileSheetStyles();
-  dropSheetForDialog();
-  try {
-    return await pickRollModeOverlay(title);
-  } finally {
-    raiseSheetAfterDialog();
-  }
+  return withSheetDropped(() => pickRollModeOverlay(title));
 }
 
 async function pickAttackOrDamage(title) {
   ensureMobileSheetStyles();
-  dropSheetForDialog();
-  try {
-    return await pickAttackOrDamageOverlay(title);
-  } finally {
-    raiseSheetAfterDialog();
-  }
+  return withSheetDropped(() => pickAttackOrDamageOverlay(title));
 }
 
 function d20Formula(modTotal, mode) {
@@ -101,20 +95,6 @@ async function rollMobileD20(actor, kind, id) {
     flavor
   });
   return true;
-}
-
-function listActivities(item) {
-  const acts = item?.system?.activities;
-  if (!acts) return [];
-  if (Array.isArray(acts)) return acts.filter(Boolean);
-  if (acts.contents) return [...acts.contents].filter(Boolean);
-  if (typeof acts[Symbol.iterator] === "function") {
-    try { return [...acts].filter(Boolean); } catch { /* fall through */ }
-  }
-  if (typeof acts.values === "function") {
-    try { return [...acts.values()].filter(Boolean); } catch { /* fall through */ }
-  }
-  return [];
 }
 
 function getAttackActivity(item) {
@@ -279,14 +259,6 @@ async function rollMobileAttack(actor, item) {
   return true;
 }
 
-function escapeHtml(text) {
-  return String(text ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
-}
-
 /** Tap item: open detail overlay with description + bottom actions. */
 async function inspectAndActItem(actor, itemId, event) {
   const item = actor.items.get(itemId);
@@ -319,10 +291,8 @@ async function inspectAndActItem(actor, itemId, event) {
     typeBit = item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : "";
   }
 
-  dropSheetForDialog();
-  let choice = null;
-  try {
-    choice = await openItemDetailOverlay(item, {
+  return withSheetDropped(async () => {
+    const choice = await openItemDetailOverlay(item, {
       subtitle: typeBit,
       canUse: canUseItem(item),
       canEquip: "equipped" in (item.system ?? {}),
@@ -332,116 +302,79 @@ async function inspectAndActItem(actor, itemId, event) {
       canPrepare,
       prepared
     });
-  } finally {
-    if (!choice) raiseSheetAfterDialog();
-  }
-  if (!choice) return false;
+    if (!choice) return false;
 
-  try {
-    if (choice === "equip") {
-      await item.update({ "system.equipped": !item.system.equipped });
-      return true;
-    }
-    if (choice === "prepare") {
-      await item.update({ "system.preparation.prepared": !prepared });
-      return true;
-    }
-    if (choice === "attack") return rollMobileAttack(actor, item);
-    if (choice === "damage") return rollMobileDamage(actor, item);
-    if (choice === "use") {
-      const used = await useItemLikeSheet(item, event);
-      if (!used) {
-        ui.notifications.warn("That item cannot be used.");
-        return false;
+    try {
+      if (choice === "equip") {
+        await item.update({ "system.equipped": !item.system.equipped });
+        return true;
       }
-      return true;
+      if (choice === "prepare") {
+        await item.update({ "system.preparation.prepared": !prepared });
+        return true;
+      }
+      if (choice === "attack") return rollMobileAttack(actor, item);
+      if (choice === "damage") return rollMobileDamage(actor, item);
+      if (choice === "use") {
+        const used = await useItemLikeSheet(actor, item, event);
+        if (!used) {
+          ui.notifications.warn("That item cannot be used.");
+          return false;
+        }
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error(`${MODULE_ID} | mobile inspect-item failed`, itemId, err);
+      ui.notifications.error("Could not use that item.");
+      return false;
     }
-    return false;
-  } catch (err) {
-    console.error(`${MODULE_ID} | mobile inspect-item failed`, itemId, err);
-    ui.notifications.error("Could not use that item.");
-    return false;
-  } finally {
-    raiseSheetAfterDialog();
-  }
-}
-
-/** @deprecated Prefer inspectAndActItem — kept for any leftover use-item hooks. */
-async function confirmAndUseItem(actor, itemId, event) {
-  return inspectAndActItem(actor, itemId, event);
+  });
 }
 
 /**
- * dnd5e 3+/4+/5: prefer Activity#use, then Item#use, then displayCard as a last resort.
+ * Same Midi fire path as the action bar (`useActivityFromHud` in midi.mjs).
+ * Skip HUD target validation so Midi/dnd5e can prompt on phones.
  */
-async function useItemLikeSheet(item, event) {
+async function useItemLikeSheet(actor, item, event) {
   const activity = getPrimaryUseActivity(item);
-
-  if (activity && typeof activity.use === "function") {
-    await activity.use({ event });
-    return true;
-  }
-
-  if (typeof item.use === "function") {
-    // dnd5e signatures vary across versions — try modern first, then legacy.
-    try {
-      await item.use({ event }, { configure: false });
-      return true;
-    } catch {
-      await item.use({}, { event, configure: false });
-      return true;
-    }
-  }
-
-  if (activity && typeof activity.rollAttack === "function") {
-    await activity.rollAttack({ event });
-    return true;
-  }
-
-  if (typeof item.displayCard === "function") {
-    await item.displayCard();
-    return true;
-  }
-
-  if (typeof item.toChat === "function") {
-    await item.toChat();
-    return true;
-  }
-
-  return false;
+  const token = findTokenForActor(actor, { preferControlled: true }) ?? { actor };
+  const section = activity?.activation?.type ?? item?.system?.activation?.type ?? "action";
+  return useActivityFromHud(token, item, activity, section, event, {}, {
+    validateTargets: false,
+    clearTargets: false
+  });
 }
 
 /** Same as Amethyst: rollInitiativeDialog, else rollInitiative({ createCombatants: true }). */
 async function rollInitiativeLikeAmethyst(actor) {
-  dropSheetForDialog();
-  try {
-    if (typeof actor.rollInitiativeDialog === "function") {
-      await actor.rollInitiativeDialog();
-      return true;
-    }
-    if (typeof actor.rollInitiative === "function") {
-      const result = await actor.rollInitiative({ createCombatants: true, rerollInitiative: true });
-      await broadcastDiceSoNiceToOthers(result, {
-        actor,
-        speaker: ChatMessage.getSpeaker({ actor })
+  return withSheetDropped(async () => {
+    try {
+      if (typeof actor.rollInitiativeDialog === "function") {
+        await actor.rollInitiativeDialog();
+        return true;
+      }
+      if (typeof actor.rollInitiative === "function") {
+        const result = await actor.rollInitiative({ createCombatants: true, rerollInitiative: true });
+        await broadcastDiceSoNiceToOthers(result, {
+          actor,
+          speaker: ChatMessage.getSpeaker({ actor })
+        });
+        return true;
+      }
+      const total = Number(actor.system?.attributes?.init?.total) || 0;
+      await swipeStyleEvaluateAndToMessage(d20Formula(total, "normal"), {
+        data: actor.getRollData?.() ?? {},
+        speaker: ChatMessage.getSpeaker({ actor }),
+        flavor: "Initiative"
       });
       return true;
+    } catch (err) {
+      console.error(`${MODULE_ID} | initiative roll failed`, err);
+      ui.notifications.error("Initiative roll failed.");
+      return false;
     }
-    // Last resort: plain init roll into chat (DSN via allowInteractive:false path).
-    const total = Number(actor.system?.attributes?.init?.total) || 0;
-    await swipeStyleEvaluateAndToMessage(d20Formula(total, "normal"), {
-      data: actor.getRollData?.() ?? {},
-      speaker: ChatMessage.getSpeaker({ actor }),
-      flavor: "Initiative"
-    });
-    return true;
-  } catch (err) {
-    console.error(`${MODULE_ID} | initiative roll failed`, err);
-    ui.notifications.error("Initiative roll failed.");
-    return false;
-  } finally {
-    raiseSheetAfterDialog();
-  }
+  });
 }
 
 /**
@@ -536,18 +469,13 @@ async function applyDeathSaveResult(actor, roll) {
 
 async function openHpDialogFixed(actor) {
   ensureMobileSheetStyles();
-  dropSheetForDialog();
-  try {
-    return await openHpDialogOverlay(actor);
-  } finally {
-    raiseSheetAfterDialog();
-  }
+  return withSheetDropped(() => openHpDialogOverlay(actor));
 }
 
 export async function handleMobileSheetAction(actor, action, dataset, event) {
   if (!actor) return false;
 
-  if (!actor.isOwner && !["close", "open-dndbeyond", "open-full-sheet", "open-dice-settings", "open-ui-color", "open-settings-menu"].includes(action)) {
+  if (!actor.isOwner && !["close", "open-dndbeyond", "open-dice-settings", "open-ui-color", "open-settings-menu"].includes(action)) {
     ui.notifications.warn(ich.warning("noOwner"));
     return false;
   }
@@ -611,69 +539,37 @@ export async function handleMobileSheetAction(actor, action, dataset, event) {
     }
     case "short-rest":
       if (typeof actor.shortRest === "function") {
-        dropSheetForDialog();
-        try {
-          await actor.shortRest();
-        } finally {
-          raiseSheetAfterDialog();
-        }
+        await withSheetDropped(() => actor.shortRest());
         return true;
       }
       return false;
     case "long-rest":
       if (typeof actor.longRest === "function") {
-        dropSheetForDialog();
-        try {
-          await actor.longRest();
-        } finally {
-          raiseSheetAfterDialog();
-        }
+        await withSheetDropped(() => actor.longRest());
         return true;
       }
       return false;
     case "open-dndbeyond":
-    case "open-full-sheet": // legacy action id
       return openDndBeyondCharacter(actor);
-    case "open-settings-menu": {
-      dropSheetForDialog();
-      const choice = await openMobileSettingsMenu();
-      if (choice === "ui-color") {
-        try {
+    case "open-settings-menu":
+      return withSheetDropped(async () => {
+        const choice = await openMobileSettingsMenu();
+        if (choice === "ui-color") {
           await openAccentColorOverlay();
           return true;
-        } finally {
-          raiseSheetAfterDialog();
         }
-      }
-      if (choice === "dice") {
-        try {
+        if (choice === "dice") {
           await openDiceSoNiceSettings();
           return true;
-        } finally {
-          raiseSheetAfterDialog();
         }
-      }
-      raiseSheetAfterDialog();
-      return false;
-    }
-    case "open-dice-settings": {
-      dropSheetForDialog();
-      try {
-        await openDiceSoNiceSettings();
-        return true;
-      } finally {
-        raiseSheetAfterDialog();
-      }
-    }
-    case "open-ui-color": {
-      dropSheetForDialog();
-      try {
-        await openAccentColorOverlay();
-        return true;
-      } finally {
-        raiseSheetAfterDialog();
-      }
-    }
+        return false;
+      });
+    case "open-dice-settings":
+      await withSheetDropped(() => openDiceSoNiceSettings());
+      return true;
+    case "open-ui-color":
+      await withSheetDropped(() => openAccentColorOverlay());
+      return true;
     default:
       return false;
   }

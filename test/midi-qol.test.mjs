@@ -2,12 +2,9 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { installFoundry, makeActor } from "./helpers.mjs";
 import {
   getMidiActions,
-  isActionAvailable,
-  isBonusActionAvailable,
-  isReactionAvailable,
-  getEconomyAvailability,
-  canSpendEconomy
-} from "../src/common/midi-qol.mjs";
+  isEconomyAvailable,
+  getEconomyAvailability
+} from "../src/common/midi.mjs";
 
 function actorWithMidi(actions) {
   return makeActor({ flags: { "midi-qol": { actions } } });
@@ -22,37 +19,37 @@ describe("midi-qol economy", () => {
     expect(getMidiActions(null)).toEqual({});
   });
 
-  describe("isActionAvailable", () => {
-    it("is true with no actor", () => expect(isActionAvailable(null)).toBe(true));
+  describe("isEconomyAvailable action", () => {
+    it("is true with no actor", () => expect(isEconomyAvailable(null, "action")).toBe(true));
     it("is true when the action flag is unset", () =>
-      expect(isActionAvailable(makeActor())).toBe(true));
+      expect(isEconomyAvailable(makeActor(), "action")).toBe(true));
     it("is false when the action has been spent", () =>
-      expect(isActionAvailable(actorWithMidi({ action: true }))).toBe(false));
+      expect(isEconomyAvailable(actorWithMidi({ action: true }), "action")).toBe(false));
   });
 
-  describe("isBonusActionAvailable", () => {
+  describe("isEconomyAvailable bonus", () => {
     it("falls back to used/max counts from flags", () => {
-      expect(isBonusActionAvailable(actorWithMidi({ bonusActionsUsed: 0, bonusActionsMax: 1 }))).toBe(true);
-      expect(isBonusActionAvailable(actorWithMidi({ bonusActionsUsed: 1, bonusActionsMax: 1 }))).toBe(false);
+      expect(isEconomyAvailable(actorWithMidi({ bonusActionsUsed: 0, bonusActionsMax: 1 }), "bonus")).toBe(true);
+      expect(isEconomyAvailable(actorWithMidi({ bonusActionsUsed: 1, bonusActionsMax: 1 }), "bonus")).toBe(false);
     });
 
     it("prefers the midi API when present", () => {
       installFoundry({ midiApi: { hasUsedBonusAction: () => true } });
-      expect(isBonusActionAvailable(makeActor())).toBe(false);
+      expect(isEconomyAvailable(makeActor(), "bonus")).toBe(false);
       installFoundry({ midiApi: { hasUsedBonusAction: () => false } });
-      expect(isBonusActionAvailable(makeActor())).toBe(true);
+      expect(isEconomyAvailable(makeActor(), "bonus")).toBe(true);
     });
   });
 
-  describe("isReactionAvailable", () => {
+  describe("isEconomyAvailable reaction", () => {
     it("falls back to used/max counts from flags", () => {
-      expect(isReactionAvailable(actorWithMidi({ reactionsUsed: 0, reactionsMax: 1 }))).toBe(true);
-      expect(isReactionAvailable(actorWithMidi({ reactionsUsed: 1, reactionsMax: 1 }))).toBe(false);
+      expect(isEconomyAvailable(actorWithMidi({ reactionsUsed: 0, reactionsMax: 1 }), "reaction")).toBe(true);
+      expect(isEconomyAvailable(actorWithMidi({ reactionsUsed: 1, reactionsMax: 1 }), "reaction")).toBe(false);
     });
 
     it("prefers the midi API when present", () => {
       installFoundry({ midiApi: { hasUsedReaction: () => true } });
-      expect(isReactionAvailable(makeActor())).toBe(false);
+      expect(isEconomyAvailable(makeActor(), "reaction")).toBe(false);
     });
   });
 
@@ -61,10 +58,10 @@ describe("midi-qol economy", () => {
     expect(getEconomyAvailability(actor)).toEqual({ action: false, bonus: true, reaction: true });
   });
 
-  it("canSpendEconomy reads a single economy and defaults unknown types to true", () => {
+  it("isEconomyAvailable defaults unknown types to true", () => {
     const actor = actorWithMidi({ action: true });
-    expect(canSpendEconomy(actor, "action")).toBe(false);
-    expect(canSpendEconomy(actor, "bonus")).toBe(true);
-    expect(canSpendEconomy(actor, "legendary")).toBe(true);
+    expect(isEconomyAvailable(actor, "action")).toBe(false);
+    expect(isEconomyAvailable(actor, "bonus")).toBe(true);
+    expect(isEconomyAvailable(actor, "legendary")).toBe(true);
   });
 });

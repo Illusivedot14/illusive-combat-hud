@@ -8,6 +8,7 @@ import { getMobileSheetActor } from "./mobile-sheet.mjs";
 import { getMobileFocusedActor } from "./mobile-focus.mjs";
 import { swipeStyleEvaluateAndToMessage } from "./mobile-sheet-dsn.mjs";
 import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
+import { ensureDomRoot } from "../../common/viewport.mjs";
 
 const ROOT_ID = "ich-mobile-dice-roller";
 
@@ -35,12 +36,9 @@ function rootEl() {
 }
 
 function ensureRoot() {
-  let root = rootEl();
-  if (root) return root;
-  root = document.createElement("div");
-  root.id = ROOT_ID;
-  root.className = "ich-mobile-dice-roller";
-  root.innerHTML = `
+  return ensureDomRoot(ROOT_ID, {
+    className: "ich-mobile-dice-roller",
+    html: `
     <button type="button" class="ich-dice-toggle" data-action="toggle" title="Manual roller" aria-expanded="false" aria-controls="ich-dice-panel">
       <i class="fa-solid fa-dice-d20"></i>
     </button>
@@ -68,9 +66,8 @@ function ensureRoot() {
         <button type="button" class="ich-dice-roll-btn" data-action="roll">Roll</button>
       </div>
     </div>
-  `;
-  document.body.appendChild(root);
-  return root;
+  `
+  });
 }
 
 function commandInput() {

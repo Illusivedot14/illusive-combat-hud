@@ -8,42 +8,20 @@ import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
 import {
   openAccentColorOverlay,
   openDiceSoNiceSettings,
-  openMobileSettingsMenu
+  openMobileSettingsMenu,
+  withSheetDropped
 } from "./mobile-sheet-dialogs.mjs";
 
 const GEAR_ID = "ich-mobile-global-gear";
 let bound = false;
 
-function dropSheet() {
-  document.getElementById("ich-mobile-sheet-root")?.classList.add("ich-mobile-sheet-behind-dialog");
-}
-
-function raiseSheet() {
-  document.getElementById("ich-mobile-sheet-root")?.classList.remove("ich-mobile-sheet-behind-dialog");
-}
-
 async function runSettingsFlow() {
   ensureMobileSheetStyles();
-  dropSheet();
-  const choice = await openMobileSettingsMenu();
-  if (choice === "ui-color") {
-    try {
-      await openAccentColorOverlay();
-    } finally {
-      raiseSheet();
-    }
-    return;
-  }
-  if (choice === "dice") {
-    dropSheet();
-    try {
-      await openDiceSoNiceSettings();
-    } finally {
-      raiseSheet();
-    }
-    return;
-  }
-  raiseSheet();
+  await withSheetDropped(async () => {
+    const choice = await openMobileSettingsMenu();
+    if (choice === "ui-color") await openAccentColorOverlay();
+    else if (choice === "dice") await openDiceSoNiceSettings();
+  });
 }
 
 export function renderMobileGlobalGear() {

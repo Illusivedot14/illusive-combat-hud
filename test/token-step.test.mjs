@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { installFoundry } from "./helpers.mjs";
 import {
   findActorTokenDoc,
+  findTokenViewById,
   getWalkUsedFeet,
   nextTokenStep,
   sceneGridStep,
@@ -97,6 +98,32 @@ describe("tokenViewFromDoc", () => {
   it("wraps a token document for movement helpers", () => {
     const doc = { id: "t1", actor: { id: "a1" } };
     expect(tokenViewFromDoc(doc)).toEqual({
+      id: "t1",
+      actor: { id: "a1" },
+      document: doc,
+      isOwner: undefined
+    });
+  });
+});
+
+describe("findTokenViewById", () => {
+  it("returns the canvas token when present", () => {
+    const token = { id: "t1", actor: { id: "a1" } };
+    installFoundry();
+    globalThis.canvas.tokens.get = (id) => (id === "t1" ? token : null);
+    expect(findTokenViewById("t1")).toBe(token);
+  });
+
+  it("wraps the scene document when the canvas has no token", () => {
+    const doc = { id: "t1", actor: { id: "a1" } };
+    installFoundry();
+    globalThis.canvas.tokens.get = () => null;
+    globalThis.game.scenes = {
+      active: { id: "scene1", tokens: { get: (id) => (id === "t1" ? doc : null) } },
+      current: null,
+      get: () => null
+    };
+    expect(findTokenViewById("t1")).toEqual({
       id: "t1",
       actor: { id: "a1" },
       document: doc,

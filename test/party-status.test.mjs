@@ -20,7 +20,7 @@ const cardOptions = {
 };
 
 describe("buildPartyMember", () => {
-	beforeEach(() => installFoundry({ settings: { showPartyNames: true } }));
+	beforeEach(() => installFoundry());
 
 	it("never shows portrait names", () => {
 		const token = partyToken({ id: "t1" });
@@ -85,7 +85,7 @@ describe("buildPartyMember", () => {
 			started: true,
 			combatants: [makeCombatant({ tokenId: "t1", defeated: true })]
 		});
-		installFoundry({ combat, settings: { showPartyNames: true } });
+		installFoundry({ combat });
 
 		const member = buildPartyMember(token, { ...cardOptions, inCombat: true });
 		expect(member.isDefeated).toBe(true);
@@ -106,7 +106,7 @@ describe("buildPartyMember", () => {
 });
 
 describe("getPartyLayout", () => {
-	beforeEach(() => installFoundry({ settings: { showPartyNames: true } }));
+	beforeEach(() => installFoundry());
 
 	it("builds members without a layout signature", () => {
 		const layout = getPartyLayout([partyToken({ id: "t1" })], "t1");

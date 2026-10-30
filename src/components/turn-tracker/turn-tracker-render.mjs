@@ -2,11 +2,8 @@ import { MODULE_ID, MODULE_PATH, ichRenderTemplate } from "../../common/constant
 import { buildUnitData } from "../../common/actor-data.mjs";
 import { getViewedCombat } from "../../common/combat.mjs";
 import { getCarouselLayout } from "./carousel-layout.mjs";
-import {
-	positionCarousel,
-	playTurnSlide,
-	positionTurnTracker
-} from "./turn-tracker-carousel.mjs";
+import { playTurnSlide, positionCarousel } from "./turn-tracker-motion.mjs";
+import { positionTurnTracker } from "./turn-tracker-position.mjs";
 import {
 	applyCarouselLayout,
 	needsFullRebuild,

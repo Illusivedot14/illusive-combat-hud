@@ -1,4 +1,5 @@
 import { ich } from "../../common/i18n.mjs";
+import { setImportant } from "../../common/viewport.mjs";
 import { shouldShowCameraPad } from "../../common/hooks/touch-table.mjs";
 import {
   applyCanvasView,
@@ -51,12 +52,6 @@ const ARROWS = {
   left: { x: -1, y: 0 },
   right: { x: 1, y: 0 }
 };
-
-function setImportant(el, props) {
-  for (const [name, value] of Object.entries(props)) {
-    el.style.setProperty(name, value, "important");
-  }
-}
 
 const PAD_SHELL = `
 <div id="${PAD_ID}" class="ich-camera-pad">
@@ -344,8 +339,7 @@ function placePad(root) {
     viewportHeight: window.innerHeight,
     obstacles: obstacleBoxes()
   });
-  root.style.setProperty("left", `${left}px`, "important");
-  root.style.setProperty("bottom", `${bottom}px`, "important");
+  setImportant(root, { left: `${left}px`, bottom: `${bottom}px` });
 }
 
 let placeRaf = 0;

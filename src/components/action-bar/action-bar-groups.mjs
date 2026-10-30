@@ -68,20 +68,16 @@ function sortGroupIds(ids) {
  * @param {object[]} abilities
  * @param {Actor} actor
  * @param {string} sectionId
- * @param {{ favoritesOnly?: boolean }} options
  */
-export function buildAbilityGroups(abilities, actor, sectionId, { favoritesOnly = false } = {}) {
+export function buildAbilityGroups(abilities, actor, sectionId) {
   const favorites = getFavorites(actor);
   const enriched = abilities.map((ability) => {
     const key = getAbilityKey(ability);
     return { ...ability, abilityKey: key, isFavorite: favorites.has(key) };
   });
 
-  let filtered = enriched;
-  if (favoritesOnly) filtered = enriched.filter((a) => a.isFavorite);
-
   const buckets = new Map();
-  for (const ability of filtered) {
+  for (const ability of enriched) {
     let groupId = groupIdForAbility(ability, actor);
     if (sectionId === "standard" && !ability.isStandard && groupId !== "free") {
       groupId = "interactions";
@@ -91,7 +87,7 @@ export function buildAbilityGroups(abilities, actor, sectionId, { favoritesOnly 
   }
 
   const favoriteAbilities = enriched.filter((a) => a.isFavorite);
-  if (favoriteAbilities.length && !favoritesOnly) {
+  if (favoriteAbilities.length) {
     buckets.set("favorites", favoriteAbilities);
   }
 

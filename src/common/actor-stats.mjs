@@ -1,5 +1,25 @@
 import { ichCore } from "./i18n.mjs";
 
+export const ABILITY_ORDER = ["str", "dex", "con", "int", "wis", "cha"];
+export const SKILL_ORDER = [
+  "acr", "ani", "arc", "ath", "dec", "his", "ins", "itm", "inv",
+  "med", "nat", "prc", "prf", "per", "rel", "slt", "ste", "sur"
+];
+
+export function abilityLabel(id) {
+  return CONFIG.DND5E?.abilities?.[id]?.label ?? String(id ?? "").toUpperCase();
+}
+
+export function skillLabel(id) {
+  return CONFIG.DND5E?.skills?.[id]?.label ?? String(id ?? "").toUpperCase();
+}
+
+export function formatMod(value, empty = "—") {
+  if (!Number.isFinite(Number(value))) return empty;
+  const n = Math.floor(Number(value));
+  return n >= 0 ? `+${n}` : `${n}`;
+}
+
 export function statPercent(stat) {
   if (!stat?.max || stat.max <= 0) return 0;
   return Math.max(0, Math.min(100, (stat.value / stat.max) * 100));

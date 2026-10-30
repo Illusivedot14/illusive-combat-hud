@@ -132,7 +132,6 @@ async function onSocketMessage(data) {
 }
 
 /**
- * Same shape as Swipe DiceRoller:
  *   new Roll(formula) → evaluate() → toMessage()
  *
  * allowInteractive:false so dice are NOT tagged with DSN interactive fulfillment.

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { installFoundry, makeToken } from "./helpers.mjs";
-import { checkAbilityRange, buildTargetListLabel } from "../src/common/range-utils.mjs";
+import { checkAbilityRange, buildTargetListLabel } from "../src/common/midi.mjs";
 import { initI18n } from "../src/common/i18n/core.mjs";
 
 const ACTIVITY = { id: "act1" };

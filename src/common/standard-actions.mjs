@@ -1,6 +1,6 @@
 import { MODULE_ID } from "./constants.mjs";
 import { ich } from "./i18n.mjs";
-import { markActionUsed } from "./midi-qol.mjs";
+import { markEconomyUsed } from "./midi.mjs";
 
 export const STANDARD_ACTION_IDS = ["dash", "disengage", "dodge", "help", "hide", "ready"];
 
@@ -33,21 +33,28 @@ export function buildStandardActions(actor, context = {}) {
   }));
 }
 
-async function spendAction(actor) {
-  await markActionUsed(actor);
-}
-
 async function createRoundEffect(actor, name, icon, statuses = []) {
   const combat = game.combat;
-  const effectData = {
+  await actor.createEmbeddedDocuments("ActiveEffect", [{
     name,
     icon,
     statuses,
     duration: combat?.started
       ? { rounds: 1, startRound: combat.round, startTurn: combat.turn }
       : { seconds: 6 }
-  };
-  await actor.createEmbeddedDocuments("ActiveEffect", [effectData]);
+  }]);
+}
+
+/** Shared spend + chat closeout. Each case in executeStandardAction used this pair. */
+async function finishStandard(token, actionId, chat, afterSpend) {
+  const actor = token.actor;
+  await markEconomyUsed(actor, "action");
+  await afterSpend?.();
+  await ChatMessage.create({
+    speaker: ChatMessage.getSpeaker({ actor, token: token.document }),
+    content: `<strong>${ich.action(actionId)}</strong> — ${chat}`
+  });
+  return true;
 }
 
 export async function executeStandardAction(token, actionId) {
@@ -61,31 +68,16 @@ export async function executeStandardAction(token, actionId) {
 
   switch (actionId) {
     case "dash":
-      await spendAction(actor);
-      await actor.setFlag(MODULE_ID, "dashing", true);
-      await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor, token: token.document }),
-        content: `<strong>${label}</strong> — ${actor.name} doubles movement this turn.`
-      });
-      return true;
+      return finishStandard(token, actionId, `${actor.name} doubles movement this turn.`, () =>
+        actor.setFlag(MODULE_ID, "dashing", true));
 
     case "disengage":
-      await spendAction(actor);
-      await createRoundEffect(actor, label, STANDARD_ACTION_ICONS.disengage);
-      await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor, token: token.document }),
-        content: `<strong>${label}</strong> — ${actor.name} avoids opportunity attacks until their next turn.`
-      });
-      return true;
+      return finishStandard(token, actionId, `${actor.name} avoids opportunity attacks until their next turn.`, () =>
+        createRoundEffect(actor, label, STANDARD_ACTION_ICONS.disengage));
 
     case "dodge":
-      await spendAction(actor);
-      await actor.toggleStatusEffect("dodging");
-      await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor, token: token.document }),
-        content: `<strong>${label}</strong> — ${actor.name} is dodging.`
-      });
-      return true;
+      return finishStandard(token, actionId, `${actor.name} is dodging.`, () =>
+        actor.toggleStatusEffect("dodging"));
 
     case "help": {
       const target = [...(game.user.targets ?? [])][0];
@@ -93,27 +85,13 @@ export async function executeStandardAction(token, actionId) {
         ui.notifications.warn(ich.warning("needAlly"));
         return false;
       }
-      await spendAction(actor);
-      await createRoundEffect(
-        target.actor,
-        `${label} from ${actor.name}`,
-        STANDARD_ACTION_ICONS.help
-      );
-      await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor, token: token.document }),
-        content: `<strong>${label}</strong> — ${actor.name} helps ${target.name} (advantage on the next ability check).`
-      });
-      return true;
+      return finishStandard(token, actionId, `${actor.name} helps ${target.name} (advantage on the next ability check).`, () =>
+        createRoundEffect(target.actor, `${label} from ${actor.name}`, STANDARD_ACTION_ICONS.help));
     }
 
     case "hide":
-      await spendAction(actor);
-      await actor.toggleStatusEffect("hiding");
-      await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor, token: token.document }),
-        content: `<strong>${label}</strong> — ${actor.name} attempts to hide.`
-      });
-      return true;
+      return finishStandard(token, actionId, `${actor.name} attempts to hide.`, () =>
+        actor.toggleStatusEffect("hiding"));
 
     case "ready": {
       const flavor = await new Promise((resolve) => {
@@ -135,15 +113,9 @@ export async function executeStandardAction(token, actionId) {
           default: "ok"
         }, { width: 360 }).render(true);
       });
-
       if (!flavor) return false;
-      await spendAction(actor);
-      await actor.setFlag(MODULE_ID, "readied", flavor);
-      await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor, token: token.document }),
-        content: `<strong>${label}</strong> — ${actor.name}: ${flavor}`
-      });
-      return true;
+      return finishStandard(token, actionId, `${actor.name}: ${flavor}`, () =>
+        actor.setFlag(MODULE_ID, "readied", flavor));
     }
 
     default:

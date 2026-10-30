@@ -41,8 +41,7 @@ describe("action-bar-foundry-ui", () => {
     installFoundry({
       settings: {
         enableActionBar: true,
-        actionBarMinimized: false,
-        hideHotbarWhenVisible: true
+        actionBarMinimized: false
       }
     });
     mountActionBarDom();

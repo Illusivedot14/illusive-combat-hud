@@ -7,6 +7,7 @@
  */
 
 import { MODULE_ID } from "../constants.mjs";
+import { getConcentrationEffect } from "../midi.mjs";
 
 const INSTANT_REGION_DELAY_MS = 6000;
 const LINK_RETRY_DELAYS_MS = [250, 1000, 2500];
@@ -45,7 +46,7 @@ function isConcentrationEffect(effect) {
 
 function findConcentrationEffect(actor, item) {
   if (!actor || !item) return null;
-  const viaMidi = globalThis.MidiQOL?.getConcentrationEffect?.(actor, item);
+  const viaMidi = getConcentrationEffect(actor, item);
   if (viaMidi) return viaMidi;
   return actor.effects.find((effect) => isConcentrationEffect(effect)
     && (effect.origin === item.uuid || effect.flags?.dnd5e?.item?.id === item.id)) ?? null;

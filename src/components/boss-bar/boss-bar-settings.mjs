@@ -204,4 +204,3 @@ export async function migrateBossBarSettings() {
   }
 }
 
-export { DEFAULT_BAR_STYLE as defaultBarStyleForExport };

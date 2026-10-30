@@ -1,33 +1,5 @@
 import { ich } from "../../common/i18n.mjs";
-
-const SKILL_ORDER = [
-  "acr", "ani", "arc", "ath", "dec", "his", "ins", "itm", "inv", "med", "nat", "prc", "prf", "per", "rel", "slt", "ste", "sur"
-];
-
-const ABILITY_ORDER = ["str", "dex", "con", "int", "wis", "cha"];
-
-let drawerOpen = false;
-
-export function isDrawerOpen() {
-  return drawerOpen;
-}
-
-export function setDrawerOpen(open) {
-  drawerOpen = open;
-}
-
-export function toggleDrawer() {
-  drawerOpen = !drawerOpen;
-  return drawerOpen;
-}
-
-function skillLabel(id) {
-  return CONFIG.DND5E?.skills?.[id]?.label ?? id.toUpperCase();
-}
-
-function abilityLabel(id) {
-  return CONFIG.DND5E?.abilities?.[id]?.label ?? id.toUpperCase();
-}
+import { ABILITY_ORDER, SKILL_ORDER, abilityLabel, formatMod, skillLabel } from "../../common/actor-stats.mjs";
 
 function toolLabel(id, fallback = null) {
   const lookup = CONFIG.DND5E?.enrichmentLookup?.tools?.[id]?.label
@@ -76,12 +48,6 @@ function collectToolEntries(actor) {
 
   tools.sort((a, b) => String(a.label).localeCompare(String(b.label), undefined, { sensitivity: "base" }));
   return tools;
-}
-
-function formatMod(value) {
-  if (!Number.isFinite(Number(value))) return null;
-  const n = Math.floor(Number(value));
-  return n >= 0 ? `+${n}` : `${n}`;
 }
 
 export function buildDrawerEntries(actor) {

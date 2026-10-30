@@ -20,16 +20,6 @@ import { bindSpellRegionCleanup } from "./spell-regions.mjs";
 import { bindCameraPad } from "../../components/camera-pad/camera-pad.mjs";
 import { bindTokenAuras } from "../../components/token-aura/token-aura.mjs";
 
-export { bindSceneLoadDeselect } from "./scene-selection.mjs";
-export {
-  bindTouchTableClient,
-  focusHudToken,
-  getHudFocusToken,
-  isTouchTableClient,
-  shouldShowCameraPad,
-  releaseCanvasSelection
-} from "./touch-table.mjs";
-
 /** Canvas + token behavior (register during init, before canvasReady). */
 export function bindCanvasHooks() {
   bindSceneLoadDeselect();

@@ -2,7 +2,7 @@ import { ich } from "../../common/i18n.mjs";
 import { getCombatantForToken, findCombatantForToken } from "../../common/action-economy.mjs";
 import { getViewedCombat, getActiveCombatant } from "../../common/combat.mjs";
 import { flipToken } from "../../common/token-actions.mjs";
-import { toggleMovementDropdown, toggleStatusDropdown, toggleLightDropdown, toggleAuraDropdown, toggleRollsDropdown } from "./action-bar-util-dropdown.mjs";
+export { toggleMovementDropdown, toggleStatusDropdown, toggleLightDropdown, toggleAuraDropdown, toggleRollsDropdown } from "./action-bar-util-dropdown.mjs";
 
 export {
   LIGHT_PRESETS,
@@ -72,26 +72,6 @@ export async function toggleTokenVisibility(token) {
   }
   await token.document.update({ hidden: !token.document.hidden });
   return true;
-}
-
-export async function showMovementOptions(anchor, token) {
-  return toggleMovementDropdown(anchor, token);
-}
-
-export async function showStatusOptions(anchor, token) {
-  return toggleStatusDropdown(anchor, token);
-}
-
-export async function showLightOptions(anchor, token) {
-  return toggleLightDropdown(anchor, token);
-}
-
-export async function showAuraOptions(anchor, token) {
-  return toggleAuraDropdown(anchor, token);
-}
-
-export async function showRollsOptions(anchor, token) {
-  return toggleRollsDropdown(anchor, token);
 }
 
 async function runShortRest(actor) {

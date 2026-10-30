@@ -1,4 +1,4 @@
-export const SLIDER_STEPS = 1000;
+export { SLIDER_STEPS } from "../../common/viewport.mjs";
 
 export const DOM_DELTA_LINE = 1;
 export const DOM_DELTA_PAGE = 2;

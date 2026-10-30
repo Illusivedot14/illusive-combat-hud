@@ -9,6 +9,7 @@ BG3-style combat HUD for Foundry VTT (dnd5e + Midi-QOL).
 - **Turn tracker** — initiative cards with max-visible cap, optional HP numbers, hide defeated, and turn-change slide
 - **Token statuses** — effect icons with duration badges and right-click duration editing
 - **Action bar** — Midi-synced A/B/R/L economy, movement, resources, standard actions, targeting, and ability launch
+- **Mobile sheet** — sheet-only client for phones (Foundry canvas off)
 
 ## Requirements
 
@@ -22,17 +23,16 @@ All client settings are under **Configure Settings → Module Settings → Illus
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| Action Bar | on | Master toggle for the action bar |
-| Abilities Outside Combat | on | Show abilities when not in combat |
-| Standard Combat Actions | on | Dash, Dodge, Disengage, Help, Hide, Ready |
-| HUD Reaction Picker | off | Optional: route Midi reaction prompts through the action bar instead of Midi’s dialog |
-| Party Combat State | on | Conditions/concentration/death saves on party portraits |
-| Party/Token Layout | — | Offset and scale sliders for party rail and token panel |
-| HUD Theme | BG3 | Ornate frames vs minimal flat panels |
+| Party Status | on | Party portrait rail |
+| Turn Tracker | on | Initiative carousel |
+| Action Bar | on | Current-token HUD and abilities |
+| Boss Bar | on | GM-picked boss HP bar |
+| Mobile Sheet | on | Sheet-only client on phones |
+| HUD Reaction Picker | on | Route Midi reaction prompts through the action bar |
 | Turn Tracker Max Cards | 9 | How many initiative cards fit before scrolling (1–16) |
 | Hide Defeated | off | Remove defeated combatants from the turn tracker for players |
-| Movement Mode Switcher | on | Walk/fly/swim mode buttons on movement bar |
-| End Turn Button | on | Show End Turn during your turn |
+
+Layout, theme, party, turn tracker, action bar, boss bar, and mobile options live in the module submenus.
 
 ## Usage
 
@@ -40,7 +40,7 @@ All client settings are under **Configure Settings → Module Settings → Illus
 2. Place player character tokens on the scene.
 3. Select a token — the current-token panel and action bar appear beside the hotbar.
 4. During combat, use economy chips (S/A/B/R/L) to expand ability lists.
-5. **Reactions** (Counterspell, opportunity attacks, Shield, etc.) are handled by **Midi-QOL** — respond in its reaction prompt when triggered. Enable **HUD Reaction Picker** only if you want those prompts on the action bar instead.
+5. **Reactions** (Counterspell, opportunity attacks, Shield, etc.) go through the HUD reaction picker when that setting is on.
 6. Target enemies on canvas (T) before using targeted abilities.
 7. **Right-click** a party portrait for sheet, target, or ping options.
 8. **Right-click** a turn tracker card for pan, ping, and GM combat tools.

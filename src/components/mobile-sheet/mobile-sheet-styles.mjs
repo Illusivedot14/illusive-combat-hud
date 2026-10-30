@@ -1,4 +1,4 @@
-/** Critical mobile-sheet CSS — self-contained (no Swipe dependency). */
+/** Critical mobile-sheet CSS. */
 export const MOBILE_SHEET_CRITICAL_CSS = `
 /* ---- Theme tokens (purple) ---- */
 body.ich-mobile-client {
@@ -82,7 +82,7 @@ body.ich-mobile-client #ich-token-statuses {
   display: none !important;
 }
 
-/* Suppress leftover Swipe chrome if that module is still enabled */
+/* Hide foreign mobile chrome so only the Illusive sheet shows */
 body.ich-mobile-client .mobile-sheet-carousel:not(#ich-mobile-carousel),
 body.ich-mobile-client .mobile-sheet-drawer:not(.ich-illusive-mobile-sheet),
 body.ich-mobile-client .mobile-chat-drawer,
@@ -200,7 +200,6 @@ body.ich-mobile-client {
 #ich-mobile-carousel.is-open .ich-carousel-avatar.is-selected .ich-carousel-close { opacity: 1; }
 /* Keep all party avatars visible so you can switch — do not hide non-selected. */
 
-/* ---- Self-contained drawer shell (no swipe-vtt.css) ---- */
 #ich-mobile-sheet-root .ich-illusive-mobile-sheet.mobile-sheet-drawer {
   position: fixed !important;
   inset: 0 !important;
@@ -618,7 +617,7 @@ body.ich-foundry-dialog-open #ich-mobile-carousel {
   z-index: 99 !important;
 }
 
-/* Foundry toasts must sit above the sheet (sheet is 100000; Swipe used 99999). */
+/* Foundry toasts must sit above the sheet. */
 body.ich-mobile-client #notifications,
 body.ich-mobile-sheet-open #notifications {
   position: fixed !important;
@@ -867,7 +866,7 @@ body.ich-mobile-sheet-open .window-app.dialog {
   z-index: 100050 !important;
 }
 
-/* Swipe-style overlays (HP + Adv/Dis) above Illusive sheet — ignore clicks until shown. */
+/* HP + Adv/Dis overlays above the sheet — ignore clicks until shown. */
 .ich-ms-overlay.hp-dialog-overlay,
 .ich-ms-overlay.roll-dialog-overlay {
   position: fixed !important;
@@ -1116,12 +1115,6 @@ body.ich-mobile-sheet-open .window-app.dialog {
 #ich-mobile-sheet-root .ich-ms-btn i {
   margin-right: 6px;
 }
-.ich-ms-overlay.roll-dialog-overlay {
-  background: rgba(0, 0, 0, 0.55) !important;
-}
-.ich-ms-overlay.roll-dialog-overlay.visible {
-  background: rgba(0, 0, 0, 0.55) !important;
-}
 .ich-ms-overlay .hp-dialog,
 .ich-ms-overlay .standalone-roll-dialog {
   background: var(--mobile-bg-secondary, #25242a) !important;
@@ -1317,7 +1310,7 @@ body.ich-mobile-sheet-open #ich-mobile-carousel {
   pointer-events: auto !important;
 }
 
-/* Hide Swipe's own drawer while ours is open — never hide Illusive's root. */
+/* Hide a foreign mobile drawer while ours is open — never hide Illusive's root. */
 body.ich-mobile-sheet-open .mobile-sheet-drawer:not(.ich-illusive-mobile-sheet),
 body.ich-mobile-sheet-open .application.mobile-character-sheet,
 body.ich-mobile-sheet-open .mobile-character-sheet:not(.ich-illusive-mobile-sheet) {

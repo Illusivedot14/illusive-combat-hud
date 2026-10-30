@@ -4,6 +4,10 @@ import { getViewedCombat, getActiveCombatant } from "./combat.mjs";
 import { buildVitalityIcon, isCombatantDeathSaving, isCombatantDefeated, isCombatantStabilized } from "./party-combat.mjs";
 import { readMemberCache, writeMemberCache } from "./render/member-cache.mjs";
 
+export function combatantToken(combatant) {
+  return combatant?.token?.object ?? canvas.tokens?.get(combatant?.tokenId) ?? null;
+}
+
 export function isEventCombatant(combatant) {
   return combatant.getFlag?.(MODULE_ID, "event") ?? combatant.flags?.[MODULE_ID]?.event ?? false;
 }
@@ -179,7 +183,7 @@ export function buildCombatantData(combatant, combat) {
   const actor = combatant.actor;
   const isEvent = isEventCombatant(combatant);
   const hpBar = getHpBarData(actor);
-  const token = combatant.token?.object ?? canvas.tokens?.get(combatant.tokenId);
+  const token = combatantToken(combatant);
   const markedDefeated = combatant.isDefeated ?? combatant.defeated ?? false;
   const isDead = !isEvent && isCombatantDefeated(actor, combatant);
   const isStabilized = !isEvent && isCombatantStabilized(actor, combatant);

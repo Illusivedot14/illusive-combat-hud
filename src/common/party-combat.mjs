@@ -233,3 +233,80 @@ export function isPartyDefeated(token) {
 export function isPartyDeathSaving(token) {
   return isCombatantDeathSaving(token?.actor, combatantForToken(token));
 }
+
+/** Shared applyDamage / heal fallback used by the action-bar portrait menu and mobile HP overlay. */
+export async function applyActorDamage(actor, amount) {
+  amount = Math.floor(Number(amount));
+  if (!Number.isFinite(amount) || amount <= 0) return;
+
+  if (typeof actor.applyDamage === "function") {
+    try {
+      await actor.applyDamage([{ value: amount }]);
+      return;
+    } catch {
+      try {
+        await actor.applyDamage(amount);
+        return;
+      } catch {
+        /* fall through */
+      }
+    }
+  }
+
+  const hp = actor.system?.attributes?.hp;
+  if (!hp) return;
+  let remaining = amount;
+  let temp = Number(hp.temp) || 0;
+  let value = Number(hp.value) || 0;
+  if (temp > 0) {
+    const used = Math.min(temp, remaining);
+    temp -= used;
+    remaining -= used;
+  }
+  await actor.update({
+    "system.attributes.hp.value": Math.max(0, value - remaining),
+    "system.attributes.hp.temp": temp
+  });
+}
+
+export async function applyActorHealing(actor, amount) {
+  amount = Math.floor(Number(amount));
+  if (!Number.isFinite(amount) || amount <= 0) return;
+
+  if (typeof actor.applyDamage === "function") {
+    try {
+      await actor.applyDamage([{ value: amount, type: "healing" }]);
+      return;
+    } catch {
+      try {
+        await actor.applyDamage(-amount);
+        return;
+      } catch {
+        /* fall through */
+      }
+    }
+  }
+
+  if (typeof actor.applyHealing === "function") {
+    try {
+      await actor.applyHealing(amount);
+      return;
+    } catch {
+      try {
+        await actor.applyHealing([{ value: amount }]);
+        return;
+      } catch {
+        /* fall through */
+      }
+    }
+  }
+
+  const hp = actor.system?.attributes?.hp;
+  if (!hp) return;
+  const max = Number(hp.max) || 0;
+  const tempmax = Number(hp.tempmax) || 0;
+  const effectiveMax = Math.max(0, max + tempmax);
+  await actor.update({
+    "system.attributes.hp.value": Math.min(effectiveMax, (Number(hp.value) || 0) + amount)
+  });
+}

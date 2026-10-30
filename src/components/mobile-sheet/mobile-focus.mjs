@@ -3,10 +3,17 @@
  * Center-snapped (or last tapped) portrait is the active character.
  */
 
+import { MODULE_ID } from "../../common/constants.mjs";
+
+export const MOBILE_FOCUS_HOOK = `${MODULE_ID}.mobileFocus`;
+
 let focusedActorId = null;
 
 export function setMobileFocusedActorId(actorId) {
-  focusedActorId = actorId || null;
+  const next = actorId || null;
+  if (focusedActorId === next) return;
+  focusedActorId = next;
+  Hooks.callAll(MOBILE_FOCUS_HOOK, focusedActorId);
 }
 
 export function getMobileFocusedActorId() {

@@ -3,7 +3,8 @@ import { desktopHudEnabled } from "../../common/mobile-client.mjs";
 import { definePanel } from "../../common/render/define-panel.mjs";
 import { TURN_TRACKER_SHELL } from "./turn-tracker-shell.mjs";
 import { renderTurnTracker } from "./turn-tracker-render.mjs";
-import { positionTurnTracker, bindCarouselScroll } from "./turn-tracker-carousel.mjs";
+import { bindCarouselScroll } from "./turn-tracker-scroll.mjs";
+import { positionTurnTracker } from "./turn-tracker-position.mjs";
 import { onTurnTrackerClick, bindTurnTrackerMenu } from "./turn-tracker-menu.mjs";
 import { applyTurnTrackerMinimized } from "./turn-tracker-minimize.mjs";
 

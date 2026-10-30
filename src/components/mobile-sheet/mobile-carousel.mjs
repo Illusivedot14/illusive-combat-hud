@@ -1,5 +1,5 @@
 /**
- * Illusive mobile character carousel — replaces Swipe's portrait strip.
+ * Illusive mobile character carousel.
  * Center-snapped avatar is the focused character (glow + dice speaker).
  * Sheet switches only after scroll settles (or on an intentional tap).
  */
@@ -20,6 +20,7 @@ import { bindMobileDiceRoller, renderMobileDiceRoller } from "./mobile-dice-roll
 import { bindMobileMove, renderMobileMove } from "./mobile-move.mjs";
 import { bindMobileGlobalGear, renderMobileGlobalGear } from "./mobile-global-settings.mjs";
 import { getMobileFocusedActorId, setMobileFocusedActorId } from "./mobile-focus.mjs";
+import { ensureDomRoot } from "../../common/viewport.mjs";
 
 const ROOT_ID = "ich-mobile-carousel";
 const SCROLL_SETTLE_MS = 220;
@@ -41,14 +42,10 @@ function rootEl() {
 }
 
 function ensureRoot() {
-  let root = rootEl();
-  if (root) return root;
-  root = document.createElement("div");
-  root.id = ROOT_ID;
-  root.className = "ich-mobile-carousel";
-  root.innerHTML = `<div class="ich-mobile-carousel-track" role="list"></div>`;
-  document.body.appendChild(root);
-  return root;
+  return ensureDomRoot(ROOT_ID, {
+    className: "ich-mobile-carousel",
+    html: `<div class="ich-mobile-carousel-track" role="list"></div>`
+  });
 }
 
 function trackEl() {

@@ -1,6 +1,16 @@
 import { MODULE_ID } from "../../common/constants.mjs";
 import { ich } from "../../common/i18n.mjs";
-import { getUiLocalRect } from "../../common/viewport.mjs";
+import {
+	applyMinimizedInstant as applyMinimizedInstantShared,
+	beginMotion as beginMotionShared,
+	clearMotionStyles,
+	getUiLocalRect,
+	lockMotionHeight,
+	prefersReducedMotion,
+	runMinimizeToggle,
+	updateMinimizeControl as updateMinimizeControlShared,
+	waitForCssMotion
+} from "../../common/viewport.mjs";
 import { positionTurnTracker } from "./turn-tracker-position.mjs";
 
 const MOTION_MS = 320;
@@ -12,11 +22,6 @@ function motionRoot(root = document.getElementById("ich-turn-tracker")) {
 	return root?.querySelector(".ich-turn-motion") ?? null;
 }
 
-function prefersReducedMotion() {
-	return typeof matchMedia === "function"
-		&& matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 function animationEnabled() {
 	return !prefersReducedMotion();
 }
@@ -26,28 +31,14 @@ export function isTurnTrackerMinimized() {
 }
 
 function updateMinimizeControl(root) {
-	const button = root?.querySelector(".ich-turn-minimize");
-	if (!button) return;
-
-	const minimized = root.classList.contains("ich-turn-minimized");
-	const icon = button.querySelector("i");
-	if (icon) icon.className = minimized ? "fas fa-chevron-down" : "fas fa-chevron-up";
-
-	const label = minimized ? ich.turnTracker("expand") : ich.turnTracker("minimize");
-	button.setAttribute("aria-label", label);
-	button.dataset.tooltip = label;
-	button.setAttribute("aria-expanded", minimized ? "false" : "true");
-}
-
-function clearMotionStyles(motion) {
-	motion.style.removeProperty("height");
-	motion.style.removeProperty("min-height");
-	motion.style.removeProperty("max-height");
-	motion.style.removeProperty("margin-top");
-	motion.style.removeProperty("transform");
-	motion.style.removeProperty("overflow");
-	motion.style.removeProperty("pointer-events");
-	motion.style.removeProperty("visibility");
+	updateMinimizeControlShared(root, {
+		buttonSelector: ".ich-turn-minimize",
+		minimizedClass: "ich-turn-minimized",
+		iconMinimized: "fas fa-chevron-down",
+		iconExpanded: "fas fa-chevron-up",
+		expandLabel: ich.turnTracker("expand"),
+		minimizeLabel: ich.turnTracker("minimize")
+	});
 }
 
 function clearMotionClasses(root) {
@@ -55,37 +46,15 @@ function clearMotionClasses(root) {
 }
 
 function beginMotion(root, direction) {
-	clearMotionClasses(root);
-	root.classList.add(MOTION_CLASS);
-	root.classList.add(direction === "out" ? MOTION_OUT : MOTION_IN);
+	beginMotionShared(root, { motionClass: MOTION_CLASS, outClass: MOTION_OUT, inClass: MOTION_IN }, direction);
+}
+
+function clearTurnMotionStyles(motion) {
+	clearMotionStyles(motion, ["margin-top"]);
 }
 
 function waitForMotion(motion) {
-	return new Promise((resolve) => {
-		let settled = false;
-		const finish = () => {
-			if (settled) return;
-			settled = true;
-			motion.removeEventListener("transitionend", onEnd);
-			clearTimeout(timer);
-			resolve();
-		};
-		const onEnd = (event) => {
-			if (event.target !== motion) return;
-			if (event.propertyName && event.propertyName !== "transform") return;
-			finish();
-		};
-		motion.addEventListener("transitionend", onEnd);
-		const timer = setTimeout(finish, MOTION_MS + 120);
-	});
-}
-
-function lockMotionHeight(motion, height) {
-	motion.style.overflow = "visible";
-	motion.style.height = `${height}px`;
-	motion.style.minHeight = `${height}px`;
-	motion.style.maxHeight = `${height}px`;
-	motion.style.visibility = "visible";
+	return waitForCssMotion(motion, MOTION_MS + 120);
 }
 
 /** Pixels needed to move the motion root fully past the top of the UI viewport. */
@@ -95,11 +64,12 @@ function slideOffDistance(motion) {
 }
 
 function applyMinimizedInstant(root, minimized) {
-	clearMotionClasses(root);
-	const motion = motionRoot(root);
-	if (motion) clearMotionStyles(motion);
-	root.classList.toggle("ich-turn-minimized", minimized);
-	if (motion) motion.setAttribute("aria-hidden", minimized ? "true" : "false");
+	applyMinimizedInstantShared(root, minimized, {
+		minimizedClass: "ich-turn-minimized",
+		motionSelector: ".ich-turn-motion",
+		motionClasses: [MOTION_CLASS, MOTION_OUT, MOTION_IN],
+		extraStyleProps: ["margin-top"]
+	});
 }
 
 /**
@@ -139,7 +109,7 @@ async function animateTurnTrackerMinimized(root, minimized) {
 
 		root.classList.add("ich-turn-minimized");
 		clearMotionClasses(root);
-		clearMotionStyles(motion);
+		clearTurnMotionStyles(motion);
 		root.style.removeProperty("overflow");
 		motion.setAttribute("aria-hidden", "true");
 		return;
@@ -163,7 +133,7 @@ async function animateTurnTrackerMinimized(root, minimized) {
 			el.style.removeProperty("visibility");
 			el.style.removeProperty("pointer-events");
 		}
-		clearMotionStyles(motion);
+		clearTurnMotionStyles(motion);
 		applyMinimizedInstant(root, false);
 		return;
 	}
@@ -189,7 +159,7 @@ async function animateTurnTrackerMinimized(root, minimized) {
 		el.style.removeProperty("pointer-events");
 	}
 	clearMotionClasses(root);
-	clearMotionStyles(motion);
+	clearTurnMotionStyles(motion);
 	root.style.removeProperty("overflow");
 }
 
@@ -204,23 +174,7 @@ const REVEAL_CLASS = "ich-turn-reveal-in";
 const REVEAL_PREP_CLASS = "ich-turn-reveal-prep";
 
 function waitForDockReveal(dock) {
-	return new Promise((resolve) => {
-		let settled = false;
-		const finish = () => {
-			if (settled) return;
-			settled = true;
-			dock.removeEventListener("transitionend", onEnd);
-			clearTimeout(timer);
-			resolve();
-		};
-		const onEnd = (event) => {
-			if (event.target !== dock) return;
-			if (event.propertyName && event.propertyName !== "transform") return;
-			finish();
-		};
-		dock.addEventListener("transitionend", onEnd);
-		const timer = setTimeout(finish, MOTION_MS + 120);
-	});
+	return waitForCssMotion(dock, MOTION_MS + 120);
 }
 
 function clearRevealStyles(root, dock) {
@@ -291,18 +245,15 @@ export function applyTurnTrackerMinimized(root = document.getElementById("ich-tu
 }
 
 export async function toggleTurnTrackerMinimized(root = document.getElementById("ich-turn-tracker")) {
-	if (!root) return;
-	if (root.dataset.turnAnimating === "1") return;
-
-	const nextMinimized = !isTurnTrackerMinimized();
-	root.dataset.turnAnimating = "1";
-	try {
-		if (nextMinimized) syncFrameHeight(root);
-		await animateTurnTrackerMinimized(root, nextMinimized);
-		updateMinimizeControl(root);
-		await game.settings.set(MODULE_ID, "turnTrackerMinimized", nextMinimized);
-	} finally {
-		delete root.dataset.turnAnimating;
-		applyTurnTrackerMinimized(root);
-	}
+	await runMinimizeToggle(root, {
+		animatingKey: "turnAnimating",
+		isMinimized: isTurnTrackerMinimized,
+		syncFrame: syncFrameHeight,
+		animate: animateTurnTrackerMinimized,
+		persist: async (nextMinimized) => {
+			updateMinimizeControl(root);
+			await game.settings.set(MODULE_ID, "turnTrackerMinimized", nextMinimized);
+		},
+		apply: applyTurnTrackerMinimized
+	});
 }

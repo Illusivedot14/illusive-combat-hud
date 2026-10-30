@@ -7,12 +7,8 @@ const BOOT_KEY = "ich-mobile-boot";
 const BOOT_STYLE_ID = "ich-mobile-boot-css";
 
 function isNativeMobileHeuristic() {
-  const uaMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i
     .test(navigator.userAgent ?? "");
-  const coarse = navigator.maxTouchPoints > 0
-    && typeof matchMedia === "function"
-    && matchMedia("(pointer: coarse)").matches;
-  return Boolean(uaMobile || coarse);
 }
 
 /** CSS that must exist before Foundry paints sidebar/hotbar/etc. */
@@ -94,21 +90,18 @@ export function applyEarlyMobileBootClass() {
   let sticky = null;
   try { sticky = sessionStorage.getItem(BOOT_KEY); } catch { /* ignore */ }
 
-  if (sticky === "0") {
+  const phone = isNativeMobileHeuristic();
+  if (!phone || sticky === "0") {
     document.documentElement.classList.remove("ich-mobile-boot");
+    document.body?.classList?.remove("ich-mobile-client");
+    try { sessionStorage.setItem(BOOT_KEY, "0"); } catch { /* ignore */ }
     return false;
   }
 
-  const want = sticky === "1" || isNativeMobileHeuristic();
-  if (want) {
-    document.documentElement.classList.add("ich-mobile-boot");
-    document.body?.classList?.add("ich-mobile-client");
-    try { sessionStorage.setItem(BOOT_KEY, "1"); } catch { /* ignore */ }
-    return true;
-  }
-
-  document.documentElement.classList.remove("ich-mobile-boot");
-  return false;
+  document.documentElement.classList.add("ich-mobile-boot");
+  document.body?.classList?.add("ich-mobile-client");
+  try { sessionStorage.setItem(BOOT_KEY, "1"); } catch { /* ignore */ }
+  return true;
 }
 
 /** Persist the resolved mode so the next paint/reload stays dark. */

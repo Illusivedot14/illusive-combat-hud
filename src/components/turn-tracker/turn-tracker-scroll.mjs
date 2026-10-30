@@ -1,6 +1,5 @@
 import { settingOn } from "../../common/hud-settings.mjs";
-
-const SLIDER_STEPS = 1000;
+import { SLIDER_STEPS, scrollFromSlider as mapScrollFromSlider, sliderFromScroll as mapSliderFromScroll } from "../../common/viewport.mjs";
 
 function queryTrack(root) {
 	return root?.querySelector?.("#ich-turn-tracker-track")
@@ -16,19 +15,12 @@ function getTrackMaxScroll(track) {
 	return Math.max(0, track.scrollWidth - track.clientWidth);
 }
 
-/** Map slider position (0…SLIDER_STEPS) to track scrollLeft. */
 export function scrollFromSlider(track, slider) {
-	const maxScroll = Number(slider.dataset.maxScroll) || getTrackMaxScroll(track);
-	if (maxScroll <= 0) return 0;
-	const ratio = Number(slider.value) / SLIDER_STEPS;
-	return ratio * maxScroll;
+	return mapScrollFromSlider(track, slider, { maxScroll: getTrackMaxScroll(track) });
 }
 
-/** Map track scrollLeft to slider position (0…SLIDER_STEPS). */
 export function sliderFromScroll(track, slider) {
-	const maxScroll = Number(slider.dataset.maxScroll) || getTrackMaxScroll(track);
-	if (maxScroll <= 0) return 0;
-	return Math.round((track.scrollLeft / maxScroll) * SLIDER_STEPS);
+	return mapSliderFromScroll(track, slider, { maxScroll: getTrackMaxScroll(track) });
 }
 
 function hideSlider(root, slider) {

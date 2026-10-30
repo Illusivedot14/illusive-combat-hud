@@ -2,23 +2,17 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { installFoundry } from "./helpers.mjs";
 import {
-  playTurnSlide,
-  positionCarousel,
-  positionTurnTracker,
   sizeCarouselWindow,
   getMaxCards,
-  bindCarouselScroll,
-  updateCarouselScrollSlider,
-  scrollFromSlider,
-  sliderFromScroll,
   measureControlExtents,
-  alignTurnTrackerToBand,
-  getDockVisualRect,
   ACTIVE_CARD_GLOW_CLEARANCE,
   CONTROL_GAP,
   CONTROL_GAP_RIGHT,
   TRACK_PADDING_INLINE
-} from "../src/components/turn-tracker/turn-tracker-carousel.mjs";
+} from "../src/components/turn-tracker/turn-tracker-window.mjs";
+import { playTurnSlide, positionCarousel } from "../src/components/turn-tracker/turn-tracker-motion.mjs";
+import { positionTurnTracker, alignTurnTrackerToBand, getDockVisualRect } from "../src/components/turn-tracker/turn-tracker-position.mjs";
+import { bindCarouselScroll, updateCarouselScrollSlider, scrollFromSlider, sliderFromScroll } from "../src/components/turn-tracker/turn-tracker-scroll.mjs";
 import { getHudBand, computeHudFitScale, applyHudBandVariables } from "../src/common/hud-bounds.mjs";
 
 function mountTrack({ active = false } = {}) {

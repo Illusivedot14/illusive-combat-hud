@@ -5,26 +5,13 @@ export function rememberActionBarToken(token) {
   if (token?.id) void game.settings.set(MODULE_ID, "actionBarLastTokenId", token.id);
 }
 
-export function getPinnedTokenId() {
-  const id = game.settings.get(MODULE_ID, "actionBarPinTokenId");
-  return id || null;
-}
-
-export async function setPinnedTokenId(tokenId) {
-  await game.settings.set(MODULE_ID, "actionBarPinTokenId", tokenId ?? "");
-}
-
-export function isTokenPinned(token) {
-  return Boolean(token?.id && getPinnedTokenId() === token.id);
-}
-
 function ownedToken(token) {
   return Boolean(token?.actor?.isOwner);
 }
 
 /**
  * Action bar follows the controlled token (or an active reaction prompt).
- * No selection → no token (bar hides). Pin / always-on / last-token do not keep it open.
+ * No selection → no token (bar hides).
  * @param {object | null} reactionContext from reaction-context
  */
 export function resolveActionBarToken(reactionContext = null) {

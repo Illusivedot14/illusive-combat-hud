@@ -5,7 +5,7 @@ import {
 	readPartyPlayerPrefs,
 	updatePartyPlayerPrefs
 } from "../../common/party-player-prefs.mjs";
-import { getUiLocalRect } from "../../common/viewport.mjs";
+import { getUiLocalRect, prefersReducedMotion, runMinimizeToggle, updateMinimizeControl as updateMinimizeControlShared, waitForCssMotion } from "../../common/viewport.mjs";
 import { getPartyMaxVisible, measurePartyViewportHeight } from "./party-status-scroll.mjs";
 
 const RAIL_MOTION_MS = 280;
@@ -17,27 +17,19 @@ export function isPartyRailMinimized() {
 	return isPartyRailMinimizedEffective();
 }
 
-function prefersReducedMotion() {
-	return typeof matchMedia === "function"
-		&& matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 function hudAnimationEnabled() {
 	return settingOn("partyRailAnimation") && !prefersReducedMotion();
 }
 
 function updateMinimizeControl(root) {
-	const button = root?.querySelector(".ich-party-minimize");
-	if (!button) return;
-
-	const minimized = root.classList.contains("ich-party-minimized");
-	const icon = button.querySelector("i");
-	if (icon) icon.className = minimized ? "fas fa-chevron-right" : "fas fa-chevron-left";
-
-	const label = minimized ? ich.partyRail("expand") : ich.partyRail("minimize");
-	button.setAttribute("aria-label", label);
-	button.dataset.tooltip = label;
-	button.setAttribute("aria-expanded", minimized ? "false" : "true");
+	updateMinimizeControlShared(root, {
+		buttonSelector: ".ich-party-minimize",
+		minimizedClass: "ich-party-minimized",
+		iconMinimized: "fas fa-chevron-right",
+		iconExpanded: "fas fa-chevron-left",
+		expandLabel: ich.partyRail("expand"),
+		minimizeLabel: ich.partyRail("minimize")
+	});
 }
 
 /** Remember panel size so the side tab stays put when the rail is minimized. */
@@ -125,24 +117,7 @@ function clearRootMotionStyles(root) {
 }
 
 function waitForRailMotion(body) {
-	return new Promise((resolve) => {
-		let settled = false;
-		const finish = () => {
-			if (settled) return;
-			settled = true;
-			body.removeEventListener("transitionend", onEnd);
-			clearTimeout(timer);
-			resolve();
-		};
-		const onEnd = (event) => {
-			if (event.target !== body) return;
-			// Prefer the visual slide; margin collapse finishes in the same duration.
-			if (event.propertyName && event.propertyName !== "transform") return;
-			finish();
-		};
-		body.addEventListener("transitionend", onEnd);
-		const timer = setTimeout(finish, RAIL_MOTION_MS + 120);
-	});
+	return waitForCssMotion(body, RAIL_MOTION_MS + 120);
 }
 
 function clearMotionClasses(root) {
@@ -271,22 +246,16 @@ export function applyPartyRailMinimized(root = document.getElementById("ich-part
 }
 
 export async function togglePartyRailMinimized(root = document.getElementById("ich-party-status")) {
-	if (!root) return;
-	if (root.dataset.railAnimating === "1") return;
-
-	const nextMinimized = !isPartyRailMinimizedEffective();
-	root.dataset.railAnimating = "1";
-	try {
-		// Animate first. Persisting prefs triggers onChange → apply/refresh, which must not
-		// interrupt the slide (see applyPartyRailMinimized guard + post-save sync).
-		await animatePartyRailMinimized(root, nextMinimized);
-		updateMinimizeControl(root);
-
-		const prefs = readPartyPlayerPrefs();
-		const rail = { ...(prefs.rail ?? {}), minimized: nextMinimized };
-		await updatePartyPlayerPrefs({ rail });
-	} finally {
-		delete root.dataset.railAnimating;
-		applyPartyRailMinimized(root);
-	}
+	await runMinimizeToggle(root, {
+		animatingKey: "railAnimating",
+		isMinimized: isPartyRailMinimizedEffective,
+		animate: animatePartyRailMinimized,
+		persist: async (nextMinimized) => {
+			updateMinimizeControl(root);
+			const prefs = readPartyPlayerPrefs();
+			const rail = { ...(prefs.rail ?? {}), minimized: nextMinimized };
+			await updatePartyPlayerPrefs({ rail });
+		},
+		apply: applyPartyRailMinimized
+	});
 }

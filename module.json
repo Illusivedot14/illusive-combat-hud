@@ -1,7 +1,7 @@
 {
   "id": "illusive-combat-hud",
   "title": "Illusive Combat HUD",
-  "description": "BG3-style combat HUD with an independent mobile sheet-only client (no Swipe VTT required).",
+  "description": "BG3-style combat HUD with an independent mobile sheet-only client.",
   "version": "1.18.53",
   "socket": true,
   "authors": [

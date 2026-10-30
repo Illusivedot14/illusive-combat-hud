@@ -1,7 +1,7 @@
 import { MODULE_ID } from "./constants.mjs";
 import { settingOn } from "./hud-settings.mjs";
 import { ich, ichCore } from "./i18n.mjs";
-import { getEconomyAvailability } from "./midi-qol.mjs";
+import { getEconomyAvailability } from "./midi.mjs";
 import { getViewedCombat } from "./combat.mjs";
 
 const ECONOMY_TYPES = ["action", "bonus", "reaction"];
@@ -204,31 +204,40 @@ function getMovementPoolMax(movement) {
  * Shared movement budget is the highest available speed (gestalt / fly 90 + walk 30 → 90).
  * Each mode is also capped by its own speed. Remaining for a mode is
  * min(modeSpeed − modeUsed, poolRemaining).
+ *
+ * Combat path (inCombat true): spend from history + dash.
+ * Idle path: full pool, no spend. Same return shape.
  */
-export function buildMovementData(token) {
-  if (!getViewedCombat()?.started || !token?.actor) return null;
+export function buildMovementData(token, { inCombat = true } = {}) {
+  if (inCombat && !getViewedCombat()?.started) return null;
+  if (!token?.actor) return null;
 
   const movement = token.actor.system?.attributes?.movement;
   if (!movement) return null;
 
-  const scene = canvas?.scene
-    ?? token.document?.parent
-    ?? game.scenes?.active
-    ?? game.scenes?.current
-    ?? null;
-  const gridDistance = Number(scene?.grid?.distance ?? scene?.dimensions?.distance) || 5;
   const pose = getTokenMovementDisplay(token);
   const mode = pose.mode;
   const poolMax = getMovementPoolMax(movement);
   if (!poolMax) return null;
 
-  const isDashing = Boolean(token.actor.getFlag?.(MODULE_ID, "dashing"));
+  const isDashing = inCombat && Boolean(token.actor.getFlag?.(MODULE_ID, "dashing"));
   const maxFeet = Math.max(0, isDashing ? poolMax * 2 : poolMax);
-  const history = token.document.movementHistory ?? [];
-  const usedFeet = getMovementUsedFeet(token, history, gridDistance);
+
+  let usedFeet = 0;
+  let usedByMode = {};
+  if (inCombat) {
+    const scene = canvas?.scene
+      ?? token.document?.parent
+      ?? game.scenes?.active
+      ?? game.scenes?.current
+      ?? null;
+    const gridDistance = Number(scene?.grid?.distance ?? scene?.dimensions?.distance) || 5;
+    const history = token.document.movementHistory ?? [];
+    usedFeet = getMovementUsedFeet(token, history, gridDistance);
+    usedByMode = getMovementUsedByMode(token, history, gridDistance, usedFeet, mode);
+  }
+
   const remainingFeet = Math.max(0, maxFeet - usedFeet);
-  const percent = maxFeet > 0 ? Math.clamp((remainingFeet / maxFeet) * 100, 0, 100) : 100;
-  const usedByMode = getMovementUsedByMode(token, history, gridDistance, usedFeet, mode);
   const modes = enrichMovementModes(token.actor, mode, usedByMode, remainingFeet, isDashing);
 
   return {
@@ -236,7 +245,7 @@ export function buildMovementData(token) {
     maxFeet,
     remainingFeet,
     poolMax,
-    percent,
+    percent: maxFeet > 0 ? Math.clamp((remainingFeet / maxFeet) * 100, 0, 100) : 100,
     mode,
     modeLabel: pose.modeLabel,
     modeIcon: pose.modeIcon,
@@ -249,32 +258,7 @@ export function buildMovementData(token) {
 
 /** Walk/fly speed display when not in active combat (muted movement readout). */
 export function buildIdleMovementData(token) {
-  if (!token?.actor) return null;
-
-  const movement = token.actor.system?.attributes?.movement;
-  if (!movement) return null;
-
-  const pose = getTokenMovementDisplay(token);
-  const mode = pose.mode;
-  const poolMax = getMovementPoolMax(movement);
-  if (!poolMax) return null;
-
-  const modes = enrichMovementModes(token.actor, mode, {}, poolMax, false);
-
-  return {
-    usedFeet: 0,
-    maxFeet: poolMax,
-    remainingFeet: poolMax,
-    poolMax,
-    percent: 100,
-    mode,
-    modeLabel: pose.modeLabel,
-    modeIcon: pose.modeIcon,
-    isDashing: false,
-    isGestalt: poolMax > getMovementModeSpeed(movement, mode),
-    modes: shouldShowMovementModes(modes) ? modes : [],
-    canUndo: canUndoTokenMovement(token)
-  };
+  return buildMovementData(token, { inCombat: false });
 }
 
 function shouldShowMovementModes(modes) {

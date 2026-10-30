@@ -24,15 +24,6 @@ export function isSuitcaseEntry(item, activity, activationType) {
   return isFreeActivation(activationType) || isItemInteractionEntry(item, activity, activationType);
 }
 
-/** @deprecated Use isSuitcaseEntry — kept for older call sites. */
-export function isInteractionEntry(item, activity, activationType) {
-  return isSuitcaseEntry(item, activity, activationType);
-}
-
 export function getInteractionActivationTypes() {
   return new Set(["action", "bonus", "special", "free", "none", ""]);
-}
-
-export function getFreeActivationTypes() {
-  return new Set(["special", "free", "none", ""]);
 }

@@ -68,7 +68,6 @@ export const HUD_FALLBACKS = {
   "empty.noParty": "No party",
   "empty.noAbilities": "No {section} abilities.",
   "empty.noAbilitiesOoc": "No {section} abilities (out of combat).",
-  "empty.outOfCombat": "No usable abilities found. Start combat or enable Abilities Outside Combat in Action Bar settings.",
   "empty.notInCombat": "This token is not in the active combat.",
   "reasons.cannotUse": "Cannot use",
   "reasons.unavailable": "Unavailable",

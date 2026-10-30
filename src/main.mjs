@@ -60,7 +60,6 @@ Hooks.once("init", async () => {
     MOBILE_SHEET_TEMPLATE
   ]);
 
-  // Swipe init path: if mobile, align core.noCanvas immediately (reload on ready if needed).
   if (isIllusiveMobileMode()) {
     persistMobileBootFlag(true);
     try {
@@ -86,7 +85,6 @@ Hooks.once("ready", async () => {
   bindConnectionQrOverlay();
   const mod = game.modules.get(MODULE_ID);
   if (mod) mod.api = { ...(mod.api ?? {}), showConnectionQrs, purgeConnectionQrTiles };
-  // Swipe ready path: mismatch → set + window.reload()
   if (await syncMobileClientSettings()) return;
 
   bindMobileSheet();

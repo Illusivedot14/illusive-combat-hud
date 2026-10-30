@@ -146,7 +146,7 @@ describe("buildPartyMember vitality", () => {
 	};
 
 	it("shows a skull when defeated, not while death saving", () => {
-		installFoundry({ settings: { showPartyNames: true } });
+		installFoundry();
 		const actor = makeActor({ hp: { value: 0, max: 20 } });
 		actor.type = "character";
 		const token = makeToken({ id: "t1", actor });
@@ -154,7 +154,7 @@ describe("buildPartyMember vitality", () => {
 			started: true,
 			combatants: [makeCombatant({ tokenId: "t1", defeated: true })]
 		});
-		installFoundry({ combat, settings: { showPartyNames: true } });
+		installFoundry({ combat });
 
 		const member = buildPartyMember(token, { ...options, inCombat: true });
 
@@ -166,7 +166,7 @@ describe("buildPartyMember vitality", () => {
 	});
 
 	it("shows an unconscious icon while death saving", () => {
-		installFoundry({ settings: { showPartyNames: true } });
+		installFoundry();
 		const actor = makeActor({ hp: { value: 0, max: 20 } });
 		actor.type = "character";
 		actor.system.attributes.death = { success: 2, failure: 1 };
@@ -181,7 +181,7 @@ describe("buildPartyMember vitality", () => {
 	});
 
 	it("shows a resting icon when stabilized", () => {
-		installFoundry({ settings: { showPartyNames: true } });
+		installFoundry();
 		const actor = makeActor({ hp: { value: 0, max: 20 } });
 		actor.type = "character";
 		actor.system.attributes.death = { success: 3, failure: 0 };

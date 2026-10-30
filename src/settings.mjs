@@ -120,43 +120,19 @@ export function registerSettings() {
   };
 
   registerHidden("showResourceBar", { type: Boolean, default: true, onChange: refreshActionBar });
-  // Legacy: turn highlight is always on during combat; setting kept for migration only.
-  registerWorldHidden("showPartyCombatState", { type: Boolean, default: true, onChange: refreshParty });
   registerHidden("preferHudReactions", { type: Boolean, default: true });
-  registerHidden("actionBarAlwaysOn", { type: Boolean, default: false, onChange: refreshActionBar });
   registerHidden("actionBarLastTokenId", { type: String, default: "", config: false });
-  registerHidden("actionBarPinTokenId", { type: String, default: "", config: false, onChange: refreshActionBar });
   registerHidden("midiConfigureDialog", {
     type: Boolean,
     default: false,
     onChange: refreshActionBar
-  });
-  // Legacy: chrome hide is always tied to action-bar expand state.
-  registerHidden("hideHotbarWhenVisible", {
-    type: Boolean,
-    default: true
   });
   registerHidden("enableTokenStatuses", {
     type: Boolean,
     default: true,
     onChange: refreshActionBarLayout
   });
-  // Legacy placement key — icons are always top-right now.
-  registerHidden("tokenStatusPlacement", {
-    type: String,
-    default: "topRight"
-  });
-  // Legacy keys kept hidden so old worlds don't error; features are always on.
   registerHidden("showActionResourceStrip", { type: Boolean, default: true });
-  registerHidden("showStandardActions", { type: Boolean, default: true });
-  registerHidden("showMovementModes", { type: Boolean, default: true });
-  registerHidden("showEndTurn", { type: Boolean, default: true });
-  registerHidden("abilitiesOutOfCombat", { type: Boolean, default: true });
-  registerHidden("showMovementBar", { type: Boolean, default: true });
-  registerHidden("statusHighlightDisposition", { type: Boolean, default: true });
-  registerHidden("statusExpiringStyle", { type: String, default: "pulse" });
-  registerHidden("statusBuffBorderColor", { type: String, default: "#5cb85c" });
-  registerHidden("statusDebuffBorderColor", { type: String, default: "#d9534f" });
   registerHidden("partyRailAnimation", { type: Boolean, default: true });
   const refreshTurnResize = () => refreshHud(ICH_RENDER.TURN, { recenter: true });
 
@@ -232,8 +208,6 @@ export function registerSettings() {
     onChange: () => applyPartyRailMinimized()
   });
 
-  // Legacy: names are no longer shown on party portraits.
-  registerWorldHidden("showPartyNames", { type: Boolean, default: false, onChange: refreshParty });
   // Per-client action-bar minimize/expand animation (GM and players).
   registerHidden("hudAnimation", {
     type: Boolean,
@@ -271,28 +245,8 @@ export function registerSettings() {
   // World / GM-only turn tracker options.
   registerWorldHidden("hideDefeatedCombatants", { type: Boolean, default: false, onChange: refreshTurn });
   registerWorldHidden("showTurnCardHpNumbers", { type: Boolean, default: true, onChange: refreshTurn });
-  // Legacy: pulse is always on; setting kept for migration only.
-  registerHidden("activeTurnPulse", { type: Boolean, default: true, onChange: refreshTheme });
   registerBool("carouselTurnAnimation", { default: true });
   registerBool("enableTurnHelpers", { default: false });
-
-  // Legacy: wash always tracks remaining HP (party-style); setting kept for migration only.
-  registerWorldHidden("damageWashBelowHalf", {
-    type: Boolean,
-    default: false,
-    onChange: () => {
-      refreshParty();
-      refreshTurn();
-    }
-  });
-
-  // Legacy: enemy health status is always shown to players now.
-  registerHidden("showEnemyHp", {
-    type: Boolean,
-    default: true,
-    scope: "world",
-    onChange: refreshTurn
-  });
 
   game.settings.register(MODULE_ID, "eventHistory", {
     name: "Recent Combat Events",
@@ -367,7 +321,7 @@ export function registerSettings() {
 
   registerHidden("mobileClientMode", {
     type: String,
-    default: "auto",
+    default: "forceDesktop",
     choices: ichSettingChoices("mobileClientMode", ["auto", "forceMobile", "forceDesktop"]),
     onChange: () => {
       import("./common/mobile-client.mjs")
@@ -375,6 +329,9 @@ export function registerSettings() {
         .catch((err) => console.error(`${MODULE_ID} | mobile mode change failed`, err));
     }
   });
+  if (game.settings.get(MODULE_ID, "mobileClientMode") !== "forceDesktop") {
+    void game.settings.set(MODULE_ID, "mobileClientMode", "forceDesktop");
+  }
 
   // Tracks whether Illusive set core.noCanvas so we can undo it on desktop.
   registerHidden("ichManagedNoCanvas", {

@@ -1,10 +1,7 @@
-/**
- * Sheet-only mobile backdrop (Swipe-equivalent of #swipe-vtt-nocanvas-bg).
- */
-
 import { MODULE_ID } from "../../common/constants.mjs";
 import { isIllusiveMobileMode } from "../../common/mobile-client.mjs";
 import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
+import { ensureDomRoot } from "../../common/viewport.mjs";
 
 const ROOT_ID = "ich-mobile-nocanvas-bg";
 
@@ -36,18 +33,15 @@ export function renderMobileBackground() {
     return;
   }
 
-  let root = document.getElementById(ROOT_ID);
-  if (!root) {
-    root = document.createElement("div");
-    root.id = ROOT_ID;
-    root.innerHTML = `
+  const iface = document.getElementById("interface");
+  const root = ensureDomRoot(ROOT_ID, {
+    html: `
       <div class="ich-nocanvas-bg-image" aria-hidden="true"></div>
       <div class="ich-nocanvas-bg-vignette" aria-hidden="true"></div>
-    `;
-    const iface = document.getElementById("interface");
-    if (iface?.parentNode) iface.parentNode.insertBefore(root, iface);
-    else document.body.insertBefore(root, document.body.firstChild);
-  }
+    `,
+    parent: iface?.parentNode ?? document.body,
+    before: iface ?? document.body.firstChild
+  });
 
   const img = root.querySelector(".ich-nocanvas-bg-image");
   if (!img) return;

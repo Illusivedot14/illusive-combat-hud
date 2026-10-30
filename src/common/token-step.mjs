@@ -384,6 +384,16 @@ export function tokenViewFromDoc(doc) {
   };
 }
 
+export function findTokenViewById(tokenId) {
+  if (!tokenId) return null;
+  const live = canvas?.tokens?.get?.(tokenId);
+  if (live) return live;
+  const scene = viewedScene();
+  const doc = hydrateToken(scene, scene?.tokens?.get?.(tokenId)
+    ?? tokensOnScene(scene).find((t) => (t.id ?? t._id) === tokenId));
+  return tokenViewFromDoc(doc);
+}
+
 export async function stepActorToken(actor, dir) {
   const doc = findActorTokenDoc(actor);
   if (!doc) return { ok: false, reason: "noToken" };

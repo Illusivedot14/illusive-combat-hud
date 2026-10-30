@@ -4,6 +4,7 @@ import { buildMobileSheetContext } from "./mobile-sheet-data.mjs";
 import { handleMobileSheetAction, MOBILE_SHEET_NO_REFRESH } from "./mobile-sheet-actions.mjs";
 import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
 import { setMobileFocusedActorId } from "./mobile-focus.mjs";
+import { ensureDomRoot, setImportant } from "../../common/viewport.mjs";
 
 const ROOT_ID = "ich-mobile-sheet-root";
 const TEMPLATE = `${MODULE_PATH}/src/components/mobile-sheet/mobile-sheet.hbs`;
@@ -30,12 +31,7 @@ function rootEl() {
 }
 
 function ensureRoot() {
-  let root = rootEl();
-  if (root) return root;
-  root = document.createElement("div");
-  root.id = ROOT_ID;
-  document.body.appendChild(root);
-  return root;
+  return ensureDomRoot(ROOT_ID);
 }
 
 function publishSheetState() {
@@ -51,7 +47,7 @@ function hideForeignMobileSheets() {
   document.querySelectorAll(
     ".mobile-sheet-drawer:not(.ich-illusive-mobile-sheet), .application.mobile-character-sheet, .mobile-character-sheet:not(.ich-illusive-mobile-sheet)"
   ).forEach((el) => {
-    el.style.setProperty("display", "none", "important");
+    setImportant(el, { display: "none" });
     el.setAttribute("data-ich-sheet-hidden", "1");
   });
 }
@@ -69,11 +65,6 @@ export function isMobileSheetOpen() {
 
 export function getMobileSheetActor() {
   return openActorId ? game.actors.get(openActorId) : null;
-}
-
-/** @deprecated Kept for older intercept callers; always false now. */
-export function shouldIgnoreSwipeCloseSideEffect() {
-  return false;
 }
 
 export async function closeMobileSheet() {

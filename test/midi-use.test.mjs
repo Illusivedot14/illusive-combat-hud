@@ -5,7 +5,7 @@ import {
   resolveActivityTargetUuids,
   buildHudMidiOptions,
   useActivityFromHud
-} from "../src/common/midi-use.mjs";
+} from "../src/common/midi.mjs";
 
 describe("midi-use", () => {
   beforeEach(() => installFoundry({ settings: { midiConfigureDialog: false } }));
@@ -30,6 +30,14 @@ describe("midi-use", () => {
     game.user.targets = new Set([target]);
     const activity = { target: { affects: { type: "creature" } } };
     expect(resolveActivityTargetUuids(token, activity)).toEqual(["Scene.1.Token.t2"]);
+  });
+
+  it("uses listed target UUIDs when canvas targets are empty", () => {
+    const token = makeToken({ id: "t1" });
+    const activity = { target: { affects: { type: "creature" } } };
+    expect(resolveActivityTargetUuids(token, activity, {
+      targetUuids: ["Scene.scene1.Token.tg"]
+    })).toEqual(["Scene.scene1.Token.tg"]);
   });
 
   it("uses the trigger token for reaction targeting", () => {

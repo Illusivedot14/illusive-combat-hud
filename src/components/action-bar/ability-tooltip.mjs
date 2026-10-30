@@ -5,7 +5,7 @@ import {
   formatAbilityHit,
   formatAbilityRange
 } from "../../common/ability-display.mjs";
-import { checkAbilityRange } from "../../common/range-utils.mjs";
+import { checkAbilityRange } from "../../common/midi.mjs";
 import { getActionBarToken } from "../../common/reaction-context.mjs";
 
 function stripHtml(html) {
@@ -277,8 +277,6 @@ export function bindAbilityTooltips(root, token) {
       hidePortal();
     });
     document.addEventListener("click", (event) => {
-      const fav = event.target.closest("#ich-action-bar .ich-favorite-toggle");
-      if (fav) return;
       const btn = event.target.closest(ABILITY_BTN);
       if (!btn || event.button !== 0) return;
       if (event.ctrlKey || event.metaKey) {

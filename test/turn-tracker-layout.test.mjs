@@ -15,7 +15,7 @@ import {
 	TRACK_PADDING_INLINE,
 	TRACK_PADDING_BLOCK,
 	ACTIVE_CARD_GLOW_CLEARANCE
-} from "../src/components/turn-tracker/turn-tracker-carousel.mjs";
+} from "../src/components/turn-tracker/turn-tracker-window.mjs";
 
 const rootDir = join(dirname(fileURLToPath(import.meta.url)), "..");
 const baseCss = readFileSync(

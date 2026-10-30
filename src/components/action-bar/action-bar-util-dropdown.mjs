@@ -14,7 +14,7 @@ import {
   isItemsEconomySpent,
   toggleEconomySpent,
   toggleItemsEconomySpent
-} from "../../common/midi-qol.mjs";
+} from "../../common/midi.mjs";
 import {
   collectMovementChoices,
   collectStatusChoices,

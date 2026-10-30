@@ -1,6 +1,6 @@
 import { settingOn } from "../../common/hud-settings.mjs";
+import { SLIDER_STEPS, scrollFromSlider as mapScrollFromSlider, sliderFromScroll as mapSliderFromScroll } from "../../common/viewport.mjs";
 import {
-	SLIDER_STEPS,
 	getListMaxScroll,
 	queryList,
 	querySlider,
@@ -8,18 +8,12 @@ import {
 } from "./party-scroll-dom.mjs";
 import { applyPartyListViewport, getPartyMaxVisible } from "./party-scroll-viewport.mjs";
 
-/** Map slider position (0…SLIDER_STEPS) to list scrollTop. */
 export function scrollFromSlider(list, slider) {
-	const maxScroll = Number(slider.dataset.maxScroll) || getListMaxScroll(list);
-	if (maxScroll <= 0) return 0;
-	return (Number(slider.value) / SLIDER_STEPS) * maxScroll;
+	return mapScrollFromSlider(list, slider, { axis: "top", maxScroll: getListMaxScroll(list) });
 }
 
-/** Map list scrollTop to slider position (0…SLIDER_STEPS). */
 export function sliderFromScroll(list, slider) {
-	const maxScroll = Number(slider.dataset.maxScroll) || getListMaxScroll(list);
-	if (maxScroll <= 0) return 0;
-	return Math.round((list.scrollTop / maxScroll) * SLIDER_STEPS);
+	return mapSliderFromScroll(list, slider, { axis: "top", maxScroll: getListMaxScroll(list) });
 }
 
 export function syncSliderFromList(list, slider) {

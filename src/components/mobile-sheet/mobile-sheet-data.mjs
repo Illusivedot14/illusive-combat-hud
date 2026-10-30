@@ -1,27 +1,9 @@
 import { getClassResources, getPactMagic, buildSpellSlotDiamondsForLevel } from "../../common/actor-resources.mjs";
 import { resolvePortraitSrc } from "../../common/actor-data.mjs";
-
-const ABILITY_ORDER = ["str", "dex", "con", "int", "wis", "cha"];
-const SKILL_ORDER = [
-  "acr", "ani", "arc", "ath", "dec", "his", "ins", "itm", "inv",
-  "med", "nat", "prc", "prf", "per", "rel", "slt", "ste", "sur"
-];
+import { listActivities } from "../../common/ability-utils.mjs";
+import { ABILITY_ORDER, SKILL_ORDER, abilityLabel, formatMod, skillLabel } from "../../common/actor-stats.mjs";
 
 const TABS = ["abilities", "combat", "inventory", "features", "spells", "effects", "other"];
-
-function formatMod(value) {
-  if (!Number.isFinite(Number(value))) return "—";
-  const n = Math.floor(Number(value));
-  return n >= 0 ? `+${n}` : `${n}`;
-}
-
-function abilityLabel(id) {
-  return CONFIG.DND5E?.abilities?.[id]?.label ?? id.toUpperCase();
-}
-
-function skillLabel(id) {
-  return CONFIG.DND5E?.skills?.[id]?.label ?? id.toUpperCase();
-}
 
 function itemImg(item) {
   return item?.img || "icons/svg/item-bag.svg";
@@ -35,11 +17,8 @@ function usesLabel(item) {
 
 function activityCount(item) {
   const acts = item?.system?.activities;
-  if (!acts) return 0;
-  if (typeof acts.size === "number") return acts.size;
-  if (Array.isArray(acts)) return acts.length;
-  if (typeof acts.contents !== "undefined") return acts.contents?.length ?? 0;
-  try { return [...acts].length; } catch { return 0; }
+  if (typeof acts?.size === "number") return acts.size;
+  return listActivities(item).length;
 }
 
 function itemTypeLabel(type) {
@@ -85,7 +64,7 @@ function allItems(actor) {
 }
 
 function mapItem(item, extras = {}) {
-  const activities = [...(item.system?.activities?.contents ?? item.system?.activities ?? [])];
+  const activities = listActivities(item);
   const attack = activities.find((a) => a.type === "attack");
   const damage = activities.find((a) => a.type === "damage" || a.type === "heal" || a.damage);
   // itemName avoids Handlebars {{name}} colliding with the sheet root actor name.
@@ -262,7 +241,7 @@ export function buildMobileSheetContext(actor, options = {}) {
     .filter((item) => {
       if (item.type === "weapon") return true;
       if (item.type === "feat" && canUseItem(item)) {
-        const actTypes = [...(item.system?.activities?.contents ?? [])].map((a) => a.type);
+        const actTypes = listActivities(item).map((a) => a.type);
         return actTypes.some((t) => ["attack", "damage", "heal", "save", "utility"].includes(t));
       }
       return false;
@@ -398,4 +377,3 @@ export function buildMobileSheetContext(actor, options = {}) {
   };
 }
 
-export { TABS as MOBILE_SHEET_TABS };

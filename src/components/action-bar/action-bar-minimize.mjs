@@ -1,7 +1,18 @@
 import { MODULE_ID } from "../../common/constants.mjs";
 import { ich } from "../../common/i18n.mjs";
 import { hudAnimationOn } from "../../common/hud-settings.mjs";
-import { getUiLocalRect, getUiViewportSize } from "../../common/viewport.mjs";
+import {
+  applyMinimizedInstant as applyMinimizedInstantShared,
+  beginMotion as beginMotionShared,
+  clearMotionStyles,
+  getUiLocalRect,
+  getUiViewportSize,
+  lockMotionHeight,
+  prefersReducedMotion,
+  runMinimizeToggle,
+  updateMinimizeControl as updateMinimizeControlShared,
+  waitForCssMotion
+} from "../../common/viewport.mjs";
 import {
   beginFoundryChromeConceal,
   beginFoundryChromeReveal,
@@ -24,11 +35,6 @@ function motionRoot(dock = document.getElementById("ich-action-bar-dock")) {
   return dock?.querySelector(".ich-action-bar-motion") ?? null;
 }
 
-function prefersReducedMotion() {
-  return typeof matchMedia === "function"
-    && matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
 function animationEnabled() {
   return hudAnimationOn() && !prefersReducedMotion();
 }
@@ -37,29 +43,19 @@ export function isActionBarMinimized() {
   return game.settings.get(MODULE_ID, "actionBarMinimized") === true;
 }
 
-function updateMinimizeControl(dock) {
-  const button = dock?.querySelector(".ich-action-bar-minimize");
-  if (!button) return;
-
-  const minimized = dock.classList.contains("ich-action-bar-dock--minimized");
-  const icon = button.querySelector("i");
-  if (icon) icon.className = minimized ? "fas fa-chevron-up" : "fas fa-chevron-down";
-
-  const label = minimized ? ich.actionBar("expand") : ich.actionBar("minimize");
-  button.setAttribute("aria-label", label);
-  button.dataset.tooltip = label;
-  button.setAttribute("aria-expanded", minimized ? "false" : "true");
+function motionSpec() {
+  return { motionClass: MOTION_CLASS, outClass: MOTION_OUT, inClass: MOTION_IN };
 }
 
-function clearMotionStyles(motion) {
-  motion.style.removeProperty("height");
-  motion.style.removeProperty("min-height");
-  motion.style.removeProperty("max-height");
-  motion.style.removeProperty("margin-bottom");
-  motion.style.removeProperty("transform");
-  motion.style.removeProperty("overflow");
-  motion.style.removeProperty("pointer-events");
-  motion.style.removeProperty("visibility");
+function updateMinimizeControl(dock) {
+  updateMinimizeControlShared(dock, {
+    buttonSelector: ".ich-action-bar-minimize",
+    minimizedClass: "ich-action-bar-dock--minimized",
+    iconMinimized: "fas fa-chevron-up",
+    iconExpanded: "fas fa-chevron-down",
+    expandLabel: ich.actionBar("expand"),
+    minimizeLabel: ich.actionBar("minimize")
+  });
 }
 
 function clearMotionClasses(dock) {
@@ -67,37 +63,15 @@ function clearMotionClasses(dock) {
 }
 
 function beginMotion(dock, direction) {
-  clearMotionClasses(dock);
-  dock.classList.add(MOTION_CLASS);
-  dock.classList.add(direction === "out" ? MOTION_OUT : MOTION_IN);
+  beginMotionShared(dock, motionSpec(), direction);
+}
+
+function clearBarMotionStyles(motion) {
+  clearMotionStyles(motion, ["margin-bottom"]);
 }
 
 function waitForMotion(motion) {
-  return new Promise((resolve) => {
-    let settled = false;
-    const finish = () => {
-      if (settled) return;
-      settled = true;
-      motion.removeEventListener("transitionend", onEnd);
-      clearTimeout(timer);
-      resolve();
-    };
-    const onEnd = (event) => {
-      if (event.target !== motion) return;
-      if (event.propertyName && event.propertyName !== "transform") return;
-      finish();
-    };
-    motion.addEventListener("transitionend", onEnd);
-    const timer = setTimeout(finish, MOTION_MS + 120);
-  });
-}
-
-function lockMotionHeight(motion, height) {
-  motion.style.overflow = "visible";
-  motion.style.height = `${height}px`;
-  motion.style.minHeight = `${height}px`;
-  motion.style.maxHeight = `${height}px`;
-  motion.style.visibility = "visible";
+  return waitForCssMotion(motion, MOTION_MS + 120);
 }
 
 /** Pixels needed to move the motion root fully past the bottom of the UI viewport. */
@@ -108,12 +82,13 @@ function slideOffDistance(motion) {
 }
 
 function applyMinimizedInstant(dock, minimized) {
-  clearMotionClasses(dock);
-  dock.classList.remove(HANDOFF_DOCK);
-  const motion = motionRoot(dock);
-  if (motion) clearMotionStyles(motion);
-  dock.classList.toggle("ich-action-bar-dock--minimized", minimized);
-  if (motion) motion.setAttribute("aria-hidden", minimized ? "true" : "false");
+  applyMinimizedInstantShared(dock, minimized, {
+    minimizedClass: "ich-action-bar-dock--minimized",
+    motionSelector: ".ich-action-bar-motion",
+    motionClasses: [MOTION_CLASS, MOTION_OUT, MOTION_IN],
+    extraStyleProps: ["margin-bottom"],
+    beforeToggle: (root) => root.classList.remove(HANDOFF_DOCK)
+  });
 }
 
 /**
@@ -162,7 +137,7 @@ async function animateActionBarMinimized(dock, minimized) {
 
     dock.classList.add("ich-action-bar-dock--minimized");
     clearMotionClasses(dock);
-    clearMotionStyles(motion);
+    clearBarMotionStyles(motion);
     dock.style.removeProperty("overflow");
     motion.setAttribute("aria-hidden", "true");
     finishFoundryChromeReveal();
@@ -182,7 +157,7 @@ async function animateActionBarMinimized(dock, minimized) {
 
   const height = motion.offsetHeight || storedHeight;
   if (height <= 0) {
-    clearMotionStyles(motion);
+    clearBarMotionStyles(motion);
     applyMinimizedInstant(dock, false);
     dock.classList.remove(HANDOFF_DOCK);
     return;
@@ -205,7 +180,7 @@ async function animateActionBarMinimized(dock, minimized) {
   await waitForMotion(motion);
 
   clearMotionClasses(dock);
-  clearMotionStyles(motion);
+  clearBarMotionStyles(motion);
   dock.style.removeProperty("overflow");
   dock.classList.remove(HANDOFF_DOCK);
 }
@@ -237,20 +212,17 @@ export async function expandActionBarForSelection(dock = document.getElementById
 }
 
 export async function toggleActionBarMinimized(dock = document.getElementById("ich-action-bar-dock")) {
-  if (!dock) return;
-  if (dock.dataset.barAnimating === "1") return;
-
-  const nextMinimized = !isActionBarMinimized();
-  dock.dataset.barAnimating = "1";
-  try {
-    if (nextMinimized) syncFrameHeight(dock);
-    await animateActionBarMinimized(dock, nextMinimized);
-    updateMinimizeControl(dock);
-    await game.settings.set(MODULE_ID, "actionBarMinimized", nextMinimized);
-    syncFoundryUiVisibility();
-    await repositionDock();
-  } finally {
-    delete dock.dataset.barAnimating;
-    applyActionBarMinimized(dock);
-  }
+  await runMinimizeToggle(dock, {
+    animatingKey: "barAnimating",
+    isMinimized: isActionBarMinimized,
+    syncFrame: syncFrameHeight,
+    animate: animateActionBarMinimized,
+    persist: async (nextMinimized) => {
+      updateMinimizeControl(dock);
+      await game.settings.set(MODULE_ID, "actionBarMinimized", nextMinimized);
+      syncFoundryUiVisibility();
+      await repositionDock();
+    },
+    apply: applyActionBarMinimized
+  });
 }
