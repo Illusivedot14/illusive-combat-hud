@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import {
   applyCameraPadChrome,
-  cameraPadBottomPx,
+  cameraPadPlacement,
   PAD_CLEARANCE_PX,
   PAD_CONTROL_PX,
   PAD_GRID_PX,
@@ -25,8 +25,9 @@ function makePad() {
     <div role="button" data-camera="down"></div>
     <span class="ich-camera-pad-empty"></span>
   </div>
-  <div class="ich-camera-pad-zoom">
+  <div class="ich-camera-pad-tools">
     <div role="button" data-camera="zoom-in"></div>
+    <div role="button" data-camera="recenter"></div>
     <div role="button" data-camera="zoom-out"></div>
   </div>
 </div>`;
@@ -38,54 +39,58 @@ describe("camera pad layout", () => {
     const root = applyCameraPadChrome(makePad());
     expect(root.tagName).toBe("DIV");
     expect(root.querySelectorAll("button")).toHaveLength(0);
-    expect(root.querySelectorAll("[data-camera][role='button']")).toHaveLength(6);
+    expect(root.querySelectorAll("[data-camera][role='button']")).toHaveLength(7);
   });
 
-  it("locks the whole pad to a compact pixel size", () => {
+  it("locks a compact plus with zoom and recenter under it", () => {
     const root = applyCameraPadChrome(makePad());
     expect(root.style.width).toBe(`${PAD_WIDTH_PX}px`);
     expect(root.style.height).toBe(`${PAD_HEIGHT_PX}px`);
-    expect(root.style.maxWidth).toBe(`${PAD_WIDTH_PX}px`);
-    expect(root.style.maxHeight).toBe(`${PAD_HEIGHT_PX}px`);
-    expect(PAD_WIDTH_PX).toBe(224);
-    expect(PAD_HEIGHT_PX).toBe(164);
+    expect(root.style.flexDirection).toBe("column");
+    expect(root.style.background).toBe("transparent");
+    expect(PAD_WIDTH_PX).toBe(PAD_GRID_PX);
+    expect(PAD_WIDTH_PX).toBe(152);
+    expect(PAD_HEIGHT_PX).toBe(204);
   });
 
-  it("locks every key to a square", () => {
+  it("locks every key to a circle", () => {
     const root = applyCameraPadChrome(makePad());
     const size = `${PAD_CONTROL_PX}px`;
     for (const el of root.querySelectorAll("[data-camera]")) {
       expect(el.style.width).toBe(size);
       expect(el.style.height).toBe(size);
-      expect(el.style.minWidth).toBe(size);
-      expect(el.style.maxWidth).toBe(size);
-      expect(el.style.background).toBe("rgb(42, 28, 16)");
-      expect(el.style.border).toContain("2px");
+      expect(el.style.borderRadius).toBe("999px");
     }
   });
 
-  it("lifts the pad above action-bar chrome in its column and leaves it when clear", () => {
-    const floor = 16;
-    const padLeft = 90;
-    const bar = { left: 40, right: 900, top: 700, width: 860, height: 180 };
-    const raised = cameraPadBottomPx({
-      floor,
-      padLeft,
-      padWidth: PAD_WIDTH_PX,
-      viewportHeight: 900,
-      obstacles: [bar]
+  it("sits on the right of the HUD band", () => {
+    const spot = cameraPadPlacement({
+      viewportHeight: 1080,
+      bandEnd: 1000
     });
-    expect(raised).toBe(Math.round(900 - 700 + PAD_CLEARANCE_PX));
-    expect(raised).toBeGreaterThan(floor);
+    expect(spot.left).toBe(1000 - PAD_WIDTH_PX - PAD_CLEARANCE_PX);
+    expect(spot.bottom).toBe(16);
+  });
 
-    const clear = cameraPadBottomPx({
-      floor,
-      padLeft,
-      padWidth: PAD_WIDTH_PX,
-      viewportHeight: 900,
-      obstacles: [{ left: 800, right: 1400, top: 700, width: 600, height: 180 }]
+  it("sits above the action bar when they share a column", () => {
+    const actionBar = { left: 200, right: 980, top: 820, bottom: 1060, width: 780, height: 240 };
+    const spot = cameraPadPlacement({
+      viewportHeight: 1080,
+      bandEnd: 1000,
+      actionBar
     });
-    expect(clear).toBe(floor);
+    expect(spot.bottom).toBe(1080 - 820 + PAD_CLEARANCE_PX);
+  });
+
+  it("stays under the turn tracker on a tall screen", () => {
+    const turnTracker = { left: 0, right: 1080, top: 8, bottom: 120, width: 1080, height: 112 };
+    const spot = cameraPadPlacement({
+      viewportHeight: 1920,
+      bandEnd: 1060,
+      turnTracker
+    });
+    expect(spot.bottom).toBeLessThanOrEqual(1920 - PAD_HEIGHT_PX - (120 + PAD_CLEARANCE_PX));
+    expect(spot.left).toBe(1060 - PAD_WIDTH_PX - PAD_CLEARANCE_PX);
   });
 
   it("keeps the arrows in a compact 3x3 plus", () => {
@@ -96,6 +101,5 @@ describe("camera pad layout", () => {
     expect(arrows.style.gridTemplateColumns).toBe(track);
     expect(arrows.style.gridTemplateRows).toBe(track);
     expect(arrows.style.width).toBe(`${PAD_GRID_PX}px`);
-    expect(arrows.style.height).toBe(`${PAD_GRID_PX}px`);
   });
 });

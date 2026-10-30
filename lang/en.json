@@ -43,6 +43,7 @@
   "illusive-combat-hud.cameraPad.panDown": "Down",
   "illusive-combat-hud.cameraPad.panLeft": "Left",
   "illusive-combat-hud.cameraPad.panRight": "Right",
+  "illusive-combat-hud.cameraPad.recenter": "Center on token",
   "illusive-combat-hud.mobileMove.title": "Move",
   "illusive-combat-hud.mobileMove.noToken": "This character is not on the map.",
   "illusive-combat-hud.mobileMove.panUp": "Up",

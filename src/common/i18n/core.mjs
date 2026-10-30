@@ -110,6 +110,7 @@ export const HUD_FALLBACKS = {
   "cameraPad.panDown": "Down",
   "cameraPad.panLeft": "Left",
   "cameraPad.panRight": "Right",
+  "cameraPad.recenter": "Center on token",
   "mobileMove.title": "Move",
   "mobileMove.noToken": "This character is not on the map.",
   "mobileMove.panUp": "Up",

@@ -1,6 +1,9 @@
 import { ich } from "../../common/i18n.mjs";
-import { setImportant } from "../../common/viewport.mjs";
-import { shouldShowCameraPad } from "../../common/hooks/touch-table.mjs";
+import { getHudBand } from "../../common/hud-bounds.mjs";
+import { getUiLocalRect, getUiViewportSize, setImportant } from "../../common/viewport.mjs";
+import { getActionBarToken } from "../../common/reaction-context.mjs";
+import { panCanvasToToken } from "../../common/token-actions.mjs";
+import { getHudFocusToken, shouldShowCameraPad } from "../../common/hooks/touch-table.mjs";
 import {
   applyCanvasView,
   canvasScaleLimits,
@@ -8,42 +11,55 @@ import {
   nextScale,
   nextViewPosition,
   readCanvasView,
-  stickToSceneDelta
+  stickToSceneDelta,
+  withLockViewUnlocked
 } from "../../common/camera-control.mjs";
 
 const PAD_ID = "ich-camera-pad";
-export const PAD_CONTROL_PX = 52;
+export const PAD_CONTROL_PX = 48;
 const KEY_GAP_PX = 4;
 export const PAD_GRID_PX = PAD_CONTROL_PX * 3 + KEY_GAP_PX * 2;
-export const PAD_WIDTH_PX = PAD_GRID_PX + 8 + PAD_CONTROL_PX;
-export const PAD_HEIGHT_PX = PAD_GRID_PX;
-export const PAD_CLEARANCE_PX = 16;
+export const PAD_WIDTH_PX = PAD_GRID_PX;
+export const PAD_HEIGHT_PX = PAD_GRID_PX + KEY_GAP_PX + PAD_CONTROL_PX;
+export const PAD_CLEARANCE_PX = 12;
+const IDLE_MS = 2400;
 
-const OBSTACLE_SELECTOR = [
-  "#ich-action-bar-dock",
-  "#ich-action-bar-dock .ich-action-bar-minimize",
-  "#ich-action-bar-dock .ich-mock-side-left",
-  "#ich-action-bar-dock .ich-mock-combat-rail",
-  "#ich-token-statuses .ich-status-icon",
-  "#ich-party-status .ich-portrait-card",
-  "#ich-party-status .ich-party-minimize",
-  "#ich-party-status .ich-party-scroll-slider"
-].join(", ");
+const OBSTACLE_SELECTOR = ["#ich-action-bar-dock", "#ich-turn-tracker"].join(", ");
+
+function boxesOverlapX(left, right, box) {
+  return !(right <= box.left || left >= box.right);
+}
 
 /**
- * Keep the pad's horizontal spot. Lift its bottom edge above anything in that
- * column: action bar, its icons, collapse arrows, and the party portraits.
+ * Compact map cluster on the right of the HUD band, above the action bar.
+ * Opposite the party rail so the fight HUD stays the focus.
  */
-export function cameraPadBottomPx({ floor, padLeft, padWidth, viewportHeight, obstacles }) {
+export function cameraPadPlacement({
+  viewportHeight,
+  padWidth = PAD_WIDTH_PX,
+  padHeight = PAD_HEIGHT_PX,
+  bandEnd = 0,
+  actionBar = null,
+  turnTracker = null,
+  gap = PAD_CLEARANCE_PX,
+  floor = 16
+} = {}) {
+  const left = Math.max(floor, Math.round((bandEnd || padWidth + gap) - padWidth - gap));
+  const padRight = left + padWidth;
+
   let bottom = floor;
-  const padRight = padLeft + padWidth;
-  for (const box of obstacles ?? []) {
-    if (!box || box.width < 1 || box.height < 1) continue;
-    if (padLeft >= box.right || padRight <= box.left) continue;
-    const above = viewportHeight - box.top + PAD_CLEARANCE_PX;
-    if (above > bottom) bottom = above;
+  if (actionBar && actionBar.height >= 1 && boxesOverlapX(left, padRight, actionBar)) {
+    bottom = Math.max(bottom, Math.round(viewportHeight - actionBar.top + gap));
   }
-  return Math.round(bottom);
+
+  if (turnTracker && turnTracker.height >= 1 && boxesOverlapX(left, padRight, turnTracker)) {
+    const minTop = turnTracker.bottom + gap;
+    const maxBottom = viewportHeight - padHeight - minTop;
+    if (Number.isFinite(maxBottom)) bottom = Math.min(bottom, maxBottom);
+  }
+
+  const cap = Math.max(floor, viewportHeight - padHeight - floor);
+  return { left, bottom: Math.round(Math.max(floor, Math.min(bottom, cap))) };
 }
 
 const ARROWS = {
@@ -66,8 +82,9 @@ const PAD_SHELL = `
     <div role="button" tabindex="0" data-camera="down"><i class="fas fa-arrow-down" aria-hidden="true"></i></div>
     <span class="ich-camera-pad-empty" aria-hidden="true"></span>
   </div>
-  <div class="ich-camera-pad-zoom">
+  <div class="ich-camera-pad-tools">
     <div role="button" tabindex="0" data-camera="zoom-in"><i class="fas fa-plus" aria-hidden="true"></i></div>
+    <div role="button" tabindex="0" data-camera="recenter"><i class="fas fa-crosshairs" aria-hidden="true"></i></div>
     <div role="button" tabindex="0" data-camera="zoom-out"><i class="fas fa-minus" aria-hidden="true"></i></div>
   </div>
 </div>`;
@@ -78,9 +95,19 @@ let zoomHeld = null;
 let rafId = 0;
 let lastTs = 0;
 let bound = false;
+let idleTimer = 0;
 
 function rootEl() {
   return document.getElementById(PAD_ID);
+}
+
+function wakePad() {
+  const root = rootEl();
+  root?.classList.remove("ich-camera-pad--idle");
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    rootEl()?.classList.add("ich-camera-pad--idle");
+  }, IDLE_MS);
 }
 
 function stickFromArrows() {
@@ -135,6 +162,12 @@ function setHeld(el, held) {
   el?.classList.toggle("is-held", held);
 }
 
+function recenterOnToken() {
+  const token = getActionBarToken() ?? getHudFocusToken();
+  if (!token) return;
+  withLockViewUnlocked(() => panCanvasToToken(token));
+}
+
 function pressAction(action, el) {
   if (ARROWS[action]) {
     heldArrows.add(action);
@@ -146,6 +179,11 @@ function pressAction(action, el) {
     zoomHeld = action === "zoom-in" ? "in" : "out";
     setHeld(el, true);
     ensureLoop();
+    return;
+  }
+  if (action === "recenter") {
+    setHeld(el, true);
+    recenterOnToken();
   }
 }
 
@@ -160,7 +198,9 @@ function releaseAction(action, el) {
       zoomHeld = null;
     }
     setHeld(el, false);
+    return;
   }
+  if (action === "recenter") setHeld(el, false);
 }
 
 function onPointerDown(event) {
@@ -171,6 +211,7 @@ function onPointerDown(event) {
   if (!action) return;
   event.preventDefault();
   event.stopPropagation();
+  wakePad();
   button.setPointerCapture?.(event.pointerId);
   pointers.set(event.pointerId, { action, button });
   pressAction(action, button);
@@ -183,6 +224,7 @@ function onPointerUp(event) {
   event.stopPropagation();
   pointers.delete(event.pointerId);
   releaseAction(held.action, held.button);
+  wakePad();
 }
 
 function paintPad(root) {
@@ -193,27 +235,27 @@ function paintPad(root) {
     ["left", "panLeft"],
     ["right", "panRight"],
     ["zoom-in", "zoomIn"],
-    ["zoom-out", "zoomOut"]
+    ["zoom-out", "zoomOut"],
+    ["recenter", "recenter"]
   ]) {
     const button = root.querySelector(`[data-camera="${action}"]`);
     if (button) button.setAttribute("aria-label", ich.cameraPad(key));
   }
 }
 
-/** Lock the pad to a compact plus. Sizes are exact pixels so Foundry cannot stretch it. */
 export function applyCameraPadChrome(root) {
   if (!root) return root;
 
   setImportant(root, {
     position: "fixed",
     inset: "auto",
-    right: "auto",
     top: "auto",
     "z-index": "2147483646",
     display: "flex",
+    "flex-direction": "column",
     "align-items": "center",
     "justify-content": "flex-start",
-    gap: "8px",
+    gap: `${KEY_GAP_PX}px`,
     width: `${PAD_WIDTH_PX}px`,
     height: `${PAD_HEIGHT_PX}px`,
     "min-width": `${PAD_WIDTH_PX}px`,
@@ -229,7 +271,6 @@ export function applyCameraPadChrome(root) {
     "pointer-events": "auto",
     "touch-action": "none",
     visibility: "visible",
-    opacity: "1",
     flex: "none",
     transform: "none"
   });
@@ -244,20 +285,20 @@ export function applyCameraPadChrome(root) {
       gap: `${KEY_GAP_PX}px`,
       width: `${PAD_GRID_PX}px`,
       height: `${PAD_GRID_PX}px`,
-      "min-width": `${PAD_GRID_PX}px`,
-      "max-width": `${PAD_GRID_PX}px`,
       flex: "none"
     });
   }
 
-  const zoom = root.querySelector(".ich-camera-pad-zoom");
-  if (zoom) {
-    setImportant(zoom, {
+  const tools = root.querySelector(".ich-camera-pad-tools");
+  if (tools) {
+    setImportant(tools, {
       display: "flex",
-      "flex-direction": "column",
+      "flex-direction": "row",
       "justify-content": "center",
-      gap: "8px",
-      width: `${PAD_CONTROL_PX}px`,
+      "align-items": "center",
+      gap: `${KEY_GAP_PX}px`,
+      width: `${PAD_GRID_PX}px`,
+      height: `${PAD_CONTROL_PX}px`,
       flex: "none"
     });
   }
@@ -267,10 +308,6 @@ export function applyCameraPadChrome(root) {
     setImportant(el, {
       width: key,
       height: key,
-      "min-width": key,
-      "max-width": key,
-      "min-height": key,
-      "max-height": key,
       padding: "0",
       margin: "0",
       border: "none",
@@ -293,13 +330,11 @@ export function applyCameraPadChrome(root) {
       display: "flex",
       "align-items": "center",
       "justify-content": "center",
-      "justify-self": "center",
-      "align-self": "center",
-      border: "2px solid #f0ddb0",
-      "border-radius": "10px",
-      background: "#2a1c10",
+      border: "1px solid #9a7840",
+      "border-radius": "999px",
+      background: "rgba(18, 12, 30, 0.88)",
       color: "#f0ddb0",
-      "font-size": "26px",
+      "font-size": "18px",
       "line-height": "1",
       cursor: "pointer"
     });
@@ -312,7 +347,7 @@ function obstacleVisible(el) {
   if (el.hidden || el.closest("[hidden]")) return false;
   const style = getComputedStyle(el);
   if (style.display === "none" || style.visibility === "hidden") return false;
-  const clipped = el.closest(".ich-party-body, .ich-action-bar-motion");
+  const clipped = el.closest(".ich-action-bar-motion");
   if (clipped) {
     const clip = clipped.getBoundingClientRect();
     if (clip.width < 1 || clip.height < 1) return false;
@@ -320,26 +355,22 @@ function obstacleVisible(el) {
   return true;
 }
 
-function obstacleBoxes() {
-  return [...document.querySelectorAll(OBSTACLE_SELECTOR)]
-    .filter(obstacleVisible)
-    .map((el) => el.getBoundingClientRect());
+function panelBox(id) {
+  const el = document.getElementById(id);
+  if (!el || !obstacleVisible(el)) return null;
+  return getUiLocalRect(el);
 }
 
 function placePad(root) {
   applyCameraPadChrome(root);
-  const board = document.getElementById("board") ?? document.getElementById("board-game");
-  const rect = board?.getBoundingClientRect();
-  const left = rect ? Math.max(90, Math.round(rect.left + 90)) : 90;
-  const floor = rect ? Math.max(16, Math.round(window.innerHeight - rect.bottom + 16)) : 16;
-  const bottom = cameraPadBottomPx({
-    floor,
-    padLeft: left,
-    padWidth: PAD_WIDTH_PX,
-    viewportHeight: window.innerHeight,
-    obstacles: obstacleBoxes()
+  const ui = getUiViewportSize();
+  const { left, bottom } = cameraPadPlacement({
+    viewportHeight: ui.h,
+    bandEnd: getHudBand().end,
+    actionBar: panelBox("ich-action-bar-dock"),
+    turnTracker: panelBox("ich-turn-tracker")
   });
-  setImportant(root, { left: `${left}px`, bottom: `${bottom}px` });
+  setImportant(root, { left: `${left}px`, bottom: `${bottom}px`, right: "auto" });
 }
 
 let placeRaf = 0;
@@ -383,6 +414,8 @@ function watchObstacles() {
 function unmountPad() {
   stopLoop();
   resetInput();
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = 0;
   rootEl()?.remove();
 }
 
@@ -397,6 +430,7 @@ function mountPad() {
   }
   placePad(el);
   paintPad(el);
+  wakePad();
 }
 
 function bindPad() {
