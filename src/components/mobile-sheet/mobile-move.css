@@ -1,141 +1,350 @@
+/* Phone controller — glass well + segmented bar, like a virtual gamepad / Control Center. */
+
 #ich-mobile-move {
+  --ich-move-glass: rgba(22, 18, 32, 0.62);
+  --ich-move-glass-border: rgba(255, 255, 255, 0.1);
+  --ich-move-key: 56px;
+  --ich-move-gap: 6px;
+  --ich-move-fab: 52px;
   position: fixed !important;
   inset: 0 0 var(--ich-carousel-dock, 96px) 0 !important;
   z-index: 100002 !important;
   display: flex !important;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
+  padding-bottom: 12px;
   pointer-events: none;
   background: transparent !important;
+}
+
+#ich-mobile-move.is-hidden .ich-move-panel,
+#ich-mobile-move.is-hidden .ich-move-utils,
+#ich-mobile-move.is-hidden .ich-move-sidebar,
+#ich-mobile-move.no-token .ich-move-panel,
+#ich-mobile-move.no-token .ich-move-utils {
+  display: none !important;
 }
 
 #ich-mobile-move .ich-move-panel {
   pointer-events: auto;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: center;
   gap: 10px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  box-shadow: none;
 }
 
-#ich-mobile-move .ich-move-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-width: 280px;
-}
-
-#ich-mobile-move .ich-move-flip {
-  position: fixed;
-  left: 12px;
-  bottom: calc(var(--ich-carousel-dock, 96px) + 12px);
-  width: 72px;
-  height: 72px;
+#ich-mobile-move .ich-move-pad [data-move="mode"] {
+  flex-direction: column;
+  gap: 2px;
   border-radius: 50%;
-  z-index: 100003;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
-#ich-mobile-move .ich-move-mode,
-#ich-mobile-move .ich-move-undo,
-#ich-mobile-move .ich-move-flip,
-#ich-mobile-move .ich-move-pad [data-move] {
-  box-sizing: border-box;
+#ich-mobile-move .ich-move-pad [data-move="mode"] i {
+  font-size: 16px;
+  opacity: 0.92;
+}
+
+#ich-mobile-move .ich-move-pad [data-move="mode"] span {
+  max-width: calc(var(--ich-move-key) - 8px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#ich-mobile-move .ich-move-pad [data-move="mode"].is-held,
+#ich-mobile-move .ich-move-pad [data-move="mode"]:active {
+  background: rgba(183, 148, 246, 0.28);
+  color: #fff;
+  transform: scale(0.94);
+}
+
+/* Virtual-stick well (Genshin / Diablo Immortal / Steam Link) */
+#ich-mobile-move .ich-move-well {
+  width: calc(var(--ich-move-key) * 3 + var(--ich-move-gap) * 2 + 28px);
+  height: calc(var(--ich-move-key) * 3 + var(--ich-move-gap) * 2 + 28px);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
-  margin: 0;
-  border: 2px solid var(--mobile-btn-border, var(--mobile-accent-50, #b794f6));
-  border-radius: 10px;
-  background: var(--mobile-bg-secondary, #1f1830);
-  color: var(--mobile-text-primary, #fff);
-  box-shadow: 0 4px 16px var(--mobile-shadow-strong, rgba(0,0,0,0.45));
-  line-height: 1;
-  cursor: pointer;
-  user-select: none;
-  touch-action: none;
-  pointer-events: auto;
-}
-
-#ich-mobile-move .ich-move-mode,
-#ich-mobile-move .ich-move-undo {
-  min-height: 52px;
-  padding: 0 12px;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-#ich-mobile-move .ich-move-feet {
-  min-height: 52px;
-  padding: 0 4px;
-  border: none;
-  background: transparent;
-  box-shadow: none;
-  color: var(--mobile-text-primary, #fff);
-  font-weight: 700;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-#ich-mobile-move .ich-move-feet[hidden],
-#ich-mobile-move .ich-move-undo[hidden] {
-  display: none !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
+  background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.08), rgba(12, 8, 20, 0.55) 72%);
+  border: 1px solid var(--ich-move-glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 16px 40px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 #ich-mobile-move .ich-move-pad {
   display: grid !important;
-  grid-template-columns: 64px 64px 64px !important;
-  grid-template-rows: 64px 64px 64px !important;
-  gap: 4px;
-  width: 200px;
-  height: 200px;
+  grid-template-columns: repeat(3, var(--ich-move-key)) !important;
+  grid-template-rows: repeat(3, var(--ich-move-key)) !important;
+  gap: var(--ich-move-gap);
 }
 
-#ich-mobile-move .ich-move-empty {
-  width: 64px;
-  height: 64px;
+#ich-mobile-move .ich-move-pad [data-move] {
+  box-sizing: border-box;
+  width: var(--ich-move-key) !important;
+  height: var(--ich-move-key) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+}
+
+#ich-mobile-move .ich-move-pad [data-move] i {
+  pointer-events: none;
+}
+
+#ich-mobile-move .ich-move-pad [data-move].is-held,
+#ich-mobile-move .ich-move-pad [data-move]:active {
+  background: transparent;
+  color: var(--mobile-accent, #b794f6);
+  transform: scale(0.9);
+}
+
+#ich-mobile-move .ich-move-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 0;
+}
+
+#ich-mobile-move .ich-move-feet,
+#ich-mobile-move .ich-move-undo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ich-move-glass-border);
+  background: var(--ich-move-glass);
+  color: #f4eefe;
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+#ich-mobile-move .ich-move-feet {
+  pointer-events: none;
   border: none;
   background: transparent;
 }
 
-#ich-mobile-move .ich-move-pad [data-move] {
-  width: 64px !important;
-  height: 64px !important;
-  min-width: 64px !important;
-  max-width: 64px !important;
-  min-height: 64px !important;
-  max-height: 64px !important;
-  font-size: 26px;
+#ich-mobile-move .ich-move-feet[hidden],
+#ich-mobile-move .ich-move-undo[hidden],
+#ich-mobile-move .ich-move-meta:not(:has(:not([hidden]))) {
+  display: none !important;
 }
 
-#ich-mobile-move .ich-move-pad [data-move] i,
-#ich-mobile-move .ich-move-mode i,
-#ich-mobile-move .ich-move-undo i,
-#ich-mobile-move .ich-move-flip i {
+#ich-mobile-move .ich-move-undo i {
   pointer-events: none;
 }
 
-#ich-mobile-move [data-move].is-held,
-#ich-mobile-move [data-move]:active {
-  background: var(--mobile-bg-button-active, rgba(183,148,246,0.24));
-  border-color: var(--mobile-accent, #b794f6);
-  color: var(--mobile-accent, #b794f6);
+/* Left rail: grouped Control Center toggles */
+#ich-mobile-move .ich-move-utils {
+  position: fixed;
+  left: 12px;
+  bottom: calc(var(--ich-carousel-dock, 96px) + 12px);
+  z-index: 100003;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 36px;
+  background: var(--ich-move-glass);
+  border: 1px solid var(--ich-move-glass-border);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  pointer-events: auto;
+}
+
+#ich-mobile-move .ich-move-flip,
+#ich-mobile-move .ich-move-util {
+  width: var(--ich-move-fab);
+  height: var(--ich-move-fab);
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.07);
+  color: #f4eefe;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#ich-mobile-move .ich-move-flip i,
+#ich-mobile-move .ich-move-util i {
+  pointer-events: none;
+}
+
+#ich-mobile-move .ich-move-flip.is-held,
+#ich-mobile-move .ich-move-util.is-held,
+#ich-mobile-move .ich-move-flip:active,
+#ich-mobile-move .ich-move-util:active,
+#ich-mobile-move [data-move].is-on {
+  background: rgba(183, 148, 246, 0.38);
+  border-color: rgba(183, 148, 246, 0.65);
+  color: #fff;
 }
 
 #ich-mobile-move [data-move].is-disabled {
-  opacity: 0.35;
+  opacity: 0.32;
   pointer-events: none;
+}
+
+/* Foundry's right-sidebar tabs — stacked above a chevron, slides up / down */
+#ich-mobile-move .ich-move-sidebar {
+  position: fixed;
+  right: max(10px, env(safe-area-inset-right, 0px));
+  bottom: calc(var(--ich-carousel-dock, 96px) + 80px);
+  top: auto;
+  max-height: calc(100% - 68px);
+  z-index: 100003;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 8px 6px;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--ich-move-glass);
+  border: 1px solid var(--ich-move-glass-border);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  pointer-events: auto;
+  transition: padding 0.28s ease;
+}
+
+#ich-mobile-move.sidebar-collapsed .ich-move-sidebar {
+  padding: 6px;
+}
+
+#ich-mobile-move .ich-move-sidebar-tabs-clip {
+  display: grid;
+  grid-template-rows: 1fr;
+  min-height: 0;
+  width: 100%;
+  transition: grid-template-rows 0.32s ease;
+}
+
+#ich-mobile-move.sidebar-collapsed .ich-move-sidebar-tabs-clip {
+  grid-template-rows: 0fr;
+}
+
+#ich-mobile-move .ich-move-sidebar-tabs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#ich-mobile-move.sidebar-collapsed .ich-move-sidebar-tabs {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#ich-mobile-move .ich-move-sidebar-toggle {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f4eefe;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#ich-mobile-move .ich-move-sidebar-toggle i {
+  pointer-events: none;
+  transition: transform 0.28s ease;
+}
+
+#ich-mobile-move:not(.sidebar-collapsed) .ich-move-sidebar-toggle i {
+  transform: rotate(180deg);
+}
+
+#ich-mobile-move .ich-move-sidebar-toggle.is-held,
+#ich-mobile-move .ich-move-sidebar-toggle:active {
+  background: rgba(183, 148, 246, 0.38);
+  color: #fff;
+}
+
+#ich-mobile-move .ich-move-sidebar-tab {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: #f4eefe;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+#ich-mobile-move .ich-move-sidebar-tab i {
+  pointer-events: none;
+}
+
+#ich-mobile-move .ich-move-sidebar-tab.is-held,
+#ich-mobile-move .ich-move-sidebar-tab:active {
+  background: rgba(183, 148, 246, 0.38);
+  color: #fff;
+}
+
+body.ich-mobile-sheet-open #ich-mobile-move .ich-move-panel,
+body.ich-mobile-sheet-open #ich-mobile-move .ich-move-utils,
+body.ich-mobile-sheet-open #ich-mobile-move .ich-move-sidebar,
+body.ich-mobile-target-picking #ich-mobile-move .ich-move-panel,
+body.ich-mobile-target-picking #ich-mobile-move .ich-move-utils,
+body.ich-mobile-target-picking #ich-mobile-move .ich-move-sidebar,
+body.ich-mobile-sidebar-open #ich-mobile-move .ich-move-panel,
+body.ich-mobile-sidebar-open #ich-mobile-move .ich-move-utils,
+body.ich-mobile-sidebar-open #ich-mobile-move .ich-move-sidebar {
+  display: none !important;
 }
 
 body.ich-foundry-dialog-open #ich-mobile-move,

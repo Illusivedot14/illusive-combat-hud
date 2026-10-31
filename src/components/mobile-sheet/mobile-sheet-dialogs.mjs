@@ -3,6 +3,9 @@
  */
 
 import { applyActorDamage as applyDamage, applyActorHealing } from "../../common/party-combat.mjs";
+import { MODULE_ID } from "../../common/constants.mjs";
+import { ichSetting } from "../../common/i18n.mjs";
+import { getMobileClientMode } from "../../common/mobile-client.mjs";
 
 const OVERLAY_Z = "100060";
 const SHEET_BEHIND = "ich-mobile-sheet-behind-dialog";
@@ -137,6 +140,9 @@ export async function openHpDialogOverlay(actor) {
       <div class="hp-dialog-header">
         <span class="hp-dialog-current">${hp0.value} / ${hp0.effectiveMax}</span>
         ${hp0.temp ? `<span class="hp-dialog-temp">+${hp0.temp} temp</span>` : ""}
+        <button type="button" class="roll-dialog-close" data-action="close" aria-label="Close">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
       <div class="hp-dialog-input-row">
         <button type="button" class="hp-dialog-adjust" data-adjust="-1">
@@ -174,10 +180,15 @@ export async function openHpDialogOverlay(actor) {
     const hp = readHp();
     const header = overlay.querySelector(".hp-dialog-header");
     if (!header) return;
-    header.innerHTML = `
-      <span class="hp-dialog-current">${hp.value} / ${hp.effectiveMax}</span>
-      ${hp.temp ? `<span class="hp-dialog-temp">+${hp.temp} temp</span>` : ""}
-    `;
+    const current = header.querySelector(".hp-dialog-current");
+    const temp = header.querySelector(".hp-dialog-temp");
+    if (current) current.textContent = `${hp.value} / ${hp.effectiveMax}`;
+    if (hp.temp) {
+      if (temp) temp.textContent = `+${hp.temp} temp`;
+      else current?.insertAdjacentHTML("afterend", `<span class="hp-dialog-temp">+${hp.temp} temp</span>`);
+    } else {
+      temp?.remove();
+    }
   };
 
   const close = () => overlay.remove();
@@ -256,11 +267,16 @@ export async function openHpDialogOverlay(actor) {
     }
   });
 
-  overlay.addEventListener("click", (ev) => {
-    if (ev.target === overlay) close();
+  overlay.addEventListener("pointerup", (ev) => {
+    if (ev.target === overlay || ev.target?.closest?.("[data-action='close']")) {
+      ev.preventDefault();
+      ev.stopPropagation();
+      close();
+    }
   });
 
   document.body.appendChild(overlay);
+  requestAnimationFrame(() => overlay.classList.add("visible"));
   setTimeout(() => amountInput?.focus(), 50);
 
   // Wait until overlay is removed so caller can refresh the sheet.
@@ -462,12 +478,19 @@ const ACCENT_THEMES = [
   { hex: "#1a1a1a", name: "Black" }
 ];
 
+const CLIENT_MODES = ["auto", "forceMobile", "forceDesktop"];
+
+function clientModeLabel(mode) {
+  return ichSetting("mobileClientMode", mode);
+}
+
 /**
- * Gear menu: UI Color + Dice So Nice (client-wide settings).
- * @returns {Promise<"ui-color"|"dice"|null>}
+ * Gear menu: HUD/sheet mode, UI Color, Dice So Nice.
+ * @returns {Promise<"client-mode"|"ui-color"|"dice"|null>}
  */
 export async function openMobileSettingsMenu() {
   closeOverlays(".ich-ms-settings-overlay");
+  const mode = getMobileClientMode();
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.className = "roll-dialog-overlay ich-ms-overlay ich-ms-settings-overlay";
@@ -482,6 +505,13 @@ export async function openMobileSettingsMenu() {
         </div>
         <p class="ich-ms-settings-hint">Applies to your whole mobile client — every character.</p>
         <div class="ich-ms-settings-list">
+          <button type="button" class="ich-ms-settings-item" data-action="client-mode">
+            <i class="fa-solid fa-mobile-screen"></i>
+            <span>
+              <strong>Sheet or HUD</strong>
+              <small>${escapeHtml(clientModeLabel(mode))}</small>
+            </span>
+          </button>
           <button type="button" class="ich-ms-settings-item" data-action="ui-color">
             <i class="fa-solid fa-palette"></i>
             <span>
@@ -502,6 +532,49 @@ export async function openMobileSettingsMenu() {
     document.body.appendChild(overlay);
     bindOverlayActions(overlay, resolve);
   });
+}
+
+/**
+ * Pick Auto / Force Mobile / Force Desktop. Changing it reloads the client.
+ * @returns {Promise<boolean>} whether a new mode was saved
+ */
+export async function openMobileClientModeOverlay() {
+  closeOverlays(".ich-ms-mode-overlay");
+  const current = getMobileClientMode();
+  const picked = await new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "roll-dialog-overlay ich-ms-overlay ich-ms-settings-overlay ich-ms-mode-overlay";
+    overlay.style.zIndex = OVERLAY_Z;
+    const rows = CLIENT_MODES.map((mode) => {
+      const on = mode === current ? " is-current" : "";
+      return `
+        <button type="button" class="ich-ms-settings-item${on}" data-action="${mode}">
+          <i class="fa-solid ${mode === "forceDesktop" ? "fa-desktop" : "fa-mobile-screen"}"></i>
+          <span>
+            <strong>${escapeHtml(clientModeLabel(mode))}</strong>
+            <small>${mode === current ? "Currently using this" : "&nbsp;"}</small>
+          </span>
+        </button>`;
+    }).join("");
+    overlay.innerHTML = `
+      <div class="standalone-roll-dialog ich-ms-settings-dialog">
+        <div class="roll-dialog-header">
+          <span class="roll-dialog-title">${escapeHtml(ichSetting("mobileClientMode", "name"))}</span>
+          <button type="button" class="roll-dialog-close" data-action="cancel" aria-label="Close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <p class="ich-ms-settings-hint">${escapeHtml(ichSetting("mobileClientMode", "hint"))}</p>
+        <div class="ich-ms-settings-list">${rows}</div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+    bindOverlayActions(overlay, resolve);
+  });
+
+  if (!CLIENT_MODES.includes(picked) || picked === current) return false;
+  await game.settings.set(MODULE_ID, "mobileClientMode", picked);
+  return true;
 }
 
 /**

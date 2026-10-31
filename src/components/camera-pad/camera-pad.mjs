@@ -1,9 +1,11 @@
 import { ich } from "../../common/i18n.mjs";
+import { setting, settingOn } from "../../common/hud-settings.mjs";
+import { desktopHudEnabled } from "../../common/mobile-client.mjs";
 import { getHudBand } from "../../common/hud-bounds.mjs";
 import { getUiLocalRect, getUiViewportSize, setImportant } from "../../common/viewport.mjs";
 import { getActionBarToken } from "../../common/reaction-context.mjs";
 import { panCanvasToToken } from "../../common/token-actions.mjs";
-import { getHudFocusToken, shouldShowCameraPad } from "../../common/hooks/touch-table.mjs";
+import { getHudFocusToken, isTouchTableClient } from "../../common/hooks/touch-table.mjs";
 import {
   applyCanvasView,
   canvasScaleLimits,
@@ -25,6 +27,25 @@ export const PAD_CLEARANCE_PX = 12;
 const IDLE_MS = 2400;
 
 const OBSTACLE_SELECTOR = ["#ich-action-bar-dock", "#ich-turn-tracker"].join(", ");
+
+function cameraPadAllowed() {
+  try {
+    return setting("cameraPadVisibleTo");
+  } catch {
+    return null;
+  }
+}
+
+/** Pad is on when this client enables it, desktop HUD is up, and this user is on the world list. */
+export function shouldShowCameraPad() {
+  if (!desktopHudEnabled()) return false;
+  if (!settingOn("enableCameraPad")) return false;
+  const allowed = cameraPadAllowed();
+  if (Array.isArray(allowed)) return allowed.includes(game.user?.id);
+  if (allowed === "gm") return Boolean(game.user?.isGM);
+  if (allowed === "all") return true;
+  return isTouchTableClient();
+}
 
 function boxesOverlapX(left, right, box) {
   return !(right <= box.left || left >= box.right);
@@ -458,3 +479,17 @@ export function bindCameraPad() {
   Hooks.on("canvasReady", show);
   if (globalThis.game?.ready) show();
 }
+
+export const cameraPadPanel = {
+  id: PAD_ID,
+  mask: "layout",
+  paint() {
+    refreshCameraPad();
+  },
+  unmount() {
+    unmountPad();
+  },
+  position() {
+    schedulePlace();
+  }
+};

@@ -60,6 +60,7 @@ export const HUD_FALLBACKS = {
   "reaction.pass": "Pass",
   "reaction.notTriggered": "Not available for this trigger",
   "turn.end": "End Turn",
+  "turn.endShort": "End",
   "turn.notYourTurn": "It is not this token's turn.",
   "warnings.noOwner": "You do not own this token.",
   "warnings.economySpent": "{type} already spent.",
@@ -111,6 +112,20 @@ export const HUD_FALLBACKS = {
   "cameraPad.panLeft": "Left",
   "cameraPad.panRight": "Right",
   "cameraPad.recenter": "Center on token",
+  "settings.mobileClientMode.name": "Mobile Client Mode",
+  "settings.mobileClientMode.hint": "Auto detects phones/tablets. Force Mobile always uses the sheet-only client; Force Desktop always loads the full HUD (useful for testing).",
+  "settings.mobileClientMode.auto": "Auto (detect device)",
+  "settings.mobileClientMode.forceMobile": "Force Mobile (sheet-only)",
+  "settings.mobileClientMode.forceDesktop": "Force Desktop (full HUD)",
+  "settings.enableCameraPad.name": "Enable Camera Pad",
+  "settings.enableCameraPad.hint": "Show the map pan and zoom cluster on this client when the world allows it.",
+  "settings.menus.cameraPad.name": "Camera Pad Settings",
+  "settings.menus.cameraPad.label": "Camera Pad Settings",
+  "settings.menus.cameraPad.hint": "Pick which users can see the map pan and zoom cluster.",
+  "settings.menus.cameraPad.title": "Camera Pad Settings",
+  "settings.cameraPadVisibleTo.name": "Who can see the camera pad",
+  "settings.cameraPadVisibleTo.hint": "Each checked user sees the pad on their client. Leave it unset to keep the Touchscreen account.",
+  "settings.cameraPadVisibleTo.empty": "No users in this world yet.",
   "mobileMove.title": "Move",
   "mobileMove.noToken": "This character is not on the map.",
   "mobileMove.panUp": "Up",
@@ -123,7 +138,10 @@ export const HUD_FALLBACKS = {
   "mobileMove.panDownRight": "Down right",
   "mobileMove.undoOne": "Undo 1",
   "mobileMove.undoAll": "Undo all",
-  "mobileMove.failed": "Could not move that token."
+  "mobileMove.failed": "Could not move that token.",
+  "mobileMove.noTargetsInRange": "Nobody is in range.",
+  "mobileMove.showSidebar": "Show tabs",
+  "mobileMove.hideSidebar": "Hide tabs"
 };
 
 /** @type {Map<string, string>} */

@@ -9,10 +9,11 @@ import {
   nextViewPosition,
   withLockViewUnlocked
 } from "../src/common/camera-control.mjs";
-import { isTouchTableClient, shouldShowCameraPad } from "../src/common/hooks/touch-table.mjs";
+import { isTouchTableClient } from "../src/common/hooks/touch-table.mjs";
+import { shouldShowCameraPad } from "../src/components/camera-pad/camera-pad.mjs";
 
-function asUser(name, { isGM = false } = {}) {
-  installFoundry({ isGM });
+function asUser(name, { isGM = false, settings = {} } = {}) {
+  installFoundry({ isGM, settings });
   globalThis.game.user.name = name;
 }
 
@@ -106,13 +107,13 @@ describe("applyCanvasView", () => {
 });
 
 describe("shouldShowCameraPad", () => {
-  it("shows only for the Touchscreen account", () => {
+  it("defaults to the Touchscreen account", () => {
     asUser("Touchscreen");
     expect(shouldShowCameraPad()).toBe(true);
     expect(isTouchTableClient()).toBe(true);
   });
 
-  it("hides for the GM and every other player", () => {
+  it("hides for the GM and every other player by default", () => {
     asUser("Gamemaster", { isGM: true });
     expect(shouldShowCameraPad()).toBe(false);
     expect(isTouchTableClient()).toBe(false);
@@ -121,6 +122,23 @@ describe("shouldShowCameraPad", () => {
     asUser("Broccoli");
     expect(shouldShowCameraPad()).toBe(false);
     asUser("Mirena");
+    expect(shouldShowCameraPad()).toBe(false);
+  });
+
+  it("hides when this client disables the pad", () => {
+    asUser("Touchscreen", { settings: { enableCameraPad: false } });
+    expect(shouldShowCameraPad()).toBe(false);
+  });
+
+  it("shows only the listed users", () => {
+    asUser("Vesper", { settings: { cameraPadVisibleTo: ["user1"] } });
+    expect(shouldShowCameraPad()).toBe(true);
+    asUser("Vesper", { settings: { cameraPadVisibleTo: ["other"] } });
+    expect(shouldShowCameraPad()).toBe(false);
+  });
+
+  it("hides everyone when the list is empty", () => {
+    asUser("Touchscreen", { settings: { cameraPadVisibleTo: [] } });
     expect(shouldShowCameraPad()).toBe(false);
   });
 });

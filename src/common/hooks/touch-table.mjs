@@ -16,11 +16,6 @@ export function isTouchTableClient() {
   return String(game.user?.name ?? "").trim().toLowerCase() === TOUCHSCREEN_USER;
 }
 
-/** Camera pad is only for that one account. */
-export function shouldShowCameraPad() {
-  return isTouchTableClient();
-}
-
 export function getHudFocusToken() {
   const id = hudFocusTokenId || game.settings.get(MODULE_ID, "actionBarLastTokenId") || null;
   return id ? canvas?.tokens?.get(id) ?? null : null;

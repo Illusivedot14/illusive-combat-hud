@@ -14,7 +14,8 @@ import {
 } from "./common/i18n.mjs";
 import { applyLayoutVariables } from "./common/layout.mjs";
 import { DISPLAY_PROFILE_CHOICES } from "./common/hud-bounds.mjs";
-const DISPLAY_KEYS = ["displayProfile", "mobileClientMode"];
+import { refreshCameraPad } from "./components/camera-pad/camera-pad.mjs";
+const DISPLAY_KEYS = ["displayProfile"];
 
 const PARTY_KEYS = [
   "partyMaxPortraits",
@@ -43,6 +44,8 @@ const ACTION_BAR_KEYS = [
   "preferHudReactions",
   "midiConfigureDialog"
 ];
+
+const CAMERA_PAD_KEYS = ["cameraPadVisibleTo"];
 
 const MOBILE_KEYS = [
   "mobileClientMode",
@@ -309,6 +312,26 @@ export function registerSettings() {
     settingKeys: BOSS_BAR_KEYS
   });
 
+  registerMain("enableCameraPad", {
+    type: Boolean,
+    default: true,
+    onChange: () => refreshCameraPad()
+  });
+
+  registerWorldHidden("cameraPadVisibleTo", {
+    type: Array,
+    default: null,
+    onChange: () => refreshCameraPad()
+  });
+
+  registerSettingsSubmenu("cameraPadMenu", {
+    menuId: "cameraPad",
+    titleKey: "settings.menus.cameraPad.title",
+    icon: "fas fa-up-down-left-right",
+    settingKeys: CAMERA_PAD_KEYS,
+    restricted: true
+  });
+
   registerMain("enableMobileSheet", {
     type: Boolean,
     default: true,
@@ -321,7 +344,7 @@ export function registerSettings() {
 
   registerHidden("mobileClientMode", {
     type: String,
-    default: "forceDesktop",
+    default: "auto",
     choices: ichSettingChoices("mobileClientMode", ["auto", "forceMobile", "forceDesktop"]),
     onChange: () => {
       import("./common/mobile-client.mjs")
@@ -329,9 +352,6 @@ export function registerSettings() {
         .catch((err) => console.error(`${MODULE_ID} | mobile mode change failed`, err));
     }
   });
-  if (game.settings.get(MODULE_ID, "mobileClientMode") !== "forceDesktop") {
-    void game.settings.set(MODULE_ID, "mobileClientMode", "forceDesktop");
-  }
 
   // Tracks whether Illusive set core.noCanvas so we can undo it on desktop.
   registerHidden("ichManagedNoCanvas", {

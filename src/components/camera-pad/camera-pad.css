@@ -83,3 +83,16 @@
   background: #c8a030 !important;
   color: #1a1208 !important;
 }
+
+.ich-subsettings-form .ich-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.ich-subsettings-form .ich-user-list label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

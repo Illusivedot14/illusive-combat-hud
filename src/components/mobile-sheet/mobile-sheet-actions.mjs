@@ -11,14 +11,16 @@ import {
   openItemDetailOverlay,
   openAccentColorOverlay,
   openDiceSoNiceSettings,
-  openMobileSettingsMenu,
   withSheetDropped
 } from "./mobile-sheet-dialogs.mjs";
+import { runMobileSettingsFlow } from "./mobile-global-settings.mjs";
 import { canUseItem } from "./mobile-sheet-data.mjs";
 import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
 import { useActivityFromHud } from "../../common/midi.mjs";
-import { listActivities } from "../../common/ability-utils.mjs";
+import { listActivities, requiresCanvasTargets } from "../../common/ability-utils.mjs";
 import { findTokenForActor } from "../../common/reaction-context.mjs";
+import { pickCastSlotLevel } from "../action-bar/action-bar-cast-picker.mjs";
+import { startMobileTargetUse } from "./mobile-target-pick.mjs";
 
 function signed(n) {
   const v = Number(n) || 0;
@@ -291,55 +293,57 @@ async function inspectAndActItem(actor, itemId, event) {
     typeBit = item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : "";
   }
 
-  return withSheetDropped(async () => {
-    const choice = await openItemDetailOverlay(item, {
-      subtitle: typeBit,
-      canUse: canUseItem(item),
-      canEquip: "equipped" in (item.system ?? {}),
-      equipped: Boolean(item.system?.equipped),
-      showAttack,
-      showDamage: showDamage || showAttack,
-      canPrepare,
-      prepared
-    });
-    if (!choice) return false;
+  const choice = await withSheetDropped(() => openItemDetailOverlay(item, {
+    subtitle: typeBit,
+    canUse: canUseItem(item),
+    canEquip: "equipped" in (item.system ?? {}),
+    equipped: Boolean(item.system?.equipped),
+    showAttack,
+    showDamage: showDamage || showAttack,
+    canPrepare,
+    prepared
+  }));
+  if (!choice) return false;
 
-    try {
-      if (choice === "equip") {
-        await item.update({ "system.equipped": !item.system.equipped });
-        return true;
-      }
-      if (choice === "prepare") {
-        await item.update({ "system.preparation.prepared": !prepared });
-        return true;
-      }
-      if (choice === "attack") return rollMobileAttack(actor, item);
-      if (choice === "damage") return rollMobileDamage(actor, item);
-      if (choice === "use") {
-        const used = await useItemLikeSheet(actor, item, event);
-        if (!used) {
-          ui.notifications.warn("That item cannot be used.");
-          return false;
-        }
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error(`${MODULE_ID} | mobile inspect-item failed`, itemId, err);
-      ui.notifications.error("Could not use that item.");
-      return false;
+  try {
+    if (choice === "equip") {
+      await item.update({ "system.equipped": !item.system.equipped });
+      return true;
     }
-  });
+    if (choice === "prepare") {
+      await item.update({ "system.preparation.prepared": !prepared });
+      return true;
+    }
+    if (choice === "attack") return rollMobileAttack(actor, item);
+    if (choice === "damage") return rollMobileDamage(actor, item);
+    if (choice === "use") return useItemLikeSheet(actor, item, event);
+    return false;
+  } catch (err) {
+    console.error(`${MODULE_ID} | mobile inspect-item failed`, itemId, err);
+    ui.notifications.error("Could not use that item.");
+    return false;
+  }
 }
 
 /**
  * Same Midi fire path as the action bar (`useActivityFromHud` in midi.mjs).
- * Skip HUD target validation so Midi/dnd5e can prompt on phones.
+ * If the use needs people, close the sheet and pick from a range list first.
  */
 async function useItemLikeSheet(actor, item, event) {
   const activity = getPrimaryUseActivity(item);
   const token = findTokenForActor(actor, { preferControlled: true }) ?? { actor };
   const section = activity?.activation?.type ?? item?.system?.activation?.type ?? "action";
+
+  if (requiresCanvasTargets(item, activity)) {
+    let spellLevel = null;
+    if (item && (activity?.type === "cast" || item.type === "spell")) {
+      const pick = await withSheetDropped(() => pickCastSlotLevel(actor, item, activity));
+      if (pick.cancelled) return false;
+      spellLevel = pick.level;
+    }
+    return startMobileTargetUse({ actor, token, item, activity, section, event, spellLevel });
+  }
+
   return useActivityFromHud(token, item, activity, section, event, {}, {
     validateTargets: false,
     clearTargets: false
@@ -552,18 +556,8 @@ export async function handleMobileSheetAction(actor, action, dataset, event) {
     case "open-dndbeyond":
       return openDndBeyondCharacter(actor);
     case "open-settings-menu":
-      return withSheetDropped(async () => {
-        const choice = await openMobileSettingsMenu();
-        if (choice === "ui-color") {
-          await openAccentColorOverlay();
-          return true;
-        }
-        if (choice === "dice") {
-          await openDiceSoNiceSettings();
-          return true;
-        }
-        return false;
-      });
+      await runMobileSettingsFlow();
+      return true;
     case "open-dice-settings":
       await withSheetDropped(() => openDiceSoNiceSettings());
       return true;

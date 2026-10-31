@@ -22,42 +22,27 @@ import {
 import { ich } from "../../common/i18n.mjs";
 import { getMobileFocusedActor } from "./mobile-focus.mjs";
 import { getMobileSheetActor, isMobileSheetOpen, MOBILE_SHEET_STATE_HOOK } from "./mobile-sheet.mjs";
+import { isMobileTargetPickActive } from "./mobile-target-pick.mjs";
+import { openMobileAuraMenu, openMobileLightMenu } from "./mobile-controller-menus.mjs";
+import {
+  bindMobileSidebar,
+  isMobileSidebarOpen,
+  listFoundrySidebarTabs,
+  openMobileSidebarTab
+} from "./mobile-sidebar.mjs";
+import { isTokenLightOn } from "../action-bar/action-bar-light.mjs";
+import { isTokenAuraOn } from "../token-aura/token-aura.mjs";
 import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
-import { ensureDomRoot, setImportant } from "../../common/viewport.mjs";
+import { ensureDomRoot } from "../../common/viewport.mjs";
 
 const ROOT_ID = "ich-mobile-move";
-const KEY_PX = 64;
-const KEY_GAP_PX = 4;
-const PAD_PX = KEY_PX * 3 + KEY_GAP_PX * 2;
-
 const HOLD_MS = 150;
 
 let bound = false;
+let sidebarExpanded = true;
 let stepping = false;
 let holdTimer = null;
 let holdAction = null;
-
-function paintKeyFace(el, extra = {}) {
-  setImportant(el, {
-    "box-sizing": "border-box",
-    display: "flex",
-    "align-items": "center",
-    "justify-content": "center",
-    padding: "0",
-    margin: "0",
-    border: "2px solid var(--mobile-btn-border, var(--mobile-accent-50, #b794f6))",
-    "border-radius": "10px",
-    background: "var(--mobile-bg-secondary, #1f1830)",
-    color: "var(--mobile-text-primary, #fff)",
-    "box-shadow": "0 4px 16px var(--mobile-shadow-strong, rgba(0,0,0,0.45))",
-    "line-height": "1",
-    cursor: "pointer",
-    "user-select": "none",
-    "touch-action": "none",
-    "pointer-events": "auto",
-    ...extra
-  });
-}
 
 function rootEl() {
   return document.getElementById(ROOT_ID);
@@ -76,16 +61,46 @@ function inCombat() {
 }
 
 function ensureRoot() {
+  const existing = document.getElementById(ROOT_ID);
+  if (existing && !existing.querySelector(".ich-move-sidebar-tabs-clip")) existing.remove();
   return ensureDomRoot(ROOT_ID, {
     className: "ich-mobile-move",
     html: `
-    <div role="button" tabindex="0" class="ich-move-flip" data-move="flip" aria-label="">
-      <i class="fas fa-left-right" aria-hidden="true"></i>
+    <div class="ich-move-utils">
+      <div role="button" tabindex="0" class="ich-move-util" data-move="light" aria-label="">
+        <i class="fas fa-lightbulb" aria-hidden="true"></i>
+      </div>
+      <div role="button" tabindex="0" class="ich-move-util" data-move="aura" aria-label="">
+        <i class="fas fa-circle-dot" aria-hidden="true"></i>
+      </div>
+      <div role="button" tabindex="0" class="ich-move-flip" data-move="flip" aria-label="">
+        <i class="fas fa-left-right" aria-hidden="true"></i>
+      </div>
+    </div>
+    <div class="ich-move-sidebar" id="ich-move-sidebar">
+      <div class="ich-move-sidebar-tabs-clip">
+        <div class="ich-move-sidebar-tabs" id="ich-move-sidebar-tabs"></div>
+      </div>
+      <div role="button" tabindex="0" class="ich-move-sidebar-toggle" data-sidebar-toggle="1">
+        <i class="fas fa-chevron-up" aria-hidden="true"></i>
+      </div>
     </div>
     <div class="ich-move-panel">
-      <div class="ich-move-status">
+      <div class="ich-move-well">
+      <div class="ich-move-pad">
+        <div role="button" tabindex="0" data-move="upLeft"><i class="fas fa-arrow-up" style="transform:rotate(-45deg)" aria-hidden="true"></i></div>
+        <div role="button" tabindex="0" data-move="up"><i class="fas fa-arrow-up" aria-hidden="true"></i></div>
+        <div role="button" tabindex="0" data-move="upRight"><i class="fas fa-arrow-up" style="transform:rotate(45deg)" aria-hidden="true"></i></div>
+        <div role="button" tabindex="0" data-move="left"><i class="fas fa-arrow-left" aria-hidden="true"></i></div>
         <div role="button" tabindex="0" class="ich-move-mode" data-move="mode"></div>
-        <span class="ich-move-feet" data-move="feet"></span>
+        <div role="button" tabindex="0" data-move="right"><i class="fas fa-arrow-right" aria-hidden="true"></i></div>
+        <div role="button" tabindex="0" data-move="downLeft"><i class="fas fa-arrow-down" style="transform:rotate(45deg)" aria-hidden="true"></i></div>
+        <div role="button" tabindex="0" data-move="down"><i class="fas fa-arrow-down" aria-hidden="true"></i></div>
+        <div role="button" tabindex="0" data-move="downRight"><i class="fas fa-arrow-down" style="transform:rotate(-45deg)" aria-hidden="true"></i></div>
+      </div>
+      </div>
+      <div class="ich-move-meta">
+        <span class="ich-move-feet" data-move="feet" hidden></span>
         <div role="button" tabindex="0" class="ich-move-undo" data-move="undo-one" hidden>
           <i class="fas fa-undo" aria-hidden="true"></i>
           <span></span>
@@ -95,167 +110,79 @@ function ensureRoot() {
           <span></span>
         </div>
       </div>
-      <div class="ich-move-pad">
-        <div role="button" tabindex="0" data-move="upLeft"><i class="fas fa-arrow-up" style="transform:rotate(-45deg)" aria-hidden="true"></i></div>
-        <div role="button" tabindex="0" data-move="up"><i class="fas fa-arrow-up" aria-hidden="true"></i></div>
-        <div role="button" tabindex="0" data-move="upRight"><i class="fas fa-arrow-up" style="transform:rotate(45deg)" aria-hidden="true"></i></div>
-        <div role="button" tabindex="0" data-move="left"><i class="fas fa-arrow-left" aria-hidden="true"></i></div>
-        <span class="ich-move-empty" aria-hidden="true"></span>
-        <div role="button" tabindex="0" data-move="right"><i class="fas fa-arrow-right" aria-hidden="true"></i></div>
-        <div role="button" tabindex="0" data-move="downLeft"><i class="fas fa-arrow-down" style="transform:rotate(45deg)" aria-hidden="true"></i></div>
-        <div role="button" tabindex="0" data-move="down"><i class="fas fa-arrow-down" aria-hidden="true"></i></div>
-        <div role="button" tabindex="0" data-move="downRight"><i class="fas fa-arrow-down" style="transform:rotate(-45deg)" aria-hidden="true"></i></div>
-      </div>
     </div>
   `
   });
 }
 
-function hideChrome(el) {
-  if (!el) return;
-  setImportant(el, {
-    display: "none",
-    visibility: "hidden",
-    "pointer-events": "none"
-  });
-  el.hidden = true;
+function controllerHidden() {
+  return isMobileSheetOpen() || isMobileTargetPickActive() || isMobileSidebarOpen();
 }
 
 function applyMoveChrome(root, { showFeet = false, showUndo = false } = {}) {
-  setImportant(root, {
-    position: "fixed",
-    inset: "0 0 var(--ich-carousel-dock, 96px) 0",
-    "z-index": "100002",
-    display: "flex",
-    "align-items": "center",
-    "justify-content": "center",
-    background: "transparent",
-    "pointer-events": "none"
-  });
-
+  const hidden = controllerHidden();
+  const hasToken = Boolean(focusedToken()) || actorHasMapToken(focusedActor());
+  root.classList.toggle("is-hidden", hidden);
+  root.classList.toggle("no-token", !hasToken);
   const panel = root.querySelector(".ich-move-panel");
-  if (panel) {
-    const sheetOpen = isMobileSheetOpen();
-    setImportant(panel, {
-      display: sheetOpen ? "none" : "flex",
-      "flex-direction": "column",
-      "align-items": "center",
-      gap: "10px",
-      padding: "0",
-      margin: "0",
-      border: "none",
-      background: "transparent",
-      "box-shadow": "none",
-      "pointer-events": sheetOpen ? "none" : "auto",
-      visibility: sheetOpen ? "hidden" : "visible"
-    });
-    panel.hidden = sheetOpen;
-  }
-
-  const pad = root.querySelector(".ich-move-pad");
-  if (pad) {
-    const track = `${KEY_PX}px ${KEY_PX}px ${KEY_PX}px`;
-    setImportant(pad, {
-      display: "grid",
-      "grid-template-columns": track,
-      "grid-template-rows": track,
-      gap: `${KEY_GAP_PX}px`,
-      width: `${PAD_PX}px`,
-      height: `${PAD_PX}px`
-    });
-  }
-
-  const key = `${KEY_PX}px`;
-  root.querySelectorAll(".ich-move-empty").forEach((el) => {
-    setImportant(el, {
-      width: key,
-      height: key,
-      border: "none",
-      background: "transparent"
-    });
+  if (panel) panel.hidden = hidden || !hasToken;
+  root.querySelectorAll(".ich-move-utils").forEach((el) => {
+    el.hidden = hidden || !hasToken;
   });
-
-  root.querySelectorAll(".ich-move-pad [data-move]").forEach((el) => {
-    paintKeyFace(el, {
-      width: key,
-      height: key,
-      "min-width": key,
-      "max-width": key,
-      "min-height": key,
-      "max-height": key,
-      "font-size": "26px"
-    });
-  });
-
-  root.querySelectorAll(".ich-move-mode").forEach((el) => {
-    paintKeyFace(el, {
-      height: "52px",
-      "min-height": "52px",
-      padding: "0 12px",
-      gap: "8px",
-      "font-size": "16px",
-      "font-weight": "700"
-    });
-  });
+  const sidebar = root.querySelector(".ich-move-sidebar");
+  if (sidebar) sidebar.hidden = hidden;
+  applySidebarExpanded(root);
 
   root.querySelectorAll(".ich-move-undo").forEach((el) => {
-    if (showUndo) {
-      paintKeyFace(el, {
-        height: "52px",
-        "min-height": "52px",
-        padding: "0 12px",
-        gap: "8px",
-        "font-size": "16px",
-        "font-weight": "700"
-      });
-      el.hidden = false;
-    } else {
-      hideChrome(el);
-    }
+    el.hidden = !showUndo;
   });
-
-  const flip = root.querySelector(".ich-move-flip");
-  if (flip) {
-    paintKeyFace(flip, {
-      position: "fixed",
-      left: "12px",
-      right: "auto",
-      top: "auto",
-      bottom: "calc(var(--ich-carousel-dock, 96px) + 12px)",
-      width: "72px",
-      height: "72px",
-      "min-width": "72px",
-      "max-width": "72px",
-      "min-height": "72px",
-      "max-height": "72px",
-      "border-radius": "50%",
-      "font-size": "1.8rem",
-      "z-index": "100003"
-    });
-  }
-
   const feet = root.querySelector(".ich-move-feet");
-  if (feet) {
-    if (showFeet) {
-      paintKeyFace(feet, {
-        height: "52px",
-        "min-height": "52px",
-        padding: "0 12px",
-        "font-size": "16px",
-        "font-weight": "700",
-        cursor: "default"
-      });
-      feet.hidden = false;
-    } else {
-      hideChrome(feet);
-    }
-  }
+  if (feet) feet.hidden = !showFeet;
 }
 
 function actorMaxFeet(token, movement) {
   if (Number.isFinite(movement?.maxFeet) && movement.maxFeet > 0) return movement.maxFeet;
   const walk = Number(token?.actor?.system?.attributes?.movement?.walk);
   return Number.isFinite(walk) && walk > 0 ? walk : null;
+}
+
+function locSidebarToggle() {
+  return sidebarExpanded
+    ? (ich.mobileMove("hideSidebar") ?? "Hide tabs")
+    : (ich.mobileMove("showSidebar") ?? "Show tabs");
+}
+
+function applySidebarExpanded(root) {
+  root.classList.toggle("sidebar-collapsed", !sidebarExpanded);
+  const toggle = root.querySelector("[data-sidebar-toggle]");
+  if (!toggle) return;
+  toggle.setAttribute("aria-expanded", sidebarExpanded ? "true" : "false");
+  toggle.setAttribute("aria-label", locSidebarToggle());
+  toggle.title = locSidebarToggle();
+  if (!toggle.querySelector("i")) {
+    toggle.innerHTML = `<i class="fas fa-chevron-up" aria-hidden="true"></i>`;
+  }
+}
+
+function paintSidebarTabs(root) {
+  const host = root.querySelector("#ich-move-sidebar-tabs");
+  if (!host) return;
+  const tabs = listFoundrySidebarTabs();
+  const key = tabs.map((tab) => `${tab.id}:${tab.icon}:${tab.label}`).join("|");
+  if (key === host.dataset.tabKey) return;
+  host.dataset.tabKey = key;
+  host.replaceChildren();
+  for (const tab of tabs) {
+    const button = document.createElement("div");
+    button.role = "button";
+    button.tabIndex = 0;
+    button.className = "ich-move-sidebar-tab";
+    button.dataset.sidebarTab = tab.id;
+    button.title = tab.label;
+    button.setAttribute("aria-label", tab.label);
+    button.innerHTML = `<i class="${tab.icon}" aria-hidden="true"></i>`;
+    host.appendChild(button);
+  }
 }
 
 function leftoverFeet(token, movement) {
@@ -305,6 +232,7 @@ function paintPad() {
   if (modeBtn) {
     const label = current?.label || movement?.modeLabel || ich.movement("mode");
     modeBtn.innerHTML = `<i class="fas ${current?.icon || "fa-person-walking"}" aria-hidden="true"></i><span>${label}</span>`;
+    modeBtn.title = label;
     const modeOff = !token || modes.length < 2;
     modeBtn.classList.toggle("is-disabled", modeOff);
     modeBtn.setAttribute("aria-disabled", modeOff ? "true" : "false");
@@ -336,6 +264,19 @@ function paintPad() {
 
   const flip = root.querySelector("[data-move='flip']");
   if (flip) flip.setAttribute("aria-label", ich.actionBar("flipToken"));
+
+  const light = root.querySelector("[data-move='light']");
+  if (light) {
+    light.setAttribute("aria-label", ich.actionBar("toggleLight"));
+    light.classList.toggle("is-on", Boolean(token && isTokenLightOn(token)));
+  }
+  const aura = root.querySelector("[data-move='aura']");
+  if (aura) {
+    aura.setAttribute("aria-label", ich.actionBar("toggleAura"));
+    aura.classList.toggle("is-on", Boolean(token && isTokenAuraOn(token)));
+  }
+  paintSidebarTabs(root);
+  applySidebarExpanded(root);
 
   for (const [dir, key] of [
     ["up", "panUp"],
@@ -387,6 +328,17 @@ async function onAction(action) {
     return;
   }
 
+  if (action === "light") {
+    await openMobileLightMenu(token);
+    paintPad();
+    return;
+  }
+  if (action === "aura") {
+    await openMobileAuraMenu(token);
+    paintPad();
+    return;
+  }
+
   if (stepping) return;
   if (!STEP_DIRS.includes(action)) return;
   stepping = true;
@@ -425,15 +377,6 @@ function startHold(action) {
 function setHeld(el, held) {
   if (!el) return;
   el.classList.toggle("is-held", held);
-  if (held) {
-    el.style.setProperty("background", "var(--mobile-bg-button-active, rgba(183,148,246,0.24))", "important");
-    el.style.setProperty("color", "var(--mobile-accent, #b794f6)", "important");
-    el.style.setProperty("border-color", "var(--mobile-accent, #b794f6)", "important");
-  } else {
-    el.style.setProperty("background", "var(--mobile-bg-secondary, #1f1830)", "important");
-    el.style.setProperty("color", "var(--mobile-text-primary, #fff)", "important");
-    el.style.setProperty("border-color", "var(--mobile-btn-border, var(--mobile-accent-50, #b794f6))", "important");
-  }
 }
 
 function keyFromEvent(event) {
@@ -444,7 +387,42 @@ function keyFromEvent(event) {
   return button;
 }
 
+function tabFromEvent(event) {
+  const root = rootEl();
+  if (!root) return null;
+  const button = event.target?.closest?.("[data-sidebar-tab]");
+  if (!button || !root.contains(button)) return null;
+  return button;
+}
+
+function toggleFromEvent(event) {
+  const root = rootEl();
+  if (!root) return null;
+  const button = event.target?.closest?.("[data-sidebar-toggle]");
+  if (!button || !root.contains(button)) return null;
+  return button;
+}
+
 function onPointerDown(event) {
+  const toggle = toggleFromEvent(event);
+  if (toggle) {
+    event.preventDefault();
+    event.stopPropagation();
+    toggle.setPointerCapture?.(event.pointerId);
+    setHeld(toggle, true);
+    sidebarExpanded = !sidebarExpanded;
+    applySidebarExpanded(rootEl());
+    return;
+  }
+  const tabButton = tabFromEvent(event);
+  if (tabButton) {
+    event.preventDefault();
+    event.stopPropagation();
+    tabButton.setPointerCapture?.(event.pointerId);
+    setHeld(tabButton, true);
+    void openMobileSidebarTab(tabButton.dataset.sidebarTab);
+    return;
+  }
   const button = keyFromEvent(event);
   if (!button) return;
   event.preventDefault();
@@ -460,14 +438,14 @@ function onPointerUp(event) {
   stopHold();
   const root = rootEl();
   root?.querySelectorAll(".is-held").forEach((el) => setHeld(el, false));
-  if (keyFromEvent(event)) {
+  if (keyFromEvent(event) || tabFromEvent(event) || toggleFromEvent(event)) {
     event.preventDefault();
     event.stopPropagation();
   }
 }
 
 function shouldShowMove() {
-  return isIllusiveMobileMode() && actorHasMapToken(focusedActor());
+  return isIllusiveMobileMode();
 }
 
 export function renderMobileMove() {
@@ -483,6 +461,7 @@ export function renderMobileMove() {
 export function bindMobileMove() {
   if (bound) return;
   bound = true;
+  bindMobileSidebar();
   document.addEventListener("pointerdown", onPointerDown, true);
   document.addEventListener("pointerup", onPointerUp, true);
   document.addEventListener("pointercancel", onPointerUp, true);
@@ -514,6 +493,9 @@ export function bindMobileMove() {
     if (isIllusiveMobileMode()) renderMobileMove();
   });
   Hooks.on("updateScene", () => {
+    if (isIllusiveMobileMode()) renderMobileMove();
+  });
+  Hooks.on("renderSidebar", () => {
     if (isIllusiveMobileMode()) renderMobileMove();
   });
   if (globalThis.game?.ready) renderMobileMove();

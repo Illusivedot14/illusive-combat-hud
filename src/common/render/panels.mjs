@@ -2,6 +2,7 @@ import { registerHudPanel } from "./registry.mjs";
 import { partyStatusPanel } from "../../components/party-status/party-status.mjs";
 import { actionBarPanel } from "../../components/action-bar/action-bar.mjs";
 import { turnTrackerPanel } from "../../components/turn-tracker/turn-tracker.mjs";
+import { cameraPadPanel } from "../../components/camera-pad/camera-pad.mjs";
 
 let registered = false;
 
@@ -13,4 +14,5 @@ export function registerHudPanels() {
   registerHudPanel(partyStatusPanel);
   registerHudPanel(actionBarPanel);
   registerHudPanel(turnTrackerPanel);
+  registerHudPanel(cameraPadPanel);
 }

@@ -8,6 +8,19 @@
       {{else if isNumber}}
       <input type="range" name="{{key}}" min="{{range.min}}" max="{{range.max}}" step="{{range.step}}" value="{{value}}">
       <span class="range-value">{{value}}</span>
+      {{else if isUserList}}
+      <div class="ich-user-list">
+        {{#if users.length}}
+        {{#each users}}
+        <label class="checkbox">
+          <input type="checkbox" name="{{../key}}.{{id}}" {{checked selected}}>
+          <span>{{name}}</span>
+        </label>
+        {{/each}}
+        {{else}}
+        <p class="hint">{{empty}}</p>
+        {{/if}}
+      </div>
       {{else if isSelect}}
       <select name="{{key}}">
         {{selectOptions choices selected=value localize=false}}

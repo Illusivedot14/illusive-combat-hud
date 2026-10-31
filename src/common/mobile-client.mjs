@@ -19,7 +19,7 @@ export function detectMobileDevice() {
 
 export function getMobileClientMode() {
   try {
-    return game.settings.get(MODULE_ID, "mobileClientMode") ?? "forceDesktop";
+    return game.settings.get(MODULE_ID, "mobileClientMode") ?? "auto";
   } catch {
     return "auto";
   }

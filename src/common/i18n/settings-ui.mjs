@@ -10,6 +10,7 @@ const MENU_KEYS = {
   turnTrackerMenu: "turnTracker",
   actionBarMenu: "actionBar",
   bossBarMenu: "bossBar",
+  cameraPadMenu: "cameraPad",
   mobileMenu: "mobile"
 };
 
@@ -25,6 +26,8 @@ const MAIN_CONFIG_ORDER = [
   "enableBossBar",
   "bossBarMenu",
   "bossBarStyleConfiguration",
+  "enableCameraPad",
+  "cameraPadMenu",
   "enableMobileSheet",
   "mobileMenu"
 ];
@@ -139,6 +142,39 @@ export function bindI18nHooks() {
   });
 }
 
+function listWorldUsers() {
+  return [...(game.users ?? [])];
+}
+
+function cameraPadUserChoices(value) {
+  const users = listWorldUsers();
+  let selected;
+  if (Array.isArray(value)) selected = new Set(value);
+  else if (value === "gm") selected = new Set(users.filter((user) => user.isGM).map((user) => user.id));
+  else if (value === "all") selected = new Set(users.map((user) => user.id));
+  else {
+    selected = new Set(
+      users
+        .filter((user) => String(user.name ?? "").trim().toLowerCase() === "touchscreen")
+        .map((user) => user.id)
+    );
+  }
+
+  return users
+    .map((user) => ({ id: user.id, name: user.name, selected: selected.has(user.id) }))
+    .sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? "")));
+}
+
+function submittedIdList(raw) {
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  if (raw && typeof raw === "object") {
+    return Object.entries(raw)
+      .filter(([, on]) => Boolean(on))
+      .map(([id]) => id);
+  }
+  return [];
+}
+
 export function buildSettingField(key) {
   const registered = game.settings.settings.get(`${MODULE_ID}.${key}`);
   if (!registered) return null;
@@ -147,13 +183,14 @@ export function buildSettingField(key) {
 
   const value = game.settings.get(MODULE_ID, key);
   const hasChoices = Boolean(registered.choices);
+  const isUserList = registered.type === Array && key === "cameraPadVisibleTo";
   const isBoolean = registered.type === Boolean;
   const isNumber = registered.type === Number;
   const isSelect = registered.type === String && hasChoices;
   const isFile = registered.type === String && !hasChoices && Boolean(registered.filePicker);
   const isColor = registered.type === String && !hasChoices && !isFile
     && (key.toLowerCase().includes("color") || /^#[0-9a-fA-F]{6}$/i.test(String(registered.default ?? "")));
-  const isString = registered.type === String && !hasChoices && !isFile && !isColor;
+  const isString = registered.type === String && !hasChoices && !isFile && !isColor && !isUserList;
 
   const field = {
     key,
@@ -166,8 +203,14 @@ export function buildSettingField(key) {
     isFile,
     isColor,
     isString,
+    isUserList,
     filePickerType: typeof registered.filePicker === "string" ? registered.filePicker : "image"
   };
+
+  if (isUserList) {
+    field.users = cameraPadUserChoices(value);
+    field.empty = ichSetting(key, "empty");
+  }
 
   if (field.isNumber && registered.range) {
     field.range = {
@@ -260,6 +303,11 @@ export class IchSubsettingsForm extends FormApplication {
         continue;
       }
 
+      if (registered.type === Array) {
+        await game.settings.set(MODULE_ID, key, submittedIdList(formData[key]));
+        continue;
+      }
+
       if (!(key in formData)) continue;
       let value = formData[key];
       if (registered.type === Number) value = Number(value);
@@ -268,7 +316,7 @@ export class IchSubsettingsForm extends FormApplication {
   }
 }
 
-export function registerSettingsSubmenu(menuKey, { menuId, titleKey, icon, settingKeys }) {
+export function registerSettingsSubmenu(menuKey, { menuId, titleKey, icon, settingKeys, restricted = false }) {
   const MenuClass = class extends IchSubsettingsForm {
     constructor() {
       super(settingKeys, { windowTitle: ich.t(titleKey) });
@@ -280,7 +328,7 @@ export function registerSettingsSubmenu(menuKey, { menuId, titleKey, icon, setti
     label: ichMenu(menuId, "label"),
     hint: ichMenu(menuId, "hint"),
     icon: icon ?? "fas fa-sliders",
-    restricted: false,
+    restricted,
     type: MenuClass
   });
 }

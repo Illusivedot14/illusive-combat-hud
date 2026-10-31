@@ -82,6 +82,55 @@ body.ich-mobile-client #ich-token-statuses {
   display: none !important;
 }
 
+/* Swipe-style: sidebar tabs open as Foundry windows, fitted to the phone. */
+body.ich-mobile-client.ich-mobile-sidebar-open #ich-mobile-dice-roller,
+body.ich-mobile-client.ich-mobile-sidebar-open #ich-mobile-global-gear {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+body.ich-mobile-client .ich-mobile-foundry-window,
+body.ich-mobile-client .application.sidebar-popout {
+  position: fixed !important;
+  left: 8px !important;
+  right: 8px !important;
+  top: max(8px, env(safe-area-inset-top, 0px)) !important;
+  bottom: calc(var(--ich-carousel-dock, 96px) + 8px) !important;
+  width: auto !important;
+  height: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  transform: none !important;
+  z-index: 100080 !important;
+}
+body.ich-mobile-client .ich-mobile-foundry-window .window-content,
+body.ich-mobile-client .application.sidebar-popout .window-content {
+  overflow: auto !important;
+  height: 100% !important;
+  max-height: none !important;
+}
+#ich-mobile-sidebar-close {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  left: max(10px, env(safe-area-inset-left, 0px));
+  z-index: 100085;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(22, 18, 32, 0.82);
+  color: #f4eefe;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
 /* Hide foreign mobile chrome so only the Illusive sheet shows */
 body.ich-mobile-client .mobile-sheet-carousel:not(#ich-mobile-carousel),
 body.ich-mobile-client .mobile-sheet-drawer:not(.ich-illusive-mobile-sheet),
@@ -249,6 +298,26 @@ body.ich-mobile-client {
   align-items: center;
   gap: 8px;
   position: relative;
+}
+#ich-mobile-sheet-root .ich-ms-header-gear {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border-radius: 12px;
+  border: 1px solid var(--mobile-border, rgba(255,255,255,0.2));
+  background: var(--mobile-bg-button, rgba(255,255,255,0.08));
+  color: var(--mobile-text-primary, #fff);
+  font-size: 1.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+#ich-mobile-sheet-root .ich-ms-header-gear:active {
+  background: var(--mobile-bg-button-active, rgba(255,255,255,0.14));
 }
 #ich-mobile-sheet-root .header-info {
   flex: 1;
@@ -610,6 +679,11 @@ body.ich-foundry-dialog-open #ich-mobile-dice-roller,
 body.ich-foundry-dialog-open #ich-mobile-global-gear {
   pointer-events: none !important;
 }
+body.ich-mobile-target-picking #ich-mobile-dice-roller,
+body.ich-mobile-target-picking #ich-mobile-global-gear {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
 body.ich-foundry-dialog-open #ich-mobile-sheet-root {
   z-index: 100 !important;
 }
@@ -797,6 +871,10 @@ body.ich-dsn-hide-chrome {
 }
 .ich-ms-overlay .ich-ms-settings-item:active {
   background: var(--mobile-bg-button-active, rgba(183,148,246,0.18)) !important;
+}
+.ich-ms-overlay .ich-ms-settings-item.is-current {
+  border-color: var(--mobile-accent, #b794f6) !important;
+  background: var(--mobile-accent-20, rgba(183,148,246,0.22)) !important;
 }
 .ich-ms-overlay .ich-ms-dsn-form {
   display: flex !important;
@@ -1692,7 +1770,7 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
 
 /* ---- Manual dice roller: fixed toggle + docked panel ---- */
 #ich-mobile-dice-roller {
-  --ich-dice-fab-size: 72px;
+  --ich-dice-fab-size: 56px;
   --ich-dice-fab-gap: 12px;
   position: fixed !important;
   inset: 0 !important;
@@ -1711,11 +1789,12 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
   width: var(--ich-dice-fab-size) !important;
   height: var(--ich-dice-fab-size) !important;
   border-radius: 50% !important;
-  border: 2px solid var(--mobile-btn-border, var(--mobile-accent-50, #b794f6)) !important;
-  background: var(--mobile-bg-secondary, #1f1830) !important;
-  color: var(--mobile-text-primary, #fff) !important;
-  box-shadow: 0 4px 16px var(--mobile-shadow-strong, rgba(0,0,0,0.45)) !important;
-  font-size: 1.8rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(22, 18, 32, 0.62) !important;
+  color: #f4eefe !important;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28) !important;
+  backdrop-filter: blur(18px) !important;
+  font-size: 1.2rem !important;
   cursor: pointer !important;
   z-index: 100003 !important;
 }
@@ -1870,6 +1949,126 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
 #ich-mobile-dice-roller .ich-dice-roll-btn:active {
   background: var(--mobile-accent, #b794f6) !important;
   color: #111 !important;
+}
+
+/* ---- Closed-phone light / aura menus + target list ---- */
+.ich-ms-overlay.ich-ms-controller-overlay,
+.ich-ms-overlay.ich-ms-target-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 16px !important;
+  background: rgba(8, 6, 14, 0.72) !important;
+}
+.ich-ms-overlay.ich-ms-target-overlay .ich-ms-target-dialog,
+.ich-ms-overlay.ich-ms-controller-overlay .ich-ms-settings-dialog {
+  width: min(420px, 100%) !important;
+  max-height: min(80vh, 720px) !important;
+  overflow: auto !important;
+  padding: 14px !important;
+  border-radius: 16px !important;
+  background: var(--mobile-bg-secondary, #1f1830) !important;
+  border: 1px solid var(--mobile-border, rgba(183,148,246,0.28)) !important;
+  box-shadow: 0 12px 40px var(--mobile-shadow-strong, rgba(0,0,0,0.55)) !important;
+}
+.ich-ms-target-header,
+.ich-ms-controller-overlay .roll-dialog-header {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  margin-bottom: 10px !important;
+}
+.ich-ms-target-header strong,
+.ich-ms-controller-overlay .roll-dialog-title {
+  display: block !important;
+  color: var(--mobile-text-primary, #fff) !important;
+  font-size: 1.05rem !important;
+}
+.ich-ms-target-progress,
+.ich-ms-target-hint {
+  display: block !important;
+  color: var(--mobile-text-secondary, #b9a9d4) !important;
+  font-size: 0.85rem !important;
+  margin: 0 0 10px !important;
+}
+.ich-ms-target-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  max-height: 46vh !important;
+  overflow: auto !important;
+}
+.ich-ms-target-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+  padding: 10px 12px !important;
+  border-radius: 12px !important;
+  border: 2px solid var(--mobile-btn-border, rgba(183,148,246,0.28)) !important;
+  background: var(--mobile-bg-button, rgba(180,140,255,0.08)) !important;
+  color: var(--mobile-text-primary, #fff) !important;
+  text-align: left !important;
+}
+.ich-ms-target-row img {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+}
+.ich-ms-target-name { flex: 1 !important; font-weight: 700 !important; }
+.ich-ms-target-row small { color: var(--mobile-text-secondary, #b9a9d4) !important; }
+.ich-ms-target-row.is-marked {
+  border-color: var(--mobile-accent, #b794f6) !important;
+  background: var(--mobile-bg-button-active, rgba(180,140,255,0.18)) !important;
+}
+.ich-ms-target-actions,
+.ich-ms-controller-overlay .ich-ms-dsn-actions {
+  display: flex !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+}
+.ich-ms-target-actions .roll-btn,
+.ich-ms-controller-overlay .roll-btn {
+  flex: 1 !important;
+  min-height: 48px !important;
+}
+.ich-ms-aura-swatches {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin-top: 12px !important;
+}
+.ich-ms-aura-swatch,
+.ich-ms-aura-dot {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255,255,255,0.2) !important;
+  background: var(--ich-aura-swatch, #e07020) !important;
+}
+.ich-ms-aura-swatch.is-active {
+  border-color: #fff !important;
+  box-shadow: 0 0 0 2px var(--mobile-accent, #b794f6) !important;
+}
+.ich-ms-aura-dot {
+  width: 18px !important;
+  height: 18px !important;
+  flex: 0 0 18px !important;
+}
+.ich-ms-controller-overlay .ich-ms-settings-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+.ich-ms-controller-overlay .ich-ms-settings-item img {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+  object-fit: cover !important;
 }
 `;
 

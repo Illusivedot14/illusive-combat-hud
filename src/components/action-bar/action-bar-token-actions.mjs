@@ -2,6 +2,7 @@ import { ich } from "../../common/i18n.mjs";
 import { getCombatantForToken, findCombatantForToken } from "../../common/action-economy.mjs";
 import { getViewedCombat, getActiveCombatant } from "../../common/combat.mjs";
 import { flipToken } from "../../common/token-actions.mjs";
+import { viewedScene } from "../../common/token-step.mjs";
 export { toggleMovementDropdown, toggleStatusDropdown, toggleLightDropdown, toggleAuraDropdown, toggleRollsDropdown } from "./action-bar-util-dropdown.mjs";
 
 export {
@@ -146,7 +147,10 @@ export async function enterCombatWithToken(token) {
       ui.notifications.warn(ich.actionBar("tipEnterCombatNoPermission"));
       return false;
     }
-    const created = await Combat.create({ scene: canvas.scene?.id, combatants: [] });
+    const created = await Combat.create({
+      scene: canvas.scene?.id ?? viewedScene()?.id,
+      combatants: []
+    });
     combat = created.combat ?? created;
   } else if (!game.user?.isGM && !combat.canUserModify?.(game.user, "update")) {
     ui.notifications.warn(ich.actionBar("tipEnterCombatNoPermission"));

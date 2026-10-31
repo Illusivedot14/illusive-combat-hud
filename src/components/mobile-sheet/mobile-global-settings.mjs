@@ -1,5 +1,5 @@
 /**
- * Client-wide mobile settings gear (UI theme + Dice So Nice).
+ * Client-wide mobile settings gear (sheet/HUD mode, UI theme, Dice So Nice).
  * Fixed to the viewport — not part of any character sheet.
  */
 
@@ -8,6 +8,7 @@ import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
 import {
   openAccentColorOverlay,
   openDiceSoNiceSettings,
+  openMobileClientModeOverlay,
   openMobileSettingsMenu,
   withSheetDropped
 } from "./mobile-sheet-dialogs.mjs";
@@ -15,11 +16,12 @@ import {
 const GEAR_ID = "ich-mobile-global-gear";
 let bound = false;
 
-async function runSettingsFlow() {
+export async function runMobileSettingsFlow() {
   ensureMobileSheetStyles();
   await withSheetDropped(async () => {
     const choice = await openMobileSettingsMenu();
-    if (choice === "ui-color") await openAccentColorOverlay();
+    if (choice === "client-mode") await openMobileClientModeOverlay();
+    else if (choice === "ui-color") await openAccentColorOverlay();
     else if (choice === "dice") await openDiceSoNiceSettings();
   });
 }
@@ -55,7 +57,7 @@ export function bindMobileGlobalGear() {
       if (!btn) return;
       ev.preventDefault();
       ev.stopPropagation();
-      void runSettingsFlow();
+      void runMobileSettingsFlow();
     },
     true
   );

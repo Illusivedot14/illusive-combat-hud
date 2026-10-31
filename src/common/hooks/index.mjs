@@ -3,7 +3,7 @@
  *
  * hooks/index.mjs          bindCanvasHooks() — call once from init
  * hooks/scene-selection    No mass token select on world join / scene load
- * hooks/touch-table        Touchscreen account only
+ * hooks/touch-table        Touchscreen account: HUD focus without ownership
  * hooks/spell-regions      GM: delete instant spell areas, tie concentration areas to their effect
  * token-aura               Colored circles on tokens from HUD (up to three, ICH flags)
  *
