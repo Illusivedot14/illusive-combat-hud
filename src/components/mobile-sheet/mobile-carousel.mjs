@@ -18,7 +18,6 @@ import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
 import { bindMobileBackground, renderMobileBackground } from "./mobile-background.mjs";
 import { bindMobileDiceRoller, renderMobileDiceRoller } from "./mobile-dice-roller.mjs";
 import { bindMobileMove, renderMobileMove } from "./mobile-move.mjs";
-import { bindMobileGlobalGear, renderMobileGlobalGear } from "./mobile-global-settings.mjs";
 import { getMobileFocusedActorId, setMobileFocusedActorId } from "./mobile-focus.mjs";
 import { ensureDomRoot } from "../../common/viewport.mjs";
 
@@ -346,8 +345,7 @@ export async function bootMobileClientUi() {
   renderMobileDiceRoller();
   bindMobileMove();
   renderMobileMove();
-  bindMobileGlobalGear();
-  renderMobileGlobalGear();
+  document.getElementById("ich-mobile-global-gear")?.remove();
   bindMobileCarousel();
   renderMobileCarousel();
 

@@ -152,6 +152,7 @@ export function getMobileSheetActors() {
 export function bindMobileClientHooks() {
   applyBodyClass(isIllusiveMobileMode());
   suppressMobileClientNotices();
+  bindChatPopups();
 
   Hooks.on("changeSetting", (data) => {
     if (data.namespace === MODULE_ID && (data.key === "enableMobileSheet" || data.key === "mobileClientMode")) {
@@ -210,4 +211,66 @@ function clearExistingSuppressedNotifications() {
     const text = el.textContent ?? "";
     if (shouldSuppressMobileNotice(text)) el.remove();
   }
+}
+
+let chatPopupsBound = false;
+
+function chatPopupsMuted() {
+  try {
+    return game.settings.get(MODULE_ID, "mobileMuteChatPopups") === true;
+  } catch {
+    return false;
+  }
+}
+
+function chatLogOpen() {
+  const pop = document.getElementById("chat-popout");
+  if (!pop || pop.hidden) return false;
+  const style = getComputedStyle(pop);
+  return style.display !== "none" && style.visibility !== "hidden";
+}
+
+function stripHtml(html) {
+  const tmp = document.createElement("div");
+  tmp.innerHTML = String(html ?? "");
+  return (tmp.textContent ?? "").replace(/\s+/g, " ").trim();
+}
+
+function canSeeChat(message) {
+  if (!message) return false;
+  if (typeof message.visible === "boolean") return message.visible;
+  const whispers = message.whisper ?? [];
+  if (!whispers.length) return true;
+  const userId = game.user?.id;
+  if (message.author?.id === userId || message.user === userId) return true;
+  return whispers.includes(userId);
+}
+
+function chatPopupText(message) {
+  const speaker = String(message.speaker?.alias || message.author?.name || "").trim();
+  const flavor = stripHtml(message.flavor);
+  const content = stripHtml(message.content);
+  const totals = (message.rolls ?? [])
+    .map((roll) => roll?.total)
+    .filter((n) => Number.isFinite(n));
+  const score = totals.length ? totals.join(", ") : "";
+  let body = [speaker, flavor, content !== flavor ? content : "", score && `= ${score}`]
+    .filter(Boolean)
+    .join(" — ")
+    .trim();
+  if (body.length > 160) body = `${body.slice(0, 157)}...`;
+  return body;
+}
+
+function onCreateChatMessage(message) {
+  if (!isIllusiveMobileMode() || chatPopupsMuted() || chatLogOpen() || !canSeeChat(message)) return;
+  const text = chatPopupText(message);
+  if (!text) return;
+  ui.notifications?.info?.(text, { localize: false, console: false });
+}
+
+function bindChatPopups() {
+  if (chatPopupsBound) return;
+  chatPopupsBound = true;
+  Hooks.on("createChatMessage", (message) => onCreateChatMessage(message));
 }

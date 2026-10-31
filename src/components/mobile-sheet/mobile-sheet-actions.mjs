@@ -13,7 +13,6 @@ import {
   openDiceSoNiceSettings,
   withSheetDropped
 } from "./mobile-sheet-dialogs.mjs";
-import { runMobileSettingsFlow } from "./mobile-global-settings.mjs";
 import { canUseItem } from "./mobile-sheet-data.mjs";
 import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
 import { useActivityFromHud } from "../../common/midi.mjs";
@@ -479,7 +478,7 @@ async function openHpDialogFixed(actor) {
 export async function handleMobileSheetAction(actor, action, dataset, event) {
   if (!actor) return false;
 
-  if (!actor.isOwner && !["close", "open-dndbeyond", "open-dice-settings", "open-ui-color", "open-settings-menu"].includes(action)) {
+  if (!actor.isOwner && !["close", "open-dndbeyond", "open-dice-settings", "open-ui-color"].includes(action)) {
     ui.notifications.warn(ich.warning("noOwner"));
     return false;
   }
@@ -555,9 +554,6 @@ export async function handleMobileSheetAction(actor, action, dataset, event) {
       return false;
     case "open-dndbeyond":
       return openDndBeyondCharacter(actor);
-    case "open-settings-menu":
-      await runMobileSettingsFlow();
-      return true;
     case "open-dice-settings":
       await withSheetDropped(() => openDiceSoNiceSettings());
       return true;

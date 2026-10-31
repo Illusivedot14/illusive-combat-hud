@@ -292,7 +292,6 @@ function onSheetPointerUp(event) {
   if (event.target?.closest?.("#ich-mobile-carousel")) return;
   if (event.target?.closest?.("#ich-mobile-dice-roller")) return;
   if (event.target?.closest?.("#ich-mobile-move")) return;
-  if (event.target?.closest?.("#ich-mobile-global-gear")) return;
   if (event.target?.closest?.(".ich-ms-overlay")) return;
   const actionEl = actionElFromEvent(event);
   if (!actionEl) return;

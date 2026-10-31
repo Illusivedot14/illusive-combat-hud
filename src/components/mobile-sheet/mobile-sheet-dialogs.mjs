@@ -4,8 +4,6 @@
 
 import { applyActorDamage as applyDamage, applyActorHealing } from "../../common/party-combat.mjs";
 import { MODULE_ID } from "../../common/constants.mjs";
-import { ichSetting } from "../../common/i18n.mjs";
-import { getMobileClientMode } from "../../common/mobile-client.mjs";
 
 const OVERLAY_Z = "100060";
 const SHEET_BEHIND = "ich-mobile-sheet-behind-dialog";
@@ -477,105 +475,6 @@ const ACCENT_THEMES = [
   { hex: "#ffffff", name: "White" },
   { hex: "#1a1a1a", name: "Black" }
 ];
-
-const CLIENT_MODES = ["auto", "forceMobile", "forceDesktop"];
-
-function clientModeLabel(mode) {
-  return ichSetting("mobileClientMode", mode);
-}
-
-/**
- * Gear menu: HUD/sheet mode, UI Color, Dice So Nice.
- * @returns {Promise<"client-mode"|"ui-color"|"dice"|null>}
- */
-export async function openMobileSettingsMenu() {
-  closeOverlays(".ich-ms-settings-overlay");
-  const mode = getMobileClientMode();
-  return new Promise((resolve) => {
-    const overlay = document.createElement("div");
-    overlay.className = "roll-dialog-overlay ich-ms-overlay ich-ms-settings-overlay";
-    overlay.style.zIndex = OVERLAY_Z;
-    overlay.innerHTML = `
-      <div class="standalone-roll-dialog ich-ms-settings-dialog">
-        <div class="roll-dialog-header">
-          <span class="roll-dialog-title">Client Settings</span>
-          <button type="button" class="roll-dialog-close" data-action="cancel" aria-label="Close">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <p class="ich-ms-settings-hint">Applies to your whole mobile client — every character.</p>
-        <div class="ich-ms-settings-list">
-          <button type="button" class="ich-ms-settings-item" data-action="client-mode">
-            <i class="fa-solid fa-mobile-screen"></i>
-            <span>
-              <strong>Sheet or HUD</strong>
-              <small>${escapeHtml(clientModeLabel(mode))}</small>
-            </span>
-          </button>
-          <button type="button" class="ich-ms-settings-item" data-action="ui-color">
-            <i class="fa-solid fa-palette"></i>
-            <span>
-              <strong>UI Theme</strong>
-              <small>Color the entire mobile UI</small>
-            </span>
-          </button>
-          <button type="button" class="ich-ms-settings-item" data-action="dice">
-            <i class="fa-solid fa-dice-d20"></i>
-            <span>
-              <strong>My Dice</strong>
-              <small>Theme &amp; colors — no 3D preview</small>
-            </span>
-          </button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    bindOverlayActions(overlay, resolve);
-  });
-}
-
-/**
- * Pick Auto / Force Mobile / Force Desktop. Changing it reloads the client.
- * @returns {Promise<boolean>} whether a new mode was saved
- */
-export async function openMobileClientModeOverlay() {
-  closeOverlays(".ich-ms-mode-overlay");
-  const current = getMobileClientMode();
-  const picked = await new Promise((resolve) => {
-    const overlay = document.createElement("div");
-    overlay.className = "roll-dialog-overlay ich-ms-overlay ich-ms-settings-overlay ich-ms-mode-overlay";
-    overlay.style.zIndex = OVERLAY_Z;
-    const rows = CLIENT_MODES.map((mode) => {
-      const on = mode === current ? " is-current" : "";
-      return `
-        <button type="button" class="ich-ms-settings-item${on}" data-action="${mode}">
-          <i class="fa-solid ${mode === "forceDesktop" ? "fa-desktop" : "fa-mobile-screen"}"></i>
-          <span>
-            <strong>${escapeHtml(clientModeLabel(mode))}</strong>
-            <small>${mode === current ? "Currently using this" : "&nbsp;"}</small>
-          </span>
-        </button>`;
-    }).join("");
-    overlay.innerHTML = `
-      <div class="standalone-roll-dialog ich-ms-settings-dialog">
-        <div class="roll-dialog-header">
-          <span class="roll-dialog-title">${escapeHtml(ichSetting("mobileClientMode", "name"))}</span>
-          <button type="button" class="roll-dialog-close" data-action="cancel" aria-label="Close">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-        <p class="ich-ms-settings-hint">${escapeHtml(ichSetting("mobileClientMode", "hint"))}</p>
-        <div class="ich-ms-settings-list">${rows}</div>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-    bindOverlayActions(overlay, resolve);
-  });
-
-  if (!CLIENT_MODES.includes(picked) || picked === current) return false;
-  await game.settings.set(MODULE_ID, "mobileClientMode", picked);
-  return true;
-}
 
 /**
  * Full UI theme picker (named theme rows — not swatch circles).

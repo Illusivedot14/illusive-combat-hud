@@ -51,7 +51,8 @@ const MOBILE_KEYS = [
   "mobileClientMode",
   "mobileBackgroundEnabled",
   "mobileBackground",
-  "mobileAccentColor"
+  "mobileAccentColor",
+  "mobileMuteChatPopups"
 ];
 
 function registerHidden(key, config) {
@@ -385,6 +386,14 @@ export function registerSettings() {
         .then((m) => m.renderMobileBackground())
         .catch((err) => console.error(`${MODULE_ID} | mobile background change failed`, err));
     }
+  });
+
+  game.settings.register(MODULE_ID, "mobileMuteChatPopups", {
+    ...ichMainSettingLabels("mobileMuteChatPopups"),
+    scope: "client",
+    config: false,
+    type: Boolean,
+    default: false
   });
 
   game.settings.register(MODULE_ID, "mobileAccentColor", {

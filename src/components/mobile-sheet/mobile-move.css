@@ -19,7 +19,6 @@
 
 #ich-mobile-move.is-hidden .ich-move-panel,
 #ich-mobile-move.is-hidden .ich-move-utils,
-#ich-mobile-move.is-hidden .ich-move-sidebar,
 #ich-mobile-move.no-token .ich-move-panel,
 #ich-mobile-move.no-token .ich-move-utils {
   display: none !important;
@@ -35,31 +34,7 @@
 
 #ich-mobile-move .ich-move-pad [data-move="mode"] {
   flex-direction: column;
-  gap: 2px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-#ich-mobile-move .ich-move-pad [data-move="mode"] i {
-  font-size: 16px;
-  opacity: 0.92;
-}
-
-#ich-mobile-move .ich-move-pad [data-move="mode"] span {
-  max-width: calc(var(--ich-move-key) - 8px);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-#ich-mobile-move .ich-move-pad [data-move="mode"].is-held,
-#ich-mobile-move .ich-move-pad [data-move="mode"]:active {
-  background: rgba(183, 148, 246, 0.28);
-  color: #fff;
-  transform: scale(0.94);
+  gap: 1px;
 }
 
 /* Virtual-stick well (Genshin / Diablo Immortal / Steam Link) */
@@ -109,6 +84,29 @@
 
 #ich-mobile-move .ich-move-pad [data-move] i {
   pointer-events: none;
+}
+
+/* After the 20px arrow rule so Walk/Swim/Burrow/"Teleport (Blink)" fit. */
+#ich-mobile-move .ich-move-pad [data-move="mode"] {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.05;
+  padding: 0;
+  background: transparent;
+}
+
+#ich-mobile-move .ich-move-pad [data-move="mode"] i {
+  font-size: 16px;
+  opacity: 0.92;
+}
+
+#ich-mobile-move .ich-move-pad [data-move="mode"] span {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: normal;
+  text-align: center;
+  word-break: break-word;
 }
 
 #ich-mobile-move .ich-move-pad [data-move].is-held,
@@ -217,18 +215,18 @@
   pointer-events: none;
 }
 
-/* Foundry's right-sidebar tabs — stacked above a chevron, slides up / down */
+/* Foundry's right-sidebar tabs — top-right, slides down from the chevron */
 #ich-mobile-move .ich-move-sidebar {
   position: fixed;
-  right: max(10px, env(safe-area-inset-right, 0px));
-  bottom: calc(var(--ich-carousel-dock, 96px) + 80px);
-  top: auto;
-  max-height: calc(100% - 68px);
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  bottom: auto;
+  max-height: calc(100% - var(--ich-carousel-dock, 96px) - 80px);
   z-index: 100003;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 4px;
   padding: 8px 6px;
   overflow: hidden;
@@ -337,7 +335,6 @@
 
 body.ich-mobile-sheet-open #ich-mobile-move .ich-move-panel,
 body.ich-mobile-sheet-open #ich-mobile-move .ich-move-utils,
-body.ich-mobile-sheet-open #ich-mobile-move .ich-move-sidebar,
 body.ich-mobile-target-picking #ich-mobile-move .ich-move-panel,
 body.ich-mobile-target-picking #ich-mobile-move .ich-move-utils,
 body.ich-mobile-target-picking #ich-mobile-move .ich-move-sidebar,
@@ -348,6 +345,7 @@ body.ich-mobile-sidebar-open #ich-mobile-move .ich-move-sidebar {
 }
 
 body.ich-foundry-dialog-open #ich-mobile-move,
+body.ich-mobile-sidebar-open #ich-mobile-move,
 body.ich-dsn-showing #ich-mobile-move,
 body.ich-mobile-client.ich-dsn-config-open #ich-mobile-move {
   pointer-events: none;

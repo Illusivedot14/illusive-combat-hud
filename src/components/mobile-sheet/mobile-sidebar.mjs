@@ -111,15 +111,13 @@ function isIchChrome(node) {
 function tagFoundryWindow(app, element) {
   const node = elementOf(app, element);
   if (!node?.classList || isIchChrome(node)) return;
+  if (!node.classList.contains("sidebar-popout") && !node.id?.endsWith("-popout")) return;
   node.classList.add(WINDOW_CLASS);
 }
 
 function onFoundryWindowRender(app, element) {
-  if (!isIllusiveMobileMode()) return;
-  const node = elementOf(app, element);
-  if (isMobileSidebarOpen() || node?.classList?.contains("sidebar-popout")) {
-    tagFoundryWindow(app, element);
-  }
+  if (!isIllusiveMobileMode() || !isMobileSidebarOpen()) return;
+  tagFoundryWindow(app, element);
 }
 
 function onFoundryWindowClose() {

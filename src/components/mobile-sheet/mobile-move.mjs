@@ -62,7 +62,7 @@ function inCombat() {
 
 function ensureRoot() {
   const existing = document.getElementById(ROOT_ID);
-  if (existing && !existing.querySelector(".ich-move-sidebar-tabs-clip")) existing.remove();
+  if (existing && !existing.querySelector(".ich-move-sidebar > [data-sidebar-toggle]:first-child")) existing.remove();
   return ensureDomRoot(ROOT_ID, {
     className: "ich-mobile-move",
     html: `
@@ -78,11 +78,11 @@ function ensureRoot() {
       </div>
     </div>
     <div class="ich-move-sidebar" id="ich-move-sidebar">
+      <div role="button" tabindex="0" class="ich-move-sidebar-toggle" data-sidebar-toggle="1">
+        <i class="fas fa-chevron-down" aria-hidden="true"></i>
+      </div>
       <div class="ich-move-sidebar-tabs-clip">
         <div class="ich-move-sidebar-tabs" id="ich-move-sidebar-tabs"></div>
-      </div>
-      <div role="button" tabindex="0" class="ich-move-sidebar-toggle" data-sidebar-toggle="1">
-        <i class="fas fa-chevron-up" aria-hidden="true"></i>
       </div>
     </div>
     <div class="ich-move-panel">
@@ -130,7 +130,7 @@ function applyMoveChrome(root, { showFeet = false, showUndo = false } = {}) {
     el.hidden = hidden || !hasToken;
   });
   const sidebar = root.querySelector(".ich-move-sidebar");
-  if (sidebar) sidebar.hidden = hidden;
+  if (sidebar) sidebar.hidden = isMobileTargetPickActive() || isMobileSidebarOpen();
   applySidebarExpanded(root);
 
   root.querySelectorAll(".ich-move-undo").forEach((el) => {
@@ -160,7 +160,7 @@ function applySidebarExpanded(root) {
   toggle.setAttribute("aria-label", locSidebarToggle());
   toggle.title = locSidebarToggle();
   if (!toggle.querySelector("i")) {
-    toggle.innerHTML = `<i class="fas fa-chevron-up" aria-hidden="true"></i>`;
+    toggle.innerHTML = `<i class="fas fa-chevron-down" aria-hidden="true"></i>`;
   }
 }
 
@@ -449,6 +449,7 @@ function shouldShowMove() {
 }
 
 export function renderMobileMove() {
+  document.getElementById("ich-mobile-global-gear")?.remove();
   if (!shouldShowMove()) {
     rootEl()?.remove();
     return;

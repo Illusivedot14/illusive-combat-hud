@@ -82,39 +82,14 @@ body.ich-mobile-client #ich-token-statuses {
   display: none !important;
 }
 
-/* Swipe-style: sidebar tabs open as Foundry windows, fitted to the phone. */
-body.ich-mobile-client.ich-mobile-sidebar-open #ich-mobile-dice-roller,
-body.ich-mobile-client.ich-mobile-sidebar-open #ich-mobile-global-gear {
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-body.ich-mobile-client .ich-mobile-foundry-window,
-body.ich-mobile-client .application.sidebar-popout {
-  position: fixed !important;
-  left: 8px !important;
-  right: 8px !important;
-  top: max(8px, env(safe-area-inset-top, 0px)) !important;
-  bottom: calc(var(--ich-carousel-dock, 96px) + 8px) !important;
-  width: auto !important;
-  height: auto !important;
-  min-width: 0 !important;
-  max-width: none !important;
-  max-height: none !important;
-  margin: 0 !important;
-  transform: none !important;
-  z-index: 100080 !important;
-}
-body.ich-mobile-client .ich-mobile-foundry-window .window-content,
-body.ich-mobile-client .application.sidebar-popout .window-content {
-  overflow: auto !important;
-  height: 100% !important;
-  max-height: none !important;
-}
+/* Do not pin Foundry windows. bringToFront() writes an inline z-index
+   (application.mjs:1516-1522). A locked value keeps the first popout
+   above every menu opened from it (settings.mjs #onOpenApp). */
 #ich-mobile-sidebar-close {
   position: fixed;
   top: max(10px, env(safe-area-inset-top, 0px));
   left: max(10px, env(safe-area-inset-left, 0px));
-  z-index: 100085;
+  z-index: 100190;
   width: 44px;
   height: 44px;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -298,26 +273,7 @@ body.ich-mobile-client {
   align-items: center;
   gap: 8px;
   position: relative;
-}
-#ich-mobile-sheet-root .ich-ms-header-gear {
-  flex: 0 0 auto;
-  width: 44px;
-  height: 44px;
-  margin: 0;
-  padding: 0;
-  border-radius: 12px;
-  border: 1px solid var(--mobile-border, rgba(255,255,255,0.2));
-  background: var(--mobile-bg-button, rgba(255,255,255,0.08));
-  color: var(--mobile-text-primary, #fff);
-  font-size: 1.05rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-#ich-mobile-sheet-root .ich-ms-header-gear:active {
-  background: var(--mobile-bg-button-active, rgba(255,255,255,0.14));
+  padding-right: 56px;
 }
 #ich-mobile-sheet-root .header-info {
   flex: 1;
@@ -676,19 +632,41 @@ body.ich-mobile-client {
 body.ich-foundry-dialog-open #ich-mobile-sheet-root,
 body.ich-foundry-dialog-open #ich-mobile-carousel,
 body.ich-foundry-dialog-open #ich-mobile-dice-roller,
-body.ich-foundry-dialog-open #ich-mobile-global-gear {
+body.ich-mobile-sidebar-open #ich-mobile-sheet-root,
+body.ich-mobile-sidebar-open #ich-mobile-carousel,
+body.ich-mobile-sidebar-open #ich-mobile-dice-roller {
   pointer-events: none !important;
 }
-body.ich-mobile-target-picking #ich-mobile-dice-roller,
-body.ich-mobile-target-picking #ich-mobile-global-gear {
+body.ich-mobile-target-picking #ich-mobile-dice-roller {
   visibility: hidden !important;
   pointer-events: none !important;
 }
-body.ich-foundry-dialog-open #ich-mobile-sheet-root {
+body.ich-foundry-dialog-open #ich-mobile-sheet-root,
+body.ich-mobile-sidebar-open #ich-mobile-sheet-root {
   z-index: 100 !important;
 }
-body.ich-foundry-dialog-open #ich-mobile-carousel {
+body.ich-foundry-dialog-open #ich-mobile-carousel,
+body.ich-mobile-sidebar-open #ich-mobile-carousel,
+body.ich-mobile-sidebar-open #ich-mobile-dice-roller {
   z-index: 99 !important;
+}
+
+/* Swipe chat rules use --mobile-text-primary (#ffffff / near-white from
+   mobile-accent.mjs). Foundry chat cards are light parchment. */
+body.ich-mobile-client .application .chat-message,
+body.ich-mobile-client .application .chat-message .message-header,
+body.ich-mobile-client .application .chat-message .message-header .title,
+body.ich-mobile-client .application .chat-message .message-header h4,
+body.ich-mobile-client .application .chat-message .message-content,
+body.ich-mobile-client .application .chat-message .message-content > *,
+body.ich-mobile-client .application .chat-message .dice-formula,
+body.ich-mobile-client .application .chat-message .dice-total {
+  color: var(--color-text-primary) !important;
+}
+body.ich-mobile-client .application .chat-message .flavor-text,
+body.ich-mobile-client .application .chat-message .message-header .subtitle,
+body.ich-mobile-client .application .chat-message .message-header .user {
+  color: var(--color-text-secondary) !important;
 }
 
 /* Foundry toasts must sit above the sheet. */
@@ -734,42 +712,6 @@ body.ich-mobile-client #notifications .notification:not(.info):not(.warning):not
 body.ich-mobile-sheet-open #notifications .notification:not(.info):not(.warning):not(.warn):not(.error) {
   background: rgba(40, 40, 48, 0.95) !important;
   color: #fff !important;
-}
-
-/* Client-wide settings gear — under the sheet so an open sheet covers it */
-#ich-mobile-global-gear {
-  position: fixed !important;
-  top: calc(10px + env(safe-area-inset-top, 0px)) !important;
-  right: calc(10px + env(safe-area-inset-right, 0px)) !important;
-  z-index: 99950 !important;
-  width: 44px !important;
-  height: 44px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border-radius: 12px !important;
-  border: 1px solid var(--mobile-border, rgba(255,255,255,0.2)) !important;
-  background: var(--mobile-bg-secondary, #1f1830) !important;
-  color: var(--mobile-text-primary, #fff) !important;
-  font-size: 1.1rem !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-shadow: 0 4px 16px var(--mobile-shadow-strong, rgba(0,0,0,0.45)) !important;
-  cursor: pointer !important;
-  -webkit-tap-highlight-color: transparent;
-  pointer-events: auto !important;
-}
-#ich-mobile-global-gear:active {
-  background: var(--mobile-bg-button-active, rgba(255,255,255,0.14)) !important;
-}
-body.ich-mobile-sheet-open #ich-mobile-global-gear {
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-body.ich-mobile-client.ich-dsn-config-open #ich-mobile-global-gear,
-body.ich-dsn-showing #ich-mobile-global-gear {
-  visibility: hidden !important;
-  pointer-events: none !important;
 }
 
 /* Dice So Nice must render above the mobile sheet + carousel. */
@@ -1777,6 +1719,10 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
   z-index: 100002 !important;
   pointer-events: none !important;
 }
+/* Left rail (.ich-move-utils) is 100003 at the same left/bottom dock. */
+#ich-mobile-dice-roller.is-open {
+  z-index: 100010 !important;
+}
 #ich-mobile-dice-roller .ich-dice-toggle,
 #ich-mobile-dice-roller .ich-dice-panel {
   pointer-events: auto !important;
@@ -1796,7 +1742,7 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
   backdrop-filter: blur(18px) !important;
   font-size: 1.2rem !important;
   cursor: pointer !important;
-  z-index: 100003 !important;
+  z-index: 100011 !important;
 }
 #ich-mobile-dice-roller.is-open .ich-dice-toggle,
 #ich-mobile-dice-roller .ich-dice-toggle:active {
@@ -1810,6 +1756,7 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
   left: 12px !important;
   right: auto !important;
   bottom: calc(var(--ich-carousel-dock, 96px) + 12px) !important;
+  z-index: 100010 !important;
   transform: none !important;
   width: min(420px, calc(100vw - 12px - var(--ich-dice-fab-size) - var(--ich-dice-fab-gap) * 2)) !important;
   display: flex !important;
