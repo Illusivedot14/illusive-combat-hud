@@ -343,8 +343,23 @@ function getMovementUsedByMode(token, history, gridDistance, usedFeet, activeMod
   return byMode;
 }
 
+/** Sum of recorded step costs, or null when a step never stored one. */
+function recordedHistoryCost(history) {
+  if (!history?.length) return 0;
+  let total = 0;
+  for (let i = 1; i < history.length; i += 1) {
+    const cost = Number(history[i]?.cost);
+    if (!Number.isFinite(cost) || cost < 0) return null;
+    total += cost;
+  }
+  return Math.round(total);
+}
+
 function getMovementUsedFeet(token, history, gridDistance) {
   if (!history.length) return 0;
+
+  const recorded = recordedHistoryCost(history);
+  if (recorded != null) return recorded;
 
   if (history.length >= 2 && typeof token.document.measureMovementPath === "function") {
     try {

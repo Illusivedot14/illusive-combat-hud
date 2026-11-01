@@ -5,6 +5,7 @@
  */
 
 import { MODULE_ID } from "../../common/constants.mjs";
+import { changeTouches } from "../../common/document-change.mjs";
 import { resolvePortraitSrc } from "../../common/actor-data.mjs";
 import { getMobileSheetActors, isIllusiveMobileMode } from "../../common/mobile-client.mjs";
 import {
@@ -310,8 +311,14 @@ export function bindMobileCarousel() {
   Hooks.on(MOBILE_SHEET_STATE_HOOK, () => {
     if (isIllusiveMobileMode()) renderMobileCarousel();
   });
-  Hooks.on("updateActor", () => {
-    if (isIllusiveMobileMode()) renderMobileCarousel();
+  Hooks.on("updateActor", (_actor, changes) => {
+    if (!isIllusiveMobileMode()) return;
+    const portrait = !changes
+      || changeTouches(changes, "name")
+      || changeTouches(changes, "img")
+      || changeTouches(changes, "prototypeToken")
+      || changeTouches(changes, "ownership");
+    if (portrait) renderMobileCarousel();
   });
   Hooks.on("createActor", () => {
     if (isIllusiveMobileMode()) renderMobileCarousel();
@@ -322,8 +329,14 @@ export function bindMobileCarousel() {
   Hooks.on("canvasReady", () => {
     if (isIllusiveMobileMode()) renderMobileCarousel();
   });
-  Hooks.on("updateToken", () => {
-    if (isIllusiveMobileMode()) renderMobileCarousel();
+  Hooks.on("updateToken", (_doc, changes) => {
+    if (!isIllusiveMobileMode()) return;
+    const portrait = !changes
+      || changeTouches(changes, "name")
+      || changeTouches(changes, "texture")
+      || changeTouches(changes, "actorId")
+      || changeTouches(changes, "delta");
+    if (portrait) renderMobileCarousel();
   });
   Hooks.on("createToken", () => {
     if (isIllusiveMobileMode()) renderMobileCarousel();

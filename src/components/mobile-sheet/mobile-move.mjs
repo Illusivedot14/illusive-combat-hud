@@ -218,6 +218,24 @@ function paintPad() {
   // Same readout as the table: remaining/max for the whole turn, including 30/30
   // before the first step. Undo stays hidden until a step exists.
   const showFeet = Boolean(combat && leftover);
+  const padKey = [
+    token?.document?.id ?? token?.id ?? "",
+    combat ? 1 : 0,
+    controllerHidden() ? 1 : 0,
+    isMobileTargetPickActive() ? 1 : 0,
+    isMobileSidebarOpen() ? 1 : 0,
+    sidebarExpanded ? 1 : 0,
+    showFeet ? 1 : 0,
+    showUndo ? 1 : 0,
+    leftover?.left ?? "",
+    leftover?.max ?? "",
+    current?.id ?? "",
+    current?.label ?? "",
+    token && isTokenLightOn(token) ? 1 : 0,
+    token && isTokenAuraOn(token) ? 1 : 0
+  ].join("|");
+  if (root.dataset.padKey === padKey) return;
+  root.dataset.padKey = padKey;
 
   root.classList.toggle("is-combat", combat);
   root.classList.toggle("has-token", Boolean(token));
@@ -467,8 +485,12 @@ export function bindMobileMove() {
   document.addEventListener("pointerdown", onPointerDown, true);
   document.addEventListener("pointerup", onPointerUp, true);
   document.addEventListener("pointercancel", onPointerUp, true);
-  Hooks.on("updateToken", () => {
-    if (isIllusiveMobileMode()) renderMobileMove();
+  Hooks.on("updateToken", (doc) => {
+    if (!isIllusiveMobileMode()) return;
+    const token = focusedToken();
+    const focusedId = token?.document?.id ?? token?.id ?? null;
+    if (focusedId && doc?.id && doc.id !== focusedId) return;
+    renderMobileMove();
   });
   Hooks.on("createToken", () => {
     if (isIllusiveMobileMode()) renderMobileMove();

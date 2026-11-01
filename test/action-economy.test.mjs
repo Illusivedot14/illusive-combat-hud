@@ -179,6 +179,24 @@ describe("buildMovementData", () => {
     expect(data.maxFeet).toBe(60);
   });
 
+  it("uses recorded step costs and does not remeasure the whole path", () => {
+    installFoundry({ combat: makeCombat({ started: true }) });
+    const measure = vi.fn(() => ({ cost: 999 }));
+    const token = makeToken({
+      actor: makeActor({ movement: { walk: 30 } }),
+      movementHistory: [
+        { x: 0, y: 0, cost: 0 },
+        { x: 1, y: 0, cost: 5 },
+        { x: 2, y: 0, cost: 5 }
+      ],
+      measureMovementPath: measure
+    });
+    const data = buildMovementData(token);
+    expect(data.usedFeet).toBe(10);
+    expect(data.remainingFeet).toBe(20);
+    expect(measure).not.toHaveBeenCalled();
+  });
+
   it("measures used feet from the movement path when available", () => {
     installFoundry({ combat: makeCombat({ started: true }) });
     const token = makeToken({
@@ -246,7 +264,7 @@ describe("buildMovementData", () => {
 });
 
 describe("undoLastTokenMovement", () => {
-  it("reverts to the start in one call, not square by square", async () => {
+  it("reverts to the start in one update, not square by square", async () => {
     installFoundry();
     const history = [
       { x: 0, y: 0 },
@@ -254,20 +272,19 @@ describe("undoLastTokenMovement", () => {
       { x: 2, y: 0, movementId: "drag-1" },
       { x: 3, y: 0, movementId: "stub-10" }
     ];
-    const token = makeToken({ movementHistory: history });
+    const token = makeToken({ id: "tok", movementHistory: history });
+    token.document.id = "tok";
     token.document._source = { _movementHistory: history };
-    token.document.revertRecordedMovement = vi.fn(async (id) => {
-      const src = token.document._source._movementHistory;
-      const index = src.findIndex((entry) => entry.movementId === id);
-      const next = src.slice(0, Math.max(index, 1));
-      token.document._source._movementHistory = next;
-      token.document.movementHistory = next;
+    token.document.update = vi.fn(async (_data, options) => {
+      options._movementArguments.result[token.document.id] = true;
       return true;
     });
 
     await expect(undoLastTokenMovement(token)).resolves.toBe(true);
-    expect(token.document.revertRecordedMovement).toHaveBeenCalledTimes(1);
-    expect(token.document.revertRecordedMovement).toHaveBeenCalledWith("drag-1");
-    expect(token.document.movementHistory).toHaveLength(1);
+    expect(token.document.update).toHaveBeenCalledTimes(1);
+    expect(token.document.update).toHaveBeenCalledWith(
+      expect.objectContaining({ x: 0, y: 0, _movementHistory: [], action: "walk" }),
+      expect.objectContaining({ isUndo: true, pan: false })
+    );
   });
 });

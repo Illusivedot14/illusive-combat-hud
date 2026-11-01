@@ -6,6 +6,7 @@ import {
   auraRadiusPixels,
   readTokenAuras,
   writeTokenAuras,
+  paintTokenAura,
   DEFAULT_AURA_COLOR
 } from "../src/components/token-aura/token-aura.mjs";
 import {
@@ -487,4 +488,53 @@ describe("token aura", () => {
     expect(buildAuraDropdownContext({ document: doc }).slots).toHaveLength(1);
   });
 
+});
+
+describe("paintTokenAura", () => {
+  afterEach(() => {
+    delete globalThis.PIXI;
+    delete globalThis.canvas;
+  });
+
+  it("skips a redraw when the rings and token size are unchanged", () => {
+    class Graphics {
+      constructor() {
+        this.clears = 0;
+        this.visible = true;
+      }
+      clear() { this.clears += 1; }
+      circle() { return this; }
+      fill() { return this; }
+      stroke() { return this; }
+    }
+    globalThis.PIXI = { Graphics };
+    globalThis.canvas = { grid: { size: 100 } };
+    const token = {
+      document: {
+        width: 1,
+        height: 1,
+        flags: { "illusive-combat-hud": { auras: [{ feet: 10, color: "#e07020" }] } },
+        getFlag: () => undefined
+      },
+      w: 100,
+      h: 100,
+      visible: true,
+      children: [],
+      addChildAt(child) {
+        child.name = "ichAura";
+        this.children.push(child);
+      },
+      getChildIndex() { return 0; }
+    };
+
+    paintTokenAura(token);
+    const drawn = token.children[0].clears;
+    token.x = 200;
+    paintTokenAura(token);
+    expect(token.children[0].clears).toBe(drawn);
+
+    token.w = 140;
+    paintTokenAura(token);
+    expect(token.children[0].clears).toBe(drawn + 1);
+  });
 });

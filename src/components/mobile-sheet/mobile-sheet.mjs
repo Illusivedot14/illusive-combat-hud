@@ -1,4 +1,6 @@
 import { MODULE_ID, MODULE_PATH, ichRenderTemplate } from "../../common/constants.mjs";
+import { actorFields, changePaths } from "../../common/document-change.mjs";
+import { formatMod, getHpBarData } from "../../common/actor-stats.mjs";
 import { isIllusiveMobileMode } from "../../common/mobile-client.mjs";
 import { buildMobileSheetContext } from "./mobile-sheet-data.mjs";
 import { handleMobileSheetAction, MOBILE_SHEET_NO_REFRESH } from "./mobile-sheet-actions.mjs";
@@ -25,6 +27,11 @@ let pointerStartY = 0;
 const tabScrollPositions = new Map();
 /** Horizontal section-nav scrollLeft, keyed by actor id (do not snap on tab change). */
 const navScrollPositions = new Map();
+let publishedSheetKey = "";
+let bodyRefreshQueued = false;
+
+const SHEET_HEADER_FIELDS = new Set(["inspiration", "hp", "ac", "movement", "init", "prof", "identity"]);
+const SHEET_BODY_FIELDS = new Set(["abilities", "skills", "resources", "spells", "currency"]);
 
 function rootEl() {
   return document.getElementById(ROOT_ID);
@@ -35,12 +42,100 @@ function ensureRoot() {
 }
 
 function publishSheetState() {
-  document.body.classList.toggle("ich-mobile-sheet-open", Boolean(openActorId));
+  const open = Boolean(openActorId);
+  document.body.classList.toggle("ich-mobile-sheet-open", open);
   document.body.classList.toggle("ich-mobile-client", isIllusiveMobileMode());
-  Hooks.callAll(STATE_HOOK, {
-    open: Boolean(openActorId),
-    actorId: openActorId
-  });
+  const key = `${open}:${openActorId ?? ""}`;
+  if (key === publishedSheetKey) return;
+  publishedSheetKey = key;
+  Hooks.callAll(STATE_HOOK, { open, actorId: openActorId });
+}
+
+function applyInspirationMark(on) {
+  const root = rootEl();
+  if (!root) return;
+  root.querySelector(".avatar-container")?.classList.toggle("has-inspiration", on);
+  const box = root.querySelector("[data-action='toggle-inspiration']");
+  if (!box) return;
+  box.classList.toggle("is-on", on);
+  box.setAttribute("aria-pressed", on ? "true" : "false");
+}
+
+function setStat(selector, value) {
+  const node = rootEl()?.querySelector(selector);
+  if (!node) return false;
+  node.textContent = value;
+  return true;
+}
+
+/** Header numbers and the inspiration star. Returns false when the header shape itself changed. */
+function patchSheetHeader(actor, fields) {
+  const root = rootEl();
+  if (!root) return false;
+
+  if (fields.has("inspiration")) {
+    applyInspirationMark(Boolean(actor.system?.attributes?.inspiration));
+  }
+  if (fields.has("ac")) {
+    if (!setStat(".ac-box .stat-value", String(actor.system?.attributes?.ac?.value ?? "—"))) return false;
+  }
+  if (fields.has("movement")) {
+    const movement = actor.system?.attributes?.movement ?? {};
+    const speed = movement.walk ?? movement.fly ?? movement.swim ?? 0;
+    if (!setStat(".speed-box .stat-value", String(speed))) return false;
+  }
+  if (fields.has("init")) {
+    const init = actor.system?.attributes?.init?.total
+      ?? actor.system?.attributes?.init?.mod
+      ?? actor.system?.attributes?.initiative?.mod;
+    if (!setStat(".init-box .stat-value", formatMod(init))) return false;
+  }
+  if (fields.has("prof")) {
+    if (!setStat(".prof-box .stat-value", formatMod(actor.system?.attributes?.prof))) return false;
+  }
+  if (fields.has("identity")) {
+    const name = root.querySelector(".char-name");
+    if (name && actor.name) name.textContent = actor.name;
+    const img = root.querySelector(".header-avatar");
+    if (img && actor.img) img.src = actor.img;
+  }
+  if (fields.has("hp")) {
+    const hp = getHpBarData(actor);
+    if ((hp.value ?? 0) <= 0 && (hp.max ?? 0) > 0) return false;
+    if (!setStat(".hp-current", String(hp.value ?? 0))) return false;
+    const effectiveMax = Math.max(0, (hp.max ?? 0) + (Number(actor.system?.attributes?.hp?.tempmax) || 0));
+    if (!setStat(".hp-max", String(effectiveMax))) return false;
+    const fill = root.querySelector(".hp-bar-fill");
+    if (fill) {
+      const percent = effectiveMax > 0 ? Math.max(0, Math.min(100, Math.round(((hp.value ?? 0) / effectiveMax) * 100))) : 0;
+      fill.style.flexBasis = `${percent}%`;
+    }
+    const temp = root.querySelector(".hp-temp");
+    if (hp.temp) {
+      if (!temp) return false;
+      temp.textContent = `+${hp.temp}`;
+    } else if (temp) {
+      temp.remove();
+    }
+  }
+  return true;
+}
+
+function patchItemRow(item, changes) {
+  const paths = changePaths(changes);
+  if (!paths.length) return false;
+  const equip = paths.every((path) => path === "system.equipped" || path.startsWith("system.equipped."));
+  const prepared = paths.every((path) => path.startsWith("system.preparation"));
+  if (!equip && !prepared) return false;
+  const action = equip ? "toggle-equipped" : "toggle-prepared";
+  const button = rootEl()?.querySelector(`[data-action="${action}"][data-item-id="${item.id}"]`);
+  if (!button) return false;
+  const on = equip
+    ? Boolean(item.system?.equipped)
+    : Boolean(item.system?.preparation?.prepared);
+  button.classList.toggle("equipped", on);
+  button.title = equip ? (on ? "Unequip" : "Equip") : (on ? "Unprepare" : "Prepare");
+  return true;
 }
 
 function hideForeignMobileSheets() {
@@ -210,6 +305,40 @@ function queueRefresh() {
   });
 }
 
+/** Replace the open tab only. The header, the tab bar, and the carousel stay. */
+function queueBodyRefresh() {
+  if (!openActorId || bodyRefreshQueued || refreshQueued) return;
+  bodyRefreshQueued = true;
+  requestAnimationFrame(() => {
+    bodyRefreshQueued = false;
+    void renderSheetBody();
+  });
+}
+
+async function renderSheetBody() {
+  const actor = getMobileSheetActor();
+  const root = rootEl();
+  const current = root?.querySelector(".sections-container");
+  if (!actor || !root || !current) {
+    await renderSheet();
+    return;
+  }
+
+  captureTabScroll();
+  const context = buildMobileSheetContext(actor, { tab: currentTab });
+  const html = await ichRenderTemplate(TEMPLATE, context);
+  const holder = document.createElement("template");
+  holder.innerHTML = html.trim();
+  const fresh = holder.content.querySelector(".sections-container");
+  if (!fresh) {
+    await renderSheet();
+    return;
+  }
+  current.replaceWith(fresh);
+  bindSectionScrollCapture();
+  restoreTabScrollSoon();
+}
+
 async function dispatchSheetAction(actionEl, event) {
   const action = actionEl.dataset?.action;
   if (!action) return;
@@ -300,13 +429,31 @@ function onSheetPointerUp(event) {
   void dispatchSheetAction(actionEl, event);
 }
 
-function onDocumentUpdate(doc) {
+function onDocumentUpdate(doc, changes) {
   if (!openActorId) return;
   const actor = getMobileSheetActor();
   if (!actor) return;
 
   const relevant = doc === actor || doc?.parent === actor || doc?.actor === actor;
   if (!relevant) return;
+  if (doc !== actor) {
+    if (patchItemRow(doc, changes)) return;
+    queueBodyRefresh();
+    return;
+  }
+
+  const fields = actorFields(changes);
+  const headerOnly = [...fields].every((field) => SHEET_HEADER_FIELDS.has(field));
+  const headerOrBody = [...fields].every((field) => SHEET_HEADER_FIELDS.has(field) || SHEET_BODY_FIELDS.has(field));
+  if (headerOnly) {
+    if (patchSheetHeader(actor, fields)) return;
+  } else if (!fields.has("unknown") && !fields.has("death") && !fields.has("flags") && headerOrBody) {
+    patchSheetHeader(actor, fields);
+    queueBodyRefresh();
+    return;
+  } else if (fields.size === 1 && fields.has("flags")) {
+    return;
+  }
 
   // Death saves (and other system rolls) update the actor while actionBusy is true —
   // defer refresh so success/failure pips still light up.

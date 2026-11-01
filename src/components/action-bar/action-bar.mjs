@@ -144,6 +144,42 @@ function requestPanelRefresh() {
   refreshHud(ICH_RENDER.ACTION_BAR);
 }
 
+/**
+ * Movement only changes the ring, the feet, and undo.
+ * Returns false when the bar is not on screen and a full paint is required.
+ */
+export function syncActionBarMovement(token) {
+  const container = document.getElementById("ich-action-bar");
+  if (!container || container.hidden || !token) return false;
+  const tokenId = token.id ?? token.document?.id ?? null;
+  if (!tokenId || tokenId !== selectedTokenId) return false;
+
+  const feet = container.querySelector(".ich-mock-speed-feet");
+  const ring = container.querySelector(".ich-mock-speed-ring-fill");
+  if (!feet || !ring) return false;
+
+  const combat = inCombat(token);
+  const movement = combat ? buildMovementData(token) : buildIdleMovementData(token);
+  if (!movement) return false;
+
+  const undo = container.querySelector(".ich-mock-undo-move");
+  if (movement.canUndo && !undo) return false;
+  if (!movement.canUndo && undo) undo.remove();
+
+  const unit = feet.querySelector(".ich-mock-speed-unit");
+  const readout = combat ? `${movement.remainingFeet}/${movement.maxFeet}` : `${movement.remainingFeet}`;
+  feet.replaceChildren(document.createTextNode(readout));
+  if (unit) feet.append(unit);
+
+  ring.classList.toggle("is-dashing", Boolean(movement.isDashing));
+  for (const mode of movement.modes ?? []) {
+    const button = container.querySelector(`.ich-mock-speed-mode[data-mode="${mode.id}"]`);
+    if (button) button.dataset.modePercent = String(mode.percent ?? 0);
+  }
+  animateSpeedDrain(container, buildSpeedRingData(movement));
+  return true;
+}
+
 async function renderActionBarDock(dock) {
   const bar = document.getElementById("ich-action-bar");
   if (!bar) return;

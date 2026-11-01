@@ -593,5 +593,6 @@ export const MOBILE_SHEET_NO_REFRESH = new Set([
   "roll-check",
   "roll-save",
   "roll-skill",
-  "roll-initiative"
+  "roll-initiative",
+  "toggle-inspiration"
 ]);

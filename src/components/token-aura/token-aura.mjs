@@ -210,19 +210,32 @@ function drawAuraCircle(gfx, x, y, radius, color) {
   }
 }
 
+const auraPaintKey = new WeakMap();
+
+function auraPaintSignature(token, auras, visible) {
+  if (!visible) return "off";
+  const width = Number(token.w) || Number(token.document?.width) * Number(canvas?.grid?.size) || 0;
+  const height = Number(token.h) || Number(token.document?.height) * Number(canvas?.grid?.size) || 0;
+  const rings = auras.map((aura) => `${aura.feet}:${aura.color}`).join(",");
+  return `${width}x${height}|${rings}`;
+}
+
 export function paintTokenAura(token) {
   if (!token || token.destroyed) return;
   if (!globalThis.PIXI?.Graphics) return;
 
   const auras = readTokenAuras(token.document);
   const visible = token.visible !== false && auras.length > 0;
+  const signature = auraPaintSignature(token, auras, visible);
   let gfx = findAuraGraphics(token);
+  if (auraPaintKey.get(token) === signature && (signature === "off" ? !gfx?.visible : gfx)) return;
 
   if (!visible) {
     if (gfx) {
       gfx.visible = false;
       gfx.clear();
     }
+    auraPaintKey.set(token, signature);
     return;
   }
 
@@ -240,6 +253,7 @@ export function paintTokenAura(token) {
     drawAuraCircle(gfx, x, y, auraRadiusPixels(aura.feet), colorNumber(aura.color));
   }
   gfx.visible = true;
+  auraPaintKey.set(token, signature);
 
   const index = token.getChildIndex?.(gfx);
   if (Number.isFinite(index) && index > 0) token.addChildAt(gfx, 0);

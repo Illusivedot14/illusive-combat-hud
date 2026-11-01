@@ -3,11 +3,15 @@
  * Canvas/token hooks (scene deselect, touch table) → ../hooks/index.mjs
  */
 import { getViewedCombat } from "../combat.mjs";
+import { actorFields, isTokenMovementChange } from "../document-change.mjs";
+import { syncActionBarFields, syncPartyFields, syncTurnFields } from "../field-sync.mjs";
+import { desktopHudEnabled } from "../mobile-client.mjs";
+import { getActionBarToken } from "../reaction-context.mjs";
 import { refreshHud, repositionHud } from "./core.mjs";
 import { ICH_RENDER } from "./scopes.mjs";
 import {
   handleActionBarCombatTurn,
-  shouldRefreshActionBarForActor
+  syncActionBarMovement
 } from "../../components/action-bar/action-bar.mjs";
 import { expireEventCombatants } from "../../components/turn-tracker/add-event.mjs";
 import { expireRoundBasedEffects } from "../effect-duration.mjs";
@@ -29,9 +33,9 @@ const REFRESH_HOOKS = {
   updateItem: [ICH_RENDER.ACTION_BAR],
   deleteItem: [ICH_RENDER.ACTION_BAR],
 
-  createActiveEffect: [ICH_RENDER.EFFECTS],
-  updateActiveEffect: [ICH_RENDER.EFFECTS],
-  deleteActiveEffect: [ICH_RENDER.EFFECTS],
+  createActiveEffect: [ICH_RENDER.ACTION_BAR],
+  updateActiveEffect: [ICH_RENDER.ACTION_BAR],
+  deleteActiveEffect: [ICH_RENDER.ACTION_BAR],
 
   "midi-qol.RollComplete": [ICH_RENDER.ACTION_BAR],
   "midi-qol.setActionUsed": [ICH_RENDER.ACTION_BAR],
@@ -44,24 +48,73 @@ const REFRESH_HOOKS = {
   deleteCombatant: [{ turn: true, actionBar: true }, { recenter: true }]
 };
 
-function onUpdateToken(doc, changes) {
-  refreshHud(ICH_RENDER.SELECTION);
-  const token = canvas?.tokens?.controlled?.[0];
-  if (!token || doc.id !== token.id) return;
-  if (Object.keys(changes).some((key) => key.toLowerCase().includes("movement"))) {
-    refreshHud(ICH_RENDER.ACTION_BAR);
-  }
+function refreshShownMovement(docOrActor, { actor = false } = {}) {
+  if (!desktopHudEnabled()) return;
+  const shown = getActionBarToken();
+  if (!shown) return;
+  const matches = actor
+    ? shown.actor?.id === docOrActor?.id
+    : (shown.document?.id ?? shown.id) === docOrActor?.id;
+  if (!matches) return;
+  if (!syncActionBarMovement(shown)) refreshHud(ICH_RENDER.ACTION_BAR);
 }
 
-function onUpdateActor(actor, changes) {
-  refreshHud(ICH_RENDER.PARTY);
-  if (shouldRefreshActionBarForActor(actor, changes)) {
-    refreshHud(ICH_RENDER.ACTION_BAR);
+function onUpdateToken(doc, changes) {
+  if (isTokenMovementChange(changes)) {
+    refreshShownMovement(doc);
+    return;
   }
-  // Death saves / HP change vitality icons on initiative cards. Do not skip the
-  // turn tracker when the same actor is also on the action bar.
-  if (getViewedCombat()) {
-    refreshHud(ICH_RENDER.TURN);
+  const keys = Object.keys(changes ?? {});
+  const barOnly = keys.length > 0 && keys.every((key) =>
+    key === "light" || key === "flags" || key === "movementAction"
+  );
+  if (barOnly) {
+    const shown = getActionBarToken();
+    const shownId = shown?.document?.id ?? shown?.id ?? null;
+    if (shownId && doc?.id === shownId) refreshHud(ICH_RENDER.ACTION_BAR);
+    return;
+  }
+  refreshHud(ICH_RENDER.SELECTION);
+}
+
+const PARTY_FIELDS = new Set(["hp", "death", "identity"]);
+const TURN_FIELDS = new Set(["hp", "death", "identity"]);
+const BAR_FIELDS = new Set([
+  "hp", "death", "ac", "identity", "movement", "abilities", "skills",
+  "resources", "spells", "flags", "unknown"
+]);
+
+function hasField(fields, group) {
+  for (const field of fields) if (group.has(field)) return true;
+  return false;
+}
+
+/**
+ * One actor diff updates only the panels that display those fields.
+ * A number that is already on screen is written in place. A full panel paint
+ * is reserved for a change that adds or removes a control.
+ */
+function onUpdateActor(actor, changes) {
+  if (!desktopHudEnabled()) return;
+  const fields = actorFields(changes);
+
+  if (fields.has("movement")) refreshShownMovement(actor, { actor: true });
+
+  const structural = fields.has("unknown") || fields.has("death") || fields.has("flags");
+  const shown = getActionBarToken()?.actor?.id === actor?.id;
+
+  if (hasField(fields, PARTY_FIELDS)) {
+    if (structural || !syncPartyFields(actor, fields)) refreshHud(ICH_RENDER.PARTY);
+  }
+  if (shown && hasField(fields, BAR_FIELDS)) {
+    const numbersOnly = !structural
+      && ![...fields].some((field) => !["hp", "ac", "identity", "movement"].includes(field));
+    if (!numbersOnly || !syncActionBarFields(actor, fields)) {
+      if ([...fields].some((field) => field !== "movement")) refreshHud(ICH_RENDER.ACTION_BAR);
+    }
+  }
+  if (getViewedCombat() && hasField(fields, TURN_FIELDS)) {
+    if (structural || !syncTurnFields(actor, fields)) refreshHud(ICH_RENDER.TURN);
   }
 }
 

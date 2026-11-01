@@ -3,6 +3,7 @@ import { getProperty, HandlebarsApplication, mergeClone } from "../lib/utils.mjs
 import { DEFAULT_BAR_STYLE, getBossBarSetting, setBossBarSetting } from "../boss-bar-settings.mjs";
 import { bossBarTemplate } from "../boss-bar-paths.mjs";
 import { MODULE_ID } from "../../../common/constants.mjs";
+import { changeTouches } from "../../../common/document-change.mjs";
 import { BOSS_BAR_FLAG, getSceneBossBarActors, isLegacyBossBarActive } from "../boss-bar-paths.mjs";
 import { settingOn } from "../../../common/hud-settings.mjs";
 import { desktopHudEnabled } from "../../../common/mobile-client.mjs";
@@ -16,7 +17,8 @@ export function setBossBarHooks() {
     }
   });
   Hooks.on("canvasReady", () => BossBar.update());
-  Hooks.on("updateActor", (actor) => {
+  Hooks.on("updateActor", (actor, changes) => {
+    if (!changeTouches(changes, "system.attributes.hp")) return;
     ui.bossBar?._onActorUpdate(actor);
   });
 }
