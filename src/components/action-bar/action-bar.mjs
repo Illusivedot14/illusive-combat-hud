@@ -61,7 +61,7 @@ import {
   isTokenLightOn,
   isTokenAuraOn
 } from "./action-bar-token-actions.mjs";
-import { closeUtilDropdownUnlessStatus, relinkStatusDropdownAnchor, toggleEconomySpentDropdown } from "./action-bar-util-dropdown.mjs";
+import { bindAuraDropdownSync, closeUtilDropdownUnlessStatus, relinkStatusDropdownAnchor, toggleEconomySpentDropdown } from "./action-bar-util-dropdown.mjs";
 import { buildAbilityGroups } from "./action-bar-groups.mjs";
 import { bindAbilityTooltips } from "./ability-tooltip.mjs";
 import { bindActionBarUiTooltips, hideActionBarUiTooltip } from "./action-bar-ui-tooltip.mjs";
@@ -1602,6 +1602,7 @@ export function bindActionBarInteractions() {
   bindActionBarClicks();
   bindMidiRefreshHooks();
   bindDeathSaveHooks();
+  bindAuraDropdownSync();
 
   Hooks.on("controlToken", (token, controlled) => {
     if (handleControlTokenDuringTargetPick(token, controlled)) return;

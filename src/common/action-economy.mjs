@@ -389,14 +389,6 @@ function getRecordedMovementHistory(token) {
   return token?.document?._source?._movementHistory ?? token?.document?.movementHistory ?? [];
 }
 
-function getFirstRecordedMovementId(token) {
-  const history = getRecordedMovementHistory(token);
-  for (const entry of history) {
-    if (entry?.movementId) return entry.movementId;
-  }
-  return null;
-}
-
 function getLastRecordedMovementId(token) {
   const history = getRecordedMovementHistory(token);
   for (let i = history.length - 1; i >= 0; i--) {
@@ -410,23 +402,83 @@ export function canUndoTokenMovement(token) {
   return getRecordedMovementHistory(token).length > 1 && Boolean(getLastRecordedMovementId(token));
 }
 
-/** Undo only the last recorded step. */
-export async function undoOneTokenMovement(token) {
+function gridStep(doc) {
+  const grid = doc?.parent?.grid ?? {};
+  const x = Number(grid.sizeX ?? grid.size) || 100;
+  const y = Number(grid.sizeY ?? grid.size) || x;
+  return { x, y };
+}
+
+function sameGridSquare(a, b, step) {
+  if (!a || !b) return false;
+  return Math.round(Number(a.x) / step.x) === Math.round(Number(b.x) / step.x)
+    && Math.round(Number(a.y) / step.y) === Math.round(Number(b.y) / step.y);
+}
+
+/** Last recorded point that is actually on another square. */
+function previousSquareIndex(history, step) {
+  const current = history.at(-1);
+  for (let i = history.length - 2; i >= 0; i -= 1) {
+    if (!sameGridSquare(history[i], current, step)) return i;
+  }
+  return 0;
+}
+
+/** Square to restore when Foundry's own undo does not run. Read from the recorded path. */
+export function undoFallbackPosition(token, { all = false } = {}) {
+  const history = getRecordedMovementHistory(token);
+  if (history.length < 2) return null;
+  const index = all ? 0 : previousSquareIndex(history, gridStep(token?.document));
+  const entry = history[index];
+  const x = Number(entry?.x);
+  const y = Number(entry?.y);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  return { x, y };
+}
+
+/**
+ * Roll the token back along Foundry's recorded path in one update.
+ * Foundry's revertRecordedMovement snaps and pans the camera. This is the same
+ * history write, with the camera left where it is, so the return is one glide.
+ */
+async function rollbackRecordedMovement(token, { all = false } = {}) {
   const doc = token?.document;
-  if (!doc || typeof doc.revertRecordedMovement !== "function") return false;
+  if (!doc || typeof doc.update !== "function") return false;
+  const history = getRecordedMovementHistory(token);
+  if (history.length < 2) return false;
+  const index = all ? 0 : previousSquareIndex(history, gridStep(doc));
+  const prior = history[index];
+  const kept = index === 0 ? [] : history.slice(0, index + 1);
+  const args = { result: {} };
+  try { doc.object?.stopAnimation?.({ reset: false }); } catch { /* token is not on this canvas */ }
+  let updated = null;
+  try {
+    updated = await doc.update({
+      x: prior.x,
+      y: prior.y,
+      elevation: prior.elevation,
+      width: prior.width,
+      height: prior.height,
+      depth: prior.depth,
+      shape: prior.shape,
+      level: prior.level,
+      action: "walk",
+      _movementHistory: kept
+    }, { isUndo: true, diff: false, pan: false, _movementArguments: args });
+  } catch {
+    return false;
+  }
+  return Boolean(args.result?.[doc.id] && updated);
+}
+
+/** Undo only the last square. A recorded point on that same square is not a step. */
+export async function undoOneTokenMovement(token) {
   if (!canUndoTokenMovement(token)) return false;
-  const movementId = getLastRecordedMovementId(token);
-  if (!movementId) return false;
-  return Boolean(await doc.revertRecordedMovement(movementId));
+  return rollbackRecordedMovement(token, { all: false });
 }
 
 /** Put the token all the way back in one move, not square-by-square. */
 export async function undoLastTokenMovement(token) {
-  const doc = token?.document;
-  if (!doc) return false;
-  if (typeof doc.revertRecordedMovement !== "function") return false;
   if (!canUndoTokenMovement(token)) return false;
-  const movementId = getFirstRecordedMovementId(token);
-  if (!movementId) return false;
-  return Boolean(await doc.revertRecordedMovement(movementId));
+  return rollbackRecordedMovement(token, { all: true });
 }

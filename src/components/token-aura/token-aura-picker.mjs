@@ -43,7 +43,7 @@ export async function applyAuraFeet(token, feet) {
   const nextFeet = clampAuraFeet(feet);
 
   if (nextFeet <= 0) {
-    if (!auras.length) return true;
+    if (!auras.length) return writeTokenAuras(token, []);
     auras.splice(selectedIndex, 1);
     clampSelected(auras);
     return writeTokenAuras(token, auras);

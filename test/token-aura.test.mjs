@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { installFoundry } from "./helpers.mjs";
 import {
   MAX_AURAS,
@@ -15,6 +15,36 @@ import {
   buildAuraDropdownContext,
   selectAuraSlot
 } from "../src/components/token-aura/token-aura-picker.mjs";
+import { openMobileAuraMenu } from "../src/components/mobile-sheet/mobile-controller-menus.mjs";
+import { MOBILE_SHEET_CRITICAL_CSS } from "../src/components/mobile-sheet/mobile-sheet-styles.mjs";
+import { initI18n } from "../src/common/i18n/core.mjs";
+
+function installAuraMenuStyles() {
+  document.documentElement.classList.add("ich-mobile-client");
+  document.body.classList.add("ich-mobile-client");
+  const foundryButtons = document.createElement("style");
+  foundryButtons.textContent = `
+    button { width: 100%; flex: 1; padding: 8px 16px; min-height: 32px; }
+  `;
+  document.head.appendChild(foundryButtons);
+  const mobile = document.createElement("style");
+  mobile.textContent = MOBILE_SHEET_CRITICAL_CSS;
+  document.head.appendChild(mobile);
+}
+
+function circleBox(el) {
+  const style = getComputedStyle(el);
+  return {
+    width: style.width,
+    height: style.height,
+    minWidth: style.minWidth,
+    maxWidth: style.maxWidth,
+    flexGrow: style.flexGrow,
+    flexShrink: style.flexShrink,
+    padding: style.padding,
+    radius: style.borderRadius
+  };
+}
 
 function makeAuraDoc(initial = {}) {
   const flags = { ...initial };
@@ -26,12 +56,54 @@ function makeAuraDoc(initial = {}) {
   };
 }
 
+/** Phone noCanvas token: getFlag is empty, rings live on _source. */
+function makePhoneToken(auras) {
+  const listed = Array.isArray(auras)
+    ? Object.fromEntries(auras.map((aura, index) => [String(index), aura]))
+    : structuredClone(auras);
+  const doc = {
+    isOwner: true,
+    flags: {},
+    _source: { flags: { "illusive-combat-hud": { auras: listed } } },
+    getFlag: vi.fn(() => undefined),
+    setFlag: vi.fn(async (_scope, key, value) => {
+      doc._source.flags["illusive-combat-hud"][key] = value;
+    }),
+    unsetFlag: vi.fn(async (_scope, key) => {
+      delete doc._source.flags["illusive-combat-hud"][key];
+    })
+  };
+  return { id: "t1", document: doc, isOwner: true };
+}
+
+/** Foundry stores flag arrays as {0,1,2} and can leave _source stale after unsetFlag. */
+function makeFoundryAuraDoc(initial = {}) {
+  const live = structuredClone(initial);
+  const source = structuredClone(initial);
+  return {
+    canUserModify: () => true,
+    flags: { "illusive-combat-hud": live },
+    _source: { flags: { "illusive-combat-hud": source } },
+    getFlag: (_scope, key) => live[key],
+    setFlag: vi.fn(async (_scope, key, value) => {
+      live[key] = value;
+    }),
+    unsetFlag: vi.fn(async (_scope, key) => { delete live[key]; })
+  };
+}
+
+
 describe("token aura", () => {
   beforeEach(() => {
     installFoundry();
     globalThis.game.user = { isGM: true, id: "gm" };
     globalThis.ui = { notifications: { warn: vi.fn() } };
     selectAuraSlot(0);
+    document.body.innerHTML = "";
+  });
+
+  afterEach(() => {
+    document.body.innerHTML = "";
   });
 
   it("reads no auras as empty", () => {
@@ -58,7 +130,7 @@ describe("token aura", () => {
     ]);
 
     await applyAuraFeet({ document: doc }, 0);
-    expect(doc.getFlag("illusive-combat-hud", "auras")).toBeUndefined();
+    expect(doc.getFlag("illusive-combat-hud", "auras")).toEqual([]);
   });
 
   it("adds a second and third aura, then stops", async () => {
@@ -113,4 +185,306 @@ describe("token aura", () => {
     expect(readTokenAuras(doc)[0]).toMatchObject({ feet: 12, color: "#a1b2c3" });
     expect(buildAuraDropdownContext({ document: doc }).customColor).toBe(true);
   });
+
+  it("keeps phone swatches and slot dots as circles under Foundry button CSS", async () => {
+    installAuraMenuStyles();
+    const doc = makeAuraDoc({ auras: [{ feet: 10, color: DEFAULT_AURA_COLOR }] });
+    await openMobileAuraMenu({ document: doc });
+
+    const swatch = document.querySelector(".ich-ms-aura-swatch");
+    const dot = document.querySelector(".ich-ms-aura-dot");
+    const swatchBox = circleBox(swatch);
+    const dotBox = circleBox(dot);
+
+    expect(swatchBox.width).toBe(swatchBox.height);
+    expect(swatchBox.width).toBe("36px");
+    expect(swatchBox.minWidth).toBe("36px");
+    expect(swatchBox.maxWidth).toBe("36px");
+    expect(swatchBox.flexGrow).toBe("0");
+    expect(swatchBox.padding).toBe("0px");
+    expect(swatchBox.radius).toBe("50%");
+
+    expect(dotBox.width).toBe(dotBox.height);
+    expect(dotBox.width).toBe("18px");
+    expect(dotBox.flexGrow).toBe("0");
+    expect(dotBox.flexShrink).toBe("0");
+
+    const row = document.querySelector(".ich-ms-aura-slots");
+    const rowBox = getComputedStyle(row);
+    expect(rowBox.display).toBe("flex");
+    expect(rowBox.flexDirection).toBe("row");
+    expect(rowBox.flexWrap).toBe("nowrap");
+    expect(document.querySelector(".ich-ms-settings-list [data-aura-slot]")).toBeNull();
+
+    const actions = document.querySelector(".ich-ms-aura-actions");
+    const actionsBox = getComputedStyle(actions);
+    expect(actionsBox.display).toBe("flex");
+    expect(actionsBox.flexDirection).toBe("row");
+    expect(actionsBox.flexWrap).toBe("nowrap");
+    expect(actions.querySelector("[data-aura-add]")).toBeTruthy();
+    expect(actions.querySelector("[data-aura-feet='0']")).toBeTruthy();
+    expect(document.querySelector(".ich-ms-settings-list [data-aura-add]")).toBeNull();
+    expect(document.querySelector(".ich-ms-settings-list [data-aura-feet='0']")).toBeNull();
+  });
+
+  it("keeps the phone menu scrolled unless an aura is added", async () => {
+    const doc = makeAuraDoc({ auras: [{ feet: 10, color: DEFAULT_AURA_COLOR }] });
+    await openMobileAuraMenu({ document: doc });
+    const overlay = document.querySelector(".ich-ms-aura-overlay");
+    const dialog = () => overlay.querySelector(".ich-ms-settings-dialog");
+    const previous = {
+      scrollHeight: Object.getOwnPropertyDescriptor(Element.prototype, "scrollHeight"),
+      clientHeight: Object.getOwnPropertyDescriptor(Element.prototype, "clientHeight")
+    };
+    Object.defineProperty(Element.prototype, "scrollHeight", { configurable: true, get() { return 2000; } });
+    Object.defineProperty(Element.prototype, "clientHeight", { configurable: true, get() { return 400; } });
+    try {
+      dialog().scrollTop = 320;
+      overlay.querySelector("[data-aura-feet='20']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await vi.waitFor(() => {
+        expect(overlay.querySelector("[data-aura-feet='20']").classList.contains("is-current")).toBe(true);
+        expect(dialog().scrollTop).toBe(320);
+      });
+
+      dialog().scrollTop = 320;
+      overlay.querySelector("[data-aura-add]").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      await vi.waitFor(() => {
+        expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(2);
+        expect(dialog().scrollTop).toBe(0);
+      });
+    } finally {
+      for (const [key, descriptor] of Object.entries(previous)) {
+        if (descriptor) Object.defineProperty(Element.prototype, key, descriptor);
+      }
+    }
+  });
+
+  it("sets a custom size from the phone number field", async () => {
+    await initI18n();
+    const doc = makeAuraDoc({ auras: [{ feet: 10, color: DEFAULT_AURA_COLOR }] });
+    await openMobileAuraMenu({ document: doc });
+    const overlay = document.querySelector(".ich-ms-aura-overlay");
+    const input = overlay.querySelector("[data-aura-feet-input]");
+    expect(input.value).toBe("10");
+
+    input.value = "12";
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(readTokenAuras(doc)[0]).toMatchObject({ feet: 12 });
+      expect(overlay.querySelector("[data-aura-slot]").textContent).toContain("12");
+      expect(overlay.querySelector("[data-aura-feet-input]").value).toBe("12");
+    });
+  });
+
+  it("updates the phone menu on click for add, size, color, and off", async () => {
+    const doc = makeAuraDoc({ auras: [{ feet: 10, color: DEFAULT_AURA_COLOR }] });
+    await openMobileAuraMenu({ document: doc });
+    const overlay = document.querySelector(".ich-ms-aura-overlay");
+
+    overlay.querySelector("[data-aura-add]").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(2);
+    });
+
+    overlay.querySelector("[data-aura-feet='20']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelector("[data-aura-feet='20']").classList.contains("is-current")).toBe(true);
+      expect(readTokenAuras(doc)[1]).toMatchObject({ feet: 20 });
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(2);
+    });
+
+    const nextColor = overlay.querySelector(".ich-ms-aura-swatch:not(.is-active)");
+    const hex = nextColor.dataset.auraColor;
+    nextColor.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelector(`.ich-ms-aura-swatch[data-aura-color="${hex}"]`).classList.contains("is-active")).toBe(true);
+    });
+
+    overlay.querySelector("[data-aura-feet='0']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(1);
+      expect(overlay.querySelector("[data-aura-feet='0']").classList.contains("is-current")).toBe(false);
+    });
+  });
+
+  it("shows current auras that only exist on _source", () => {
+    const token = makePhoneToken([{ feet: 15, color: "#4090e0" }]);
+    expect(readTokenAuras(token)).toEqual([
+      { index: 0, feet: 15, color: "#4090e0", on: true }
+    ]);
+    expect(buildAuraDropdownContext(token).slots).toHaveLength(1);
+  });
+
+  it("keeps the phone menu on the flag until the update settles", async () => {
+    let resolveUpdate = () => {};
+    const flags = { "illusive-combat-hud": { auras: [{ feet: 10, color: DEFAULT_AURA_COLOR }] } };
+    const doc = {
+      canUserModify: () => true,
+      flags,
+      getFlag(_scope, key) { return flags["illusive-combat-hud"][key]; },
+      update: vi.fn((data) => new Promise((resolve) => {
+        resolveUpdate = () => {
+          flags["illusive-combat-hud"].auras = data["flags.illusive-combat-hud.auras"];
+          resolve();
+        };
+      }))
+    };
+    await openMobileAuraMenu({ document: doc });
+    const overlay = document.querySelector(".ich-ms-aura-overlay");
+    expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(1);
+
+    overlay.querySelector("[data-aura-feet='0']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await Promise.resolve();
+    expect(doc.update).toHaveBeenCalled();
+    expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(1);
+
+    resolveUpdate();
+    await vi.waitFor(() => {
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(0);
+    });
+  });
+
+  it("does not invent aura rows the flag does not have", async () => {
+    const frozen = {};
+    Object.defineProperty(frozen, "auras", {
+      get: () => ({}),
+      set() { /* prepared flags ignore assignment */ }
+    });
+    const doc = {
+      canUserModify: () => true,
+      flags: { "illusive-combat-hud": frozen },
+      getFlag: vi.fn(() => undefined),
+      setFlag: vi.fn(async () => {}),
+      unsetFlag: vi.fn(async () => {})
+    };
+
+    await openMobileAuraMenu({ document: doc });
+    const overlay = document.querySelector(".ich-ms-aura-overlay");
+    overlay.querySelector("[data-aura-add]").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(doc.setFlag).toHaveBeenCalled();
+    });
+    expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(0);
+    expect(readTokenAuras(doc)).toEqual([]);
+  });
+
+  it("opens the phone menu with those current auras and updates them on add and off", async () => {
+    const token = makePhoneToken([{ feet: 15, color: "#4090e0" }]);
+    await openMobileAuraMenu(token);
+    const overlay = document.querySelector(".ich-ms-aura-overlay");
+    expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(1);
+
+    overlay.querySelector("[data-aura-add]").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(2);
+      expect(readTokenAuras(token)).toHaveLength(2);
+    });
+
+    overlay.querySelector("[data-aura-feet='0']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(1);
+      expect(readTokenAuras(token)).toHaveLength(1);
+    });
+
+    overlay.querySelector("[data-aura-feet='0']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(0);
+      expect(readTokenAuras(token)).toEqual([]);
+    });
+  });
+
+  it("puts a current-aura row back after Off when size or color is pressed", async () => {
+    await initI18n();
+    const token = makePhoneToken([
+      { feet: 20, color: "#e05050" },
+      { feet: 20, color: "#e0c040" },
+      { feet: 10, color: "#e07020" }
+    ]);
+    await openMobileAuraMenu(token);
+    const overlay = document.querySelector(".ich-ms-aura-overlay");
+    expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(3);
+    expect(overlay.querySelector(".roll-dialog-title")?.textContent).toBe("Aura");
+    expect(overlay.querySelector("[data-aura-feet='0']")?.textContent.trim()).toBe("Off");
+
+    overlay.querySelector("[data-aura-feet='0']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    overlay.querySelector("[data-aura-feet='0']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    overlay.querySelector("[data-aura-feet='0']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(0);
+      expect(overlay.querySelector("[data-aura-add]")?.textContent.trim()).toBe("Add");
+    });
+
+    overlay.querySelector("[data-aura-feet='10']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(1);
+      expect(overlay.querySelector("[data-aura-slot]").textContent).toContain("10");
+      expect(overlay.querySelector("[data-aura-feet='10']").classList.contains("is-current")).toBe(true);
+    });
+
+    overlay.querySelector("[data-aura-feet='0']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(0);
+    });
+
+    overlay.querySelector("[data-aura-color='#40b060']").dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await vi.waitFor(() => {
+      expect(overlay.querySelectorAll("[data-aura-slot]")).toHaveLength(1);
+      expect(readTokenAuras(token)[0]).toMatchObject({ feet: 10, color: "#40b060" });
+    });
+  });
+
+  it("shows a flag that arrived after a settled write", async () => {
+    let stored = [{ feet: 10, color: "#e07020" }];
+    const bucket = {};
+    Object.defineProperty(bucket, "auras", {
+      get: () => stored,
+      set() { /* prepared flags ignore assignment */ }
+    });
+    const doc = {
+      canUserModify: () => true,
+      flags: { "illusive-combat-hud": bucket },
+      getFlag: () => stored,
+      update: vi.fn(async () => {})
+    };
+    await writeTokenAuras(doc, []);
+    expect(readTokenAuras(doc)).toEqual([
+      { index: 0, feet: 10, color: "#e07020", on: true }
+    ]);
+
+    stored = [{ feet: 20, color: "#e05050" }];
+    expect(readTokenAuras(doc)).toEqual([
+      { index: 0, feet: 20, color: "#e05050", on: true }
+    ]);
+    expect(buildAuraDropdownContext({ document: doc }).slots).toHaveLength(1);
+  });
+
+  it("does not keep slots from a stale _source after Off", async () => {
+    const doc = makeFoundryAuraDoc({
+      auras: { 0: { feet: 15, color: "#4090e0" } }
+    });
+    const token = { document: doc };
+    await applyAuraFeet(token, 0);
+    expect(readTokenAuras(doc)).toEqual([]);
+    expect(buildAuraDropdownContext(token).slots).toEqual([]);
+    expect(doc.flags["illusive-combat-hud"].auras).toEqual([]);
+    expect(doc._source.flags["illusive-combat-hud"].auras).toEqual({
+      0: { feet: 15, color: "#4090e0" }
+    });
+  });
+
+  it("removes only the selected Foundry object-flag after Off", async () => {
+    const doc = makeFoundryAuraDoc({
+      auras: {
+        0: { feet: 10, color: "#e07020" },
+        1: { feet: 20, color: "#4090e0" }
+      }
+    });
+    selectAuraSlot(0);
+    await applyAuraFeet({ document: doc }, 0);
+    expect(readTokenAuras(doc)).toEqual([
+      { index: 0, feet: 20, color: "#4090e0", on: true }
+    ]);
+    expect(buildAuraDropdownContext({ document: doc }).slots).toHaveLength(1);
+  });
+
 });

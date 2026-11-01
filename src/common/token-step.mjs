@@ -1,5 +1,10 @@
 import { MODULE_ID } from "./constants.mjs";
-import { canUndoTokenMovement, undoLastTokenMovement, undoOneTokenMovement } from "./action-economy.mjs";
+import {
+  canUndoTokenMovement,
+  undoFallbackPosition,
+  undoLastTokenMovement,
+  undoOneTokenMovement
+} from "./action-economy.mjs";
 import { flipToken } from "./token-actions.mjs";
 
 const DIRS = {
@@ -133,11 +138,13 @@ function sameSpot(doc, dest) {
 
 function moveOptions() {
   return {
-    method: "api",
+    // Keyboard steps stay on one Foundry path. The ruler is what draws that path;
+    // Token.#onUpdateAnimation never draws it when animate is false.
+    // pan defaults to chasing a controlled token, which jumps the map every square.
+    method: "keyboard",
     autoRotate: false,
-    showRuler: false,
-    animate: true,
-    animation: { duration: 120 },
+    showRuler: true,
+    pan: false,
     constrainOptions: { ignoreWalls: true, ignoreCost: true, ignoreTokens: true }
   };
 }
@@ -161,16 +168,67 @@ function hasLiveCanvas() {
   return Boolean(canvas?.ready && canvas.grid);
 }
 
+/** Set the token on a square when Foundry's own undo cannot. No camera chase. */
+async function placeTokenAt(doc, destination) {
+  if (!doc || !destination) return false;
+  const options = { animate: false, pan: false, diff: false };
+  if (typeof doc.update === "function") {
+    try {
+      await doc.update({ x: destination.x, y: destination.y }, options);
+      return true;
+    } catch {
+      /* fall through */
+    }
+  }
+  const scene = doc.parent ?? viewedScene();
+  const id = doc.id ?? doc._id;
+  if (scene && id && typeof scene.updateEmbeddedDocuments === "function") {
+    try {
+      await scene.updateEmbeddedDocuments("Token", [{ _id: id, x: destination.x, y: destination.y }], options);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
 export async function applyTokenStep(doc, destination) {
   if (!doc || !destination) return false;
   if (!hasLiveCanvas()) return false;
   const options = moveOptions();
   const waypoint = waypointFromDestination(doc, destination);
+  const before = tokenXY(doc);
+
+  // constrainOptions have to be on the movement instruction. Foundry does not
+  // take them from the database update options, so a wall stops the token short
+  // and a second update records a point on the same square.
+  const scene = doc.parent ?? viewedScene();
+  if (scene && typeof scene.moveTokens === "function") {
+    try {
+      const results = await scene.moveTokens({
+        [doc.id]: {
+          destination: waypoint,
+          method: options.method,
+          autoRotate: options.autoRotate,
+          showRuler: options.showRuler,
+          constrainOptions: options.constrainOptions
+        }
+      }, { pan: false });
+      if (results?.[doc.id] || sameSpot(doc, destination)) return true;
+      const after = tokenXY(doc);
+      if (after.x !== before.x || after.y !== before.y) return true;
+    } catch {
+      /* fall through */
+    }
+  }
 
   if (typeof doc.move === "function") {
     try {
       const moved = await doc.move(waypoint, options);
       if (moved || sameSpot(doc, destination)) return true;
+      const after = tokenXY(doc);
+      if (after.x !== before.x || after.y !== before.y) return true;
     } catch {
       /* fall through */
     }
@@ -185,7 +243,6 @@ export async function applyTokenStep(doc, destination) {
     }
   }
 
-  const scene = doc.parent ?? viewedScene();
   const id = doc.id ?? doc._id;
   if (scene && id && typeof scene.updateEmbeddedDocuments === "function") {
     try {
@@ -202,68 +259,18 @@ const SOCKET_EVENT = `module.${MODULE_ID}`;
 const SOCKET_TYPE = "ich-token-step";
 const pendingSteps = new Map();
 let socketBound = false;
-let walkPath = null;
 let moverChain = Promise.resolve();
-
-function liveWalkPos(doc) {
-  const id = doc.id ?? doc._id;
-  if (walkPath && walkPath.tokenId === id && walkPath.current) return walkPath.current;
-  return tokenXY(doc);
-}
-
-function rememberStep(doc, origin, dest) {
-  const id = doc.id ?? doc._id;
-  if (!id) return;
-  if (!walkPath || walkPath.tokenId !== id) walkPath = { tokenId: id, points: [], current: origin };
-  walkPath.points.push({ x: origin.x, y: origin.y });
-  walkPath.current = { x: dest.x, y: dest.y };
-}
-
-function peekUndoFrom(all) {
-  if (!walkPath?.points.length) return null;
-  return all ? walkPath.points[0] : walkPath.points[walkPath.points.length - 1];
-}
-
-function commitLocalUndo(all) {
-  if (!walkPath) return;
-  if (all) {
-    walkPath.current = walkPath.points[0] ?? walkPath.current;
-    walkPath.points = [];
-  } else {
-    walkPath.current = walkPath.points.pop() ?? walkPath.current;
-  }
-  if (!walkPath.points.length) walkPath = null;
-}
 
 export function canUndoActorToken(actor) {
   const doc = findActorTokenDoc(actor);
   if (!doc) return false;
-  if (canUndoTokenMovement(tokenViewFromDoc(doc))) return true;
-  return getWalkStepCount(doc.id ?? doc._id) > 0;
-}
-
-export function getWalkStepCount(tokenId) {
-  if (!walkPath?.points.length) return 0;
-  if (tokenId && walkPath.tokenId !== tokenId) return 0;
-  return walkPath.points.length;
-}
-
-export function getWalkUsedFeet(scene, tokenId) {
-  const steps = getWalkStepCount(tokenId);
-  const dist = Number(scene?.grid?.distance) || 5;
-  return steps * dist;
+  return canUndoTokenMovement(tokenViewFromDoc(doc));
 }
 
 function enqueueMover(fn) {
   const run = moverChain.then(fn, fn);
   moverChain = run.catch(() => {});
   return run;
-}
-
-function emitRemoteStep(payload) {
-  if (typeof game.socket?.emit !== "function") return false;
-  game.socket.emit(SOCKET_EVENT, { type: SOCKET_TYPE, requestId: requestId(), ...payload });
-  return true;
 }
 
 function requestId() {
@@ -315,15 +322,18 @@ async function onTokenStepSocket(data) {
       ok = Boolean(doc && await flipToken(tokenViewFromDoc(doc)));
     } else if (data.kind === "undo") {
       const token = doc ? tokenViewFromDoc(doc) : null;
-      const start = data.from ?? null;
       if (data.mode === "one") {
-        ok = Boolean(doc && start && await applyTokenStep(doc, start));
-        if (!ok && token) ok = await undoOneTokenMovement(token);
+        ok = Boolean(token && await undoOneTokenMovement(token));
       } else {
         ok = Boolean(token && await undoLastTokenMovement(token));
-        if (!ok && doc && start) ok = await applyTokenStep(doc, start);
       }
-      if (ok) commitLocalUndo(data.mode !== "one");
+      if (!ok && doc && token) {
+        const start = undoFallbackPosition(token, { all: data.mode !== "one" });
+        if (start) ok = await placeTokenAt(doc, start);
+      }
+    } else if (data.dir && doc) {
+      const destination = buildStepDestination(doc, data.dir, scene);
+      ok = Boolean(destination && await applyTokenStep(doc, destination));
     } else if (data.destination) {
       ok = Boolean(doc && await applyTokenStep(doc, data.destination));
     }
@@ -402,27 +412,22 @@ export async function stepActorToken(actor, dir) {
   const scene = viewedScene();
   if (!scene || !isOnActivatedScene(doc, scene)) return { ok: false, reason: "noToken" };
 
-  const origin = liveWalkPos(doc);
+  const origin = tokenXY(doc);
   const destination = nextTokenStep(origin, dir, sceneGridStep(scene));
   if (!destination) return { ok: false, reason: "badDir" };
   destination.x = Math.round(destination.x);
   destination.y = Math.round(destination.y);
-  rememberStep(doc, origin, destination);
 
   if (await applyTokenStep(doc, destination)) return { ok: true, doc };
 
-  if (emitRemoteStep({
+  const remote = await requestRemoteStep({
     tokenUuid: doc.uuid ?? null,
     tokenId: doc.id ?? doc._id,
     sceneId: scene.id,
-    destination,
-    from: origin,
+    dir,
     userId: game.user.id
-  })) {
-    return { ok: true, doc };
-  }
-
-  commitLocalUndo(false);
+  });
+  if (remote) return { ok: true, doc };
   return { ok: false, reason: "failed" };
 }
 
@@ -430,22 +435,12 @@ export async function undoActorToken(actor, { all = false } = {}) {
   const doc = findActorTokenDoc(actor);
   if (!doc) return { ok: false, reason: "noToken" };
   const token = tokenViewFromDoc(doc);
-  const from = peekUndoFrom(all);
+  const from = undoFallbackPosition(token, { all });
   const undoFn = all ? undoLastTokenMovement : undoOneTokenMovement;
 
   if (hasLiveCanvas()) {
-    if (!all && from && await applyTokenStep(doc, from)) {
-      commitLocalUndo(false);
-      return { ok: true, doc };
-    }
-    if (await undoFn(token)) {
-      commitLocalUndo(all);
-      return { ok: true, doc };
-    }
-    if (from && await applyTokenStep(doc, from)) {
-      commitLocalUndo(all);
-      return { ok: true, doc };
-    }
+    if (await undoFn(token)) return { ok: true, doc };
+    if (from && await placeTokenAt(doc, from)) return { ok: true, doc };
   }
 
   const remote = await requestRemoteStep({
@@ -454,14 +449,9 @@ export async function undoActorToken(actor, { all = false } = {}) {
     tokenUuid: doc.uuid ?? null,
     tokenId: doc.id ?? doc._id,
     sceneId: (doc.parent ?? viewedScene())?.id,
-    from,
     userId: game.user.id
   });
-  if (remote) {
-    commitLocalUndo(all);
-    return { ok: true, doc };
-  }
-  return { ok: false, reason: "failed" };
+  return remote ? { ok: true, doc } : { ok: false, reason: "failed" };
 }
 
 export async function flipActorToken(actor) {

@@ -10,14 +10,11 @@ import {
   actorHasMapToken,
   canUndoActorToken,
   findActorTokenDoc,
-  getWalkStepCount,
-  getWalkUsedFeet,
   STEP_DIRS,
   flipActorToken,
   stepActorToken,
   tokenViewFromDoc,
-  undoActorToken,
-  viewedScene
+  undoActorToken
 } from "../../common/token-step.mjs";
 import { ich } from "../../common/i18n.mjs";
 import { getMobileFocusedActor } from "./mobile-focus.mjs";
@@ -36,10 +33,10 @@ import { ensureMobileSheetStyles } from "./mobile-sheet-styles.mjs";
 import { ensureDomRoot } from "../../common/viewport.mjs";
 
 const ROOT_ID = "ich-mobile-move";
-const HOLD_MS = 150;
+const HOLD_MS = 0;
 
 let bound = false;
-let sidebarExpanded = true;
+let sidebarExpanded = false;
 let stepping = false;
 let holdTimer = null;
 let holdAction = null;
@@ -64,7 +61,7 @@ function ensureRoot() {
   const existing = document.getElementById(ROOT_ID);
   if (existing && !existing.querySelector(".ich-move-sidebar > [data-sidebar-toggle]:first-child")) existing.remove();
   return ensureDomRoot(ROOT_ID, {
-    className: "ich-mobile-move",
+    className: "ich-mobile-move sidebar-collapsed",
     html: `
     <div class="ich-move-utils">
       <div role="button" tabindex="0" class="ich-move-util" data-move="light" aria-label="">
@@ -187,10 +184,7 @@ function paintSidebarTabs(root) {
 
 function leftoverFeet(token, movement) {
   const max = actorMaxFeet(token, movement);
-  const used = Math.max(
-    getWalkUsedFeet(viewedScene(), token?.id ?? token?.document?.id),
-    Number(movement?.usedFeet) || 0
-  );
+  const used = Number(movement?.usedFeet) || 0;
   if (max != null) return { left: Math.max(0, max - used), max };
   if (Number.isFinite(movement?.remainingFeet)) {
     return { left: movement.remainingFeet, max: Number.isFinite(movement.maxFeet) ? movement.maxFeet : null };
@@ -219,10 +213,11 @@ function paintPad() {
     ?? modes.find((m) => m.id === (token?.document?.movementAction ?? movement?.mode))
     ?? modes[0];
   const leftover = leftoverFeet(token, movement);
-  const moved = getWalkStepCount(token?.id ?? token?.document?.id) > 0
-    || canUndoActorToken(focusedActor());
+  const moved = canUndoActorToken(focusedActor());
   const showUndo = Boolean(combat && moved);
-  const showFeet = Boolean(combat && moved && leftover);
+  // Same readout as the table: remaining/max for the whole turn, including 30/30
+  // before the first step. Undo stays hidden until a step exists.
+  const showFeet = Boolean(combat && leftover);
 
   root.classList.toggle("is-combat", combat);
   root.classList.toggle("has-token", Boolean(token));
@@ -342,8 +337,12 @@ async function onAction(action) {
   if (stepping) return;
   if (!STEP_DIRS.includes(action)) return;
   stepping = true;
+  let stepped = false;
   try {
-    const result = await stepActorToken(actor, action);
+    const pending = stepActorToken(actor, action);
+    paintPad();
+    const result = await pending;
+    stepped = Boolean(result.ok);
     if (!result.ok && result.reason === "noToken") {
       ui.notifications?.warn?.(ich.mobileMove("noToken"));
     } else if (!result.ok && result.reason === "noOwner") {
@@ -355,23 +354,25 @@ async function onAction(action) {
   } finally {
     stepping = false;
     paintPad();
+    if (stepped && holdAction === action) {
+      holdTimer = setTimeout(() => {
+        holdTimer = null;
+        if (holdAction === action) void onAction(action);
+      }, HOLD_MS);
+    }
   }
 }
 
 function stopHold() {
+  holdAction = null;
   if (holdTimer) {
-    clearInterval(holdTimer);
+    clearTimeout(holdTimer);
     holdTimer = null;
   }
-  holdAction = null;
 }
 
 function startHold(action) {
-  stopHold();
   holdAction = action;
-  holdTimer = setInterval(() => {
-    if (holdAction) void onAction(holdAction);
-  }, HOLD_MS);
 }
 
 function setHeld(el, held) {
@@ -427,7 +428,7 @@ function onPointerDown(event) {
   if (!button) return;
   event.preventDefault();
   event.stopPropagation();
-  button.setPointerCapture?.(event.pointerId);
+  try { button.setPointerCapture?.(event.pointerId); } catch { /* no active pointer */ }
   setHeld(button, true);
   const action = button.dataset.move;
   void onAction(action);

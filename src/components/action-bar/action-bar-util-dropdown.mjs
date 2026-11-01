@@ -35,13 +35,27 @@ import { hideActionBarUiTooltip } from "./action-bar-ui-tooltip.mjs";
 
 let activeDropdown = null;
 let activeAnchor = null;
+let activeAuraToken = null;
+let auraSyncBound = false;
 let outsideClickBound = false;
 
 export function closeUtilDropdown() {
   activeDropdown?.remove();
   activeDropdown = null;
+  activeAuraToken = null;
   activeAnchor?.classList.remove("is-dropdown-open");
   activeAnchor = null;
+}
+
+export function bindAuraDropdownSync() {
+  if (auraSyncBound) return;
+  auraSyncBound = true;
+  Hooks.on("updateToken", (doc) => {
+    if (!activeDropdown?.isConnected || activeDropdown.dataset.type !== "aura" || !activeAuraToken) return;
+    const id = activeAuraToken.document?.id ?? activeAuraToken.id;
+    if (!id || doc?.id !== id) return;
+    void fillAuraDropdown(activeDropdown, activeAuraToken);
+  });
 }
 
 function keepDropdownOpen(type) {
@@ -161,6 +175,7 @@ async function openDropdown(anchor, type, token, html, point = null) {
 
   activeDropdown = dropdown;
   activeAnchor = anchor;
+  activeAuraToken = type === "aura" ? token : null;
   anchor.classList.add("is-dropdown-open");
   bindOutsideClick();
 

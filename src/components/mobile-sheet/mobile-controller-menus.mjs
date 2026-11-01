@@ -174,12 +174,27 @@ function auraMenuHtml(token) {
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <div class="ich-ms-settings-list">
-        ${slots}
+      <div class="ich-ms-aura-slots">${slots}</div>
+      <div class="ich-ms-aura-actions">
         ${ctx.canAdd ? `<button type="button" class="ich-ms-settings-item" data-aura-add="true"><span><strong>${escapeHtml(ctx.addLabel)}</strong></span></button>` : ""}
         <button type="button" class="ich-ms-settings-item${ctx.offActive ? " is-current" : ""}" data-aura-feet="0">
           <span><strong>${escapeHtml(ctx.offLabel)}</strong></span>
         </button>
+      </div>
+      <label class="ich-ms-aura-feet">
+        <input
+          type="number"
+          inputmode="numeric"
+          min="0"
+          max="${ctx.maxFeet}"
+          step="1"
+          value="${escapeHtml(ctx.feetValue)}"
+          data-aura-feet-input
+          aria-label="${escapeHtml(ctx.title)}"
+        >
+        <span>${escapeHtml(ctx.feetUnit)}</span>
+      </label>
+      <div class="ich-ms-settings-list">
         ${feet}
       </div>
       <div class="ich-ms-aura-swatches">${swatches}</div>
@@ -187,15 +202,50 @@ function auraMenuHtml(token) {
   `;
 }
 
-async function refillAuraMenu(overlay, token) {
+function bindAuraFeetInput(overlay, token) {
+  const input = overlay.querySelector("[data-aura-feet-input]");
+  if (!input) return;
+  const commit = async () => {
+    await applyAuraFeet(token, input.value);
+    if (overlay.isConnected) refillAuraMenu(overlay, token);
+  };
+  input.addEventListener("pointerdown", (event) => event.stopPropagation());
+  input.addEventListener("click", (event) => event.stopPropagation());
+  input.addEventListener("keydown", (event) => {
+    event.stopPropagation();
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void commit();
+    }
+  });
+  input.addEventListener("change", () => { void commit(); });
+}
+
+function refillAuraMenu(overlay, token, { toTop = false } = {}) {
+  const dialog = overlay.querySelector(".ich-ms-settings-dialog");
+  const scrollTop = toTop ? 0 : (dialog?.scrollTop ?? 0);
   overlay.innerHTML = auraMenuHtml(token);
+  bindAuraFeetInput(overlay, token);
+  const next = overlay.querySelector(".ich-ms-settings-dialog");
+  if (next) next.scrollTop = scrollTop;
 }
 
 export async function openMobileAuraMenu(token) {
   if (!token?.document) return false;
   const overlay = mountOverlay("ich-ms-aura-overlay", auraMenuHtml(token));
+  bindAuraFeetInput(overlay, token);
+  const tokenId = token.document.id ?? token.id;
+  const onTokenUpdated = (doc) => {
+    if (!overlay.isConnected) {
+      Hooks.off("updateToken", onTokenUpdated);
+      return;
+    }
+    if (!tokenId || doc?.id !== tokenId) return;
+    refillAuraMenu(overlay, token);
+  };
+  if (typeof Hooks !== "undefined") Hooks.on("updateToken", onTokenUpdated);
 
-  overlay.addEventListener("pointerup", async (ev) => {
+  overlay.addEventListener("click", async (ev) => {
     if (ev.target?.closest?.("[data-action='close']")) {
       ev.preventDefault();
       overlay.remove();
@@ -207,11 +257,14 @@ export async function openMobileAuraMenu(token) {
     const feet = ev.target?.closest?.("[data-aura-feet]");
     if (!add && !slot && !color && !feet) return;
     ev.preventDefault();
-    if (add) await addTokenAura(token);
+    ev.stopPropagation();
+    let job = Promise.resolve();
+    if (add) job = addTokenAura(token);
     else if (slot) selectAuraSlot(slot.dataset.auraSlot);
-    else if (color) await applyAuraColor(token, color.dataset.auraColor);
-    else await applyAuraFeet(token, Number(feet.dataset.auraFeet) || 0);
-    await refillAuraMenu(overlay, token);
+    else if (color) job = applyAuraColor(token, color.dataset.auraColor);
+    else job = applyAuraFeet(token, Number(feet.dataset.auraFeet) || 0);
+    await job;
+    if (overlay.isConnected) refillAuraMenu(overlay, token, { toTop: Boolean(add) });
   });
   return true;
 }

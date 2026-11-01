@@ -1983,28 +1983,114 @@ body.ich-mobile-roller-open #ich-mobile-sheet-root .drawer-content {
   flex: 1 !important;
   min-height: 48px !important;
 }
+.ich-ms-aura-slots,
+.ich-ms-aura-actions {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  gap: 8px !important;
+  min-height: 64px !important;
+  margin: 0 0 12px !important;
+}
+.ich-ms-overlay .ich-ms-aura-slots > button.ich-ms-settings-item,
+.ich-ms-overlay .ich-ms-aura-actions > button.ich-ms-settings-item {
+  width: auto !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+.ich-ms-overlay label.ich-ms-aura-feet {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  margin: 0 0 12px !important;
+  padding: 0 16px !important;
+  min-height: 64px !important;
+  border-radius: 14px !important;
+  border: 1px solid var(--mobile-border, rgba(183,148,246,0.28)) !important;
+  background: var(--mobile-bg-button, rgba(183,148,246,0.08)) !important;
+  color: var(--mobile-text-primary, #fff) !important;
+}
+.ich-ms-overlay label.ich-ms-aura-feet input {
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  color: inherit !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+.ich-ms-overlay label.ich-ms-aura-feet span {
+  flex: 0 0 auto !important;
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+}
 .ich-ms-aura-swatches {
   display: flex !important;
   flex-wrap: wrap !important;
   gap: 8px !important;
   margin-top: 12px !important;
+  align-items: center !important;
 }
-.ich-ms-aura-swatch,
-.ich-ms-aura-dot {
+/* Beat Foundry button width/flex and settings-item span flex. */
+.ich-ms-overlay button.ich-ms-aura-swatch {
+  box-sizing: border-box !important;
+  display: inline-block !important;
+  flex: 0 0 36px !important;
   width: 36px !important;
   height: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  aspect-ratio: 1 !important;
   border-radius: 50% !important;
   border: 2px solid rgba(255,255,255,0.2) !important;
   background: var(--ich-aura-swatch, #e07020) !important;
 }
-.ich-ms-aura-swatch.is-active {
+.ich-ms-overlay button.ich-ms-aura-swatch.is-active {
   border-color: #fff !important;
   box-shadow: 0 0 0 2px var(--mobile-accent, #b794f6) !important;
 }
-.ich-ms-aura-dot {
+.ich-ms-overlay .ich-ms-settings-item span.ich-ms-aura-dot {
+  display: block !important;
+  box-sizing: border-box !important;
+  flex: 0 0 18px !important;
   width: 18px !important;
   height: 18px !important;
-  flex: 0 0 18px !important;
+  min-width: 18px !important;
+  max-width: 18px !important;
+  min-height: 18px !important;
+  max-height: 18px !important;
+  padding: 0 !important;
+  aspect-ratio: 1 !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255,255,255,0.2) !important;
+  background: var(--ich-aura-swatch, #e07020) !important;
+}
+.ich-ms-controller-overlay .roll-dialog-title,
+.ich-ms-controller-overlay .ich-ms-settings-item,
+.ich-ms-controller-overlay .ich-ms-settings-item strong {
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+.ich-ms-controller-overlay .roll-dialog-title::before,
+.ich-ms-controller-overlay .roll-dialog-title::after,
+.ich-ms-controller-overlay .ich-ms-settings-item::before,
+.ich-ms-controller-overlay .ich-ms-settings-item::after,
+.ich-ms-controller-overlay .ich-ms-settings-item *::before,
+.ich-ms-controller-overlay .ich-ms-settings-item *::after {
+  content: none !important;
+  display: none !important;
 }
 .ich-ms-controller-overlay .ich-ms-settings-item {
   display: flex !important;

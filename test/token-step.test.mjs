@@ -3,11 +3,11 @@ import { installFoundry } from "./helpers.mjs";
 import {
   findActorTokenDoc,
   findTokenViewById,
-  getWalkUsedFeet,
   nextTokenStep,
   sceneGridStep,
   stepActorToken,
-  tokenViewFromDoc
+  tokenViewFromDoc,
+  undoActorToken
 } from "../src/common/token-step.mjs";
 
 describe("sceneGridStep", () => {
@@ -68,6 +68,7 @@ describe("findActorTokenDoc", () => {
 describe("stepActorToken", () => {
   it("falls back to update when move does nothing", async () => {
     const updates = [];
+    const moveOptions = [];
     const token = {
       id: "t1",
       actorId: "a1",
@@ -75,7 +76,7 @@ describe("stepActorToken", () => {
       x: 200,
       y: 300,
       parent: { grid: { size: 100 } },
-      async move() { /* noCanvas no-op */ },
+      async move(_waypoint, options) { moveOptions.push(options); },
       async update(data) { updates.push(data); Object.assign(this, data); }
     };
     installFoundry({ actors: [{ id: "a1", name: "Hero" }] });
@@ -84,13 +85,103 @@ describe("stepActorToken", () => {
     globalThis.game.scenes = { current: { tokens: [token] }, get: () => null, active: null };
     const result = await stepActorToken({ id: "a1" }, "right");
     expect(result.ok).toBe(true);
+    expect(moveOptions[0]).toMatchObject({ showRuler: true, pan: false });
+    expect(moveOptions[0].animate).toBeUndefined();
     expect(updates).toEqual([{ x: 300, y: 300 }]);
   });
 });
 
-describe("getWalkUsedFeet", () => {
-  it("is zero when this token has not stepped", () => {
-    expect(getWalkUsedFeet({ grid: { distance: 5 } }, "nobody")).toBe(0);
+describe("undoActorToken", () => {
+  it("puts the token back on a square instead of walking the path", async () => {
+    const moves = [];
+    const updates = [];
+    const token = {
+      id: "t-undo",
+      actorId: "a1",
+      isOwner: true,
+      x: 0,
+      y: 0,
+      _source: {
+        _movementHistory: [
+          { x: 0, y: 0, movementId: "origin" },
+          { x: 100, y: 0, movementId: "step-up" },
+          { x: 200, y: 0, movementId: "step-right" },
+          { x: 200, y: 100, movementId: "step-down" }
+        ]
+      },
+      parent: { id: "scene1", grid: { size: 100, distance: 5 } },
+      async move(waypoint) {
+        moves.push(waypoint);
+        this.x = waypoint.x;
+        this.y = waypoint.y;
+        return true;
+      },
+      async update(data, options) {
+        updates.push({ data, options });
+        Object.assign(this, data);
+      },
+      async revertRecordedMovement() { return false; }
+    };
+    installFoundry({ actors: [{ id: "a1", name: "Hero" }] });
+    globalThis.canvas.ready = true;
+    globalThis.canvas.grid = { size: 100 };
+    globalThis.game.scenes = {
+      current: { id: "scene1", tokens: [token], grid: { size: 100, distance: 5 } },
+      get: () => null,
+      active: null
+    };
+
+    await stepActorToken({ id: "a1" }, "up");
+    await stepActorToken({ id: "a1" }, "right");
+    await stepActorToken({ id: "a1" }, "down");
+    expect(moves.map((waypoint) => ({ x: waypoint.x, y: waypoint.y }))).toEqual([
+      { x: 0, y: -100 },
+      { x: 100, y: -100 },
+      { x: 100, y: 0 }
+    ]);
+    moves.length = 0;
+    updates.length = 0;
+
+    const undone = await undoActorToken({ id: "a1" }, { all: true });
+    expect(undone.ok).toBe(true);
+    expect(moves).toEqual([]);
+    expect(updates.at(-1)?.options).toMatchObject({ animate: false });
+    expect(updates.at(-1)?.data).toMatchObject({ x: 0, y: 0 });
+  });
+
+  it("undo one leaves the previous square when the last point is on the same square", async () => {
+    const updates = [];
+    const token = {
+      id: "t-undo",
+      actorId: "a1",
+      isOwner: true,
+      x: 560,
+      y: 1260,
+      _source: {
+        _movementHistory: [
+          { x: 560, y: 1540, movementId: "origin" },
+          { x: 560, y: 1400, movementId: "step-1" },
+          { x: 560, y: 1273, movementId: "hit" },
+          { x: 560, y: 1260, movementId: "nudge" }
+        ]
+      },
+      parent: { id: "scene1", grid: { size: 140, distance: 5 } },
+      async update(data, options) {
+        updates.push({ data, options });
+        Object.assign(this, data);
+      }
+    };
+    installFoundry({ actors: [{ id: "a1", name: "Hero" }] });
+    globalThis.canvas.ready = true;
+    globalThis.canvas.grid = { size: 140 };
+    globalThis.game.scenes = {
+      current: { id: "scene1", tokens: [token], grid: { size: 140, distance: 5 } },
+      get: () => null,
+      active: null
+    };
+    const undone = await undoActorToken({ id: "a1" }, { all: false });
+    expect(undone.ok).toBe(true);
+    expect(updates.at(-1)?.data).toMatchObject({ x: 560, y: 1400 });
   });
 });
 

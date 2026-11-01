@@ -37,11 +37,11 @@ export function clampAuraFeet(value) {
   return Math.max(0, Math.min(MAX_AURA_FEET, Math.round(n)));
 }
 
-function canUpdateTokenDocument(doc) {
+function canUpdateTokenDocument(doc, token) {
   if (!doc || !game.user) return false;
   if (game.user.isGM) return true;
   if (typeof doc.canUserModify === "function") return doc.canUserModify(game.user, "update");
-  return Boolean(doc.isOwner);
+  return Boolean(doc.isOwner ?? token?.isOwner);
 }
 
 function normalizeHex(value, fallback = DEFAULT_AURA_COLOR) {
@@ -70,8 +70,40 @@ function normalizeAura(raw, index) {
   return { index, feet, color, on: feet > 0 };
 }
 
+function moduleFlags(raw) {
+  return raw?.flags?.[MODULE_ID];
+}
+
+function listFromAuras(auras) {
+  return (auras ?? [])
+    .map((raw, index) => normalizeAura(raw, index))
+    .filter((aura) => aura.on)
+    .slice(0, MAX_AURAS)
+    .map((aura, index) => ({ ...aura, index }));
+}
+
 function readFlag(doc, key) {
-  return doc?.getFlag?.(MODULE_ID, key) ?? doc?.flags?.[MODULE_ID]?.[key];
+  const raw = doc?.document ?? doc;
+  if (!raw) return undefined;
+  const owned = moduleFlags(raw);
+  if (owned && Object.prototype.hasOwnProperty.call(owned, key)) return owned[key];
+  if (typeof raw.getFlag === "function") {
+    const fromGet = raw.getFlag(MODULE_ID, key);
+    if (fromGet !== undefined) return fromGet;
+  }
+  return raw._source?.flags?.[MODULE_ID]?.[key];
+}
+
+/** Foundry flag updates often store arrays as {0: item, 1: item}. */
+function asAuraList(value) {
+  if (Array.isArray(value)) return value;
+  if (!value || typeof value !== "object") return null;
+  const keys = Object.keys(value)
+    .filter((key) => /^\d+$/.test(key))
+    .sort((a, b) => Number(a) - Number(b));
+  if (keys.length) return keys.map((key) => value[key]);
+  if ("feet" in value || "color" in value) return [value];
+  return [];
 }
 
 export function auraRadiusPixels(feet, grid = globalThis.canvas?.grid) {
@@ -82,18 +114,12 @@ export function auraRadiusPixels(feet, grid = globalThis.canvas?.grid) {
 }
 
 export function readTokenAuras(doc) {
-  const fromList = readFlag(doc, FLAG_KEY);
-  if (Array.isArray(fromList)) {
-    return fromList
-      .map((raw, index) => normalizeAura(raw, index))
-      .filter((aura) => aura.on)
-      .slice(0, MAX_AURAS)
-      .map((aura, index) => ({ ...aura, index }));
-  }
+  const flagged = asAuraList(readFlag(doc, FLAG_KEY));
+  if (flagged) return listFromAuras(flagged);
 
-  const legacy = readFlag(doc, LEGACY_FLAG_KEY);
-  if (legacy && typeof legacy === "object") {
-    const one = normalizeAura(legacy, 0);
+  const legacy = asAuraList(readFlag(doc, LEGACY_FLAG_KEY));
+  if (legacy?.length) {
+    const one = normalizeAura(legacy[0], 0);
     return one.on ? [one] : [];
   }
 
@@ -111,11 +137,6 @@ export function unusedAuraColor(auras = []) {
 
 export async function writeTokenAuras(token, auras) {
   const doc = token?.document ?? token;
-  if (!canUpdateTokenDocument(doc)) {
-    ui.notifications.warn(ich.warning("noOwner"));
-    return false;
-  }
-
   const next = (auras ?? [])
     .filter((aura) => (Number(aura?.feet) || 0) > 0)
     .slice(0, MAX_AURAS)
@@ -124,16 +145,32 @@ export async function writeTokenAuras(token, auras) {
       color: normalizeHex(aura.color)
     }));
 
-  if (!next.length) {
-    if (readFlag(doc, FLAG_KEY)) await doc.unsetFlag(MODULE_ID, FLAG_KEY);
-    if (readFlag(doc, LEGACY_FLAG_KEY)) await doc.unsetFlag(MODULE_ID, LEGACY_FLAG_KEY);
-  } else {
-    await doc.setFlag(MODULE_ID, FLAG_KEY, next);
-    if (readFlag(doc, LEGACY_FLAG_KEY)) await doc.unsetFlag(MODULE_ID, LEGACY_FLAG_KEY);
+  if (!canUpdateTokenDocument(doc, token)) {
+    ui.notifications.warn(ich.warning("noOwner"));
+    return readTokenAuras(doc);
   }
 
-  paintTokenAura(doc.object ?? token);
-  return true;
+  try {
+    if (typeof doc.update === "function") {
+      await doc.update({
+        [`flags.${MODULE_ID}.${FLAG_KEY}`]: next,
+        [`flags.${MODULE_ID}.-=${LEGACY_FLAG_KEY}`]: null
+      });
+    } else if (typeof doc.setFlag === "function") {
+      await doc.setFlag(MODULE_ID, FLAG_KEY, next);
+      if (typeof doc.unsetFlag === "function" && readFlag(doc, LEGACY_FLAG_KEY) != null) {
+        await doc.unsetFlag(MODULE_ID, LEGACY_FLAG_KEY);
+      }
+    } else if (typeof doc.unsetFlag === "function") {
+      if (!next.length && readFlag(doc, FLAG_KEY) != null) await doc.unsetFlag(MODULE_ID, FLAG_KEY);
+      if (readFlag(doc, LEGACY_FLAG_KEY) != null) await doc.unsetFlag(MODULE_ID, LEGACY_FLAG_KEY);
+    }
+  } catch {
+    // The document did not take the write. The flag is unchanged.
+  }
+
+  paintTokenAura(doc?.object ?? token);
+  return readTokenAuras(doc);
 }
 
 function findAuraGraphics(token) {
