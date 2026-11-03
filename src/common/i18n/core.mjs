@@ -66,6 +66,12 @@ export const HUD_FALLBACKS = {
   "warnings.economySpent": "{type} already spent.",
   "warnings.needTarget": "Select a target first.",
   "warnings.needAlly": "Select an ally to help.",
+  "warnings.ddbPulling": "Updating from D&D Beyond…",
+  "warnings.ddbPulled": "Updated from D&D Beyond.",
+  "warnings.ddbNoImporter": "D&D Beyond Importer is not enabled.",
+  "warnings.ddbNoLink": "This character is not linked to D&D Beyond.",
+  "warnings.ddbFailed": "Could not update from D&D Beyond.",
+  "warnings.ddbNoGm": "A GM must be connected to update from D&D Beyond.",
   "empty.noParty": "No party",
   "empty.noAbilities": "No {section} abilities.",
   "empty.noAbilitiesOoc": "No {section} abilities (out of combat).",
@@ -141,7 +147,9 @@ export const HUD_FALLBACKS = {
   "mobileMove.failed": "Could not move that token.",
   "mobileMove.noTargetsInRange": "Nobody is in range.",
   "mobileMove.showSidebar": "Show tabs",
-  "mobileMove.hideSidebar": "Hide tabs"
+  "mobileMove.hideSidebar": "Hide tabs",
+  "mobileSheet.openDdb": "Open D&D Beyond",
+  "mobileSheet.pullDdb": "Update from Beyond"
 };
 
 /** @type {Map<string, string>} */

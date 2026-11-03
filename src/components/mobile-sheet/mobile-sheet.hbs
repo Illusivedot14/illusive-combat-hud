@@ -276,7 +276,12 @@
 
             {{#if tabs.other}}
             <div class="ich-ms-rests" style="margin-top:0">
-              <button type="button" class="ich-ms-btn" data-action="open-dndbeyond">Open D&amp;D Beyond</button>
+              {{#if canPullDdb}}
+              <button type="button" class="ich-ms-btn" data-action="pull-dndbeyond">{{labels.pullDdb}}</button>
+              {{/if}}
+              {{#if ddbUrl}}
+              <button type="button" class="ich-ms-btn" data-action="open-dndbeyond">{{labels.openDdb}}</button>
+              {{/if}}
             </div>
             {{#if appearance}}<h3 class="ich-ms-section-title">Appearance</h3><div class="bio-text">{{appearance}}</div>{{/if}}
             {{#if trait}}<h3 class="ich-ms-section-title">Traits</h3><div class="bio-text">{{trait}}</div>{{/if}}

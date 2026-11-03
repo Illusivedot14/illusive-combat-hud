@@ -20,6 +20,7 @@ import { listActivities, requiresCanvasTargets } from "../../common/ability-util
 import { findTokenForActor } from "../../common/reaction-context.mjs";
 import { pickCastSlotLevel } from "../action-bar/action-bar-cast-picker.mjs";
 import { startMobileTargetUse } from "./mobile-target-pick.mjs";
+import { pullActorFromDdb, readDdbCharacterUrl } from "../../common/ddb-pull.mjs";
 
 function signed(n) {
   const v = Number(n) || 0;
@@ -478,7 +479,7 @@ async function openHpDialogFixed(actor) {
 export async function handleMobileSheetAction(actor, action, dataset, event) {
   if (!actor) return false;
 
-  if (!actor.isOwner && !["close", "open-dndbeyond", "open-dice-settings", "open-ui-color"].includes(action)) {
+  if (!actor.isOwner && !["close", "open-dndbeyond", "pull-dndbeyond", "open-dice-settings", "open-ui-color"].includes(action)) {
     ui.notifications.warn(ich.warning("noOwner"));
     return false;
   }
@@ -554,6 +555,8 @@ export async function handleMobileSheetAction(actor, action, dataset, event) {
       return false;
     case "open-dndbeyond":
       return openDndBeyondCharacter(actor);
+    case "pull-dndbeyond":
+      return pullDndBeyondCharacter(actor);
     case "open-dice-settings":
       await withSheetDropped(() => openDiceSoNiceSettings());
       return true;
@@ -569,14 +572,25 @@ export async function handleMobileSheetAction(actor, action, dataset, event) {
  * Open the actor's D&D Beyond character page (ddb-importer flags).
  * Does not open Foundry's full sheet — that sits under the mobile overlay and is unused here.
  */
+async function pullDndBeyondCharacter(actor) {
+  ui.notifications?.info?.(ich.warning("ddbPulling"));
+  const result = await pullActorFromDdb(actor);
+  if (result.ok) {
+    ui.notifications?.info?.(ich.warning("ddbPulled"));
+    return true;
+  }
+  const key = {
+    noImporter: "ddbNoImporter",
+    noLink: "ddbNoLink",
+    noOwner: "noOwner",
+    noGm: "ddbNoGm"
+  }[result.reason] ?? "ddbFailed";
+  ui.notifications?.warn?.(ich.warning(key));
+  return false;
+}
+
 function openDndBeyondCharacter(actor) {
-  const ddb = actor.getFlag?.("ddbimporter", "dndbeyond")
-    ?? actor.flags?.ddbimporter?.dndbeyond
-    ?? {};
-  const id = ddb.characterId
-    ?? actor.getFlag?.("ddbimporter", "id")
-    ?? actor.flags?.ddbimporter?.id;
-  const url = String(ddb.url || (id ? `https://www.dndbeyond.com/characters/${id}` : "")).trim();
+  const url = readDdbCharacterUrl(actor);
 
   if (!url) {
     ui.notifications?.warn?.(

@@ -27,5 +27,6 @@ export const ich = {
   turnTracker: group("turnTracker"),
   actionBar: group("actionBar"),
   cameraPad: group("cameraPad"),
-  mobileMove: group("mobileMove")
+  mobileMove: group("mobileMove"),
+  mobileSheet: group("mobileSheet")
 };

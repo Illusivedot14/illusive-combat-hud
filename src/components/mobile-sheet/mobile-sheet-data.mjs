@@ -1,5 +1,7 @@
 import { getClassResources, getPactMagic, buildSpellSlotDiamondsForLevel } from "../../common/actor-resources.mjs";
 import { resolvePortraitSrc } from "../../common/actor-data.mjs";
+import { canPullActorFromDdb, readDdbCharacterId } from "../../common/ddb-pull.mjs";
+import { ich } from "../../common/i18n.mjs";
 import { listActivities } from "../../common/ability-utils.mjs";
 import { ABILITY_ORDER, SKILL_ORDER, abilityLabel, formatMod, skillLabel } from "../../common/actor-stats.mjs";
 
@@ -368,6 +370,12 @@ export function buildMobileSheetContext(actor, options = {}) {
     hitDice,
     senses,
     passive,
+    canPullDdb: canPullActorFromDdb(actor),
+    ddbUrl: Boolean(readDdbCharacterId(actor)),
+    labels: {
+      pullDdb: ich.mobileSheet("pullDdb"),
+      openDdb: ich.mobileSheet("openDdb")
+    },
     biography: actor.system?.details?.biography?.value || "",
     appearance: actor.system?.details?.appearance || "",
     trait: actor.system?.details?.trait || "",

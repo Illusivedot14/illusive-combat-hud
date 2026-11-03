@@ -1642,6 +1642,9 @@ body.ich-mobile-sheet-open .mobile-character-sheet:not(.ich-illusive-mobile-shee
   gap: 10px;
   margin-top: 20px;
 }
+#ich-mobile-sheet-root .ich-ms-rests:has(> :only-child) {
+  grid-template-columns: 1fr;
+}
 #ich-mobile-sheet-root .ich-ms-btn {
   border: 1px solid var(--mobile-border, rgba(255,255,255,0.12));
   background: var(--mobile-bg-button, rgba(255,255,255,0.06));

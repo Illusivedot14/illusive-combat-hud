@@ -20,6 +20,7 @@ import {
 } from "./common/mobile-client.mjs";
 import { applyEarlyMobileBootClass, persistMobileBootFlag } from "./common/mobile-boot.mjs";
 import { bindTokenStepSocket } from "./common/token-step.mjs";
+import { bindDdbPullSocket } from "./common/ddb-pull.mjs";
 import { bindCanvasHooks } from "./common/hooks/index.mjs";
 import { bindOverlayGuardHooks } from "./common/overlay-guard.mjs";
 import { bindConnectionQrOverlay, showConnectionQrs, purgeConnectionQrTiles } from "./components/connection-qr/connection-qr-overlay.mjs";
@@ -90,6 +91,7 @@ Hooks.once("ready", async () => {
   bindMobileSheet();
   bindMobileSheetDiceBroadcast();
   bindTokenStepSocket();
+  bindDdbPullSocket();
   await bootMobileClientUi();
 
   import("./components/camera-pad/camera-pad.mjs")
