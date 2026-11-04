@@ -1,5 +1,6 @@
 import { MODULE_ID } from "./constants.mjs";
 import { settingOn } from "./hud-settings.mjs";
+import { isTouchTableClient } from "./hooks/touch-table.mjs";
 import { applyEarlyMobileBootClass, persistMobileBootFlag } from "./mobile-boot.mjs";
 
 const RELOAD_GUARD = "ich-mobile-client-reload";
@@ -10,10 +11,22 @@ export function isNativeMobile() {
     .test(navigator.userAgent ?? "");
 }
 
+/**
+ * Sheet-only for every player account.
+ * GM and the Touchscreen table user keep the full canvas HUD.
+ */
 export function detectMobileDevice() {
   const mode = getMobileClientMode();
   if (mode === "forceMobile") return true;
   if (mode === "forceDesktop") return false;
+
+  const user = game.user;
+  if (user) {
+    if (user.isGM || isTouchTableClient()) return false;
+    return true;
+  }
+
+  // User not ready yet (very early boot) — phones only.
   return isNativeMobile();
 }
 

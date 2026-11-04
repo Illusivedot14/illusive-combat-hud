@@ -93,6 +93,31 @@ describe("camera pad layout", () => {
     expect(spot.left).toBe(1060 - PAD_WIDTH_PX - PAD_CLEARANCE_PX);
   });
 
+  it("stays in the bottom-right corner when the bar leaves no room above it", () => {
+    const actionBar = { left: 100, right: 1500, top: 250, bottom: 1060, width: 1400, height: 810 };
+    const turnTracker = { left: 0, right: 1920, top: 8, bottom: 140, width: 1920, height: 132 };
+    const spot = cameraPadPlacement({
+      viewportHeight: 1080,
+      bandEnd: 1600,
+      actionBar,
+      turnTracker
+    });
+    expect(spot.bottom).toBe(16);
+    expect(spot.left).toBe(1600 - PAD_WIDTH_PX - PAD_CLEARANCE_PX);
+  });
+
+  it("ignores a centered minimize chevron that does not share the pad column", () => {
+    // Minimized dock used to report the full bar width; the real chevron is narrow.
+    const chevron = { left: 512, right: 567, top: 1041, bottom: 1064, width: 55, height: 23 };
+    const spot = cameraPadPlacement({
+      viewportHeight: 1080,
+      bandEnd: 1000,
+      actionBar: chevron
+    });
+    expect(spot.bottom).toBe(16);
+    expect(spot.left).toBe(1000 - PAD_WIDTH_PX - PAD_CLEARANCE_PX);
+  });
+
   it("keeps the arrows in a compact 3x3 plus", () => {
     const root = applyCameraPadChrome(makePad());
     const arrows = root.querySelector(".ich-camera-pad-arrows");

@@ -48,6 +48,7 @@ import { refreshHud } from "../../common/render/core.mjs";
 import { ICH_RENDER } from "../../common/render/scopes.mjs";
 import { definePanel } from "../../common/render/define-panel.mjs";
 import { renderTokenStatuses, positionTokenStatuses } from "../token-statuses/token-statuses.mjs";
+import { repositionCameraPad } from "../camera-pad/camera-pad.mjs";
 import { syncFoundryUiVisibility, isFoundryHotbarHidden } from "./action-bar-foundry-ui.mjs";
 import {
   handleCombatFlowButton,
@@ -138,6 +139,9 @@ export function positionActionBar() {
   dock.style.transformOrigin = "bottom center";
 
   positionTokenStatuses();
+  // Action-bar show/hide is the usual reason the zoom pad must move; don't wait
+  // on a MutationObserver tick or the pad can sit under the bar and look gone.
+  repositionCameraPad();
 }
 
 function requestPanelRefresh() {

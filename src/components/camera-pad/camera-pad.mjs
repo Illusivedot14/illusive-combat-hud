@@ -52,8 +52,12 @@ function boxesOverlapX(left, right, box) {
 }
 
 /**
- * Compact map cluster on the right of the HUD band, above the action bar.
- * Opposite the party rail so the fight HUD stays the focus.
+ * Compact map cluster on the right of the HUD band, above the action bar when
+ * there is room. Opposite the party rail so the fight HUD stays the focus.
+ *
+ * When the bar + turn tracker leave no vertical slot for the pad, keep it in
+ * the bottom-right corner (drawn above the bar) instead of clamping into a
+ * mid-screen overlap that reads as "the zoom pad disappeared."
  */
 export function cameraPadPlacement({
   viewportHeight,
@@ -67,19 +71,21 @@ export function cameraPadPlacement({
 } = {}) {
   const left = Math.max(floor, Math.round((bandEnd || padWidth + gap) - padWidth - gap));
   const padRight = left + padWidth;
-
-  let bottom = floor;
-  if (actionBar && actionBar.height >= 1 && boxesOverlapX(left, padRight, actionBar)) {
-    bottom = Math.max(bottom, Math.round(viewportHeight - actionBar.top + gap));
-  }
-
-  if (turnTracker && turnTracker.height >= 1 && boxesOverlapX(left, padRight, turnTracker)) {
-    const minTop = turnTracker.bottom + gap;
-    const maxBottom = viewportHeight - padHeight - minTop;
-    if (Number.isFinite(maxBottom)) bottom = Math.min(bottom, maxBottom);
-  }
-
   const cap = Math.max(floor, viewportHeight - padHeight - floor);
+
+  let aboveBar = floor;
+  if (actionBar && actionBar.height >= 1 && boxesOverlapX(left, padRight, actionBar)) {
+    aboveBar = Math.max(floor, Math.round(viewportHeight - actionBar.top + gap));
+  }
+
+  let maxBottom = cap;
+  if (turnTracker && turnTracker.height >= 1 && boxesOverlapX(left, padRight, turnTracker)) {
+    const underTracker = viewportHeight - padHeight - (turnTracker.bottom + gap);
+    if (Number.isFinite(underTracker)) maxBottom = Math.min(maxBottom, underTracker);
+  }
+
+  // Only lift when the whole pad still fits under the turn tracker.
+  const bottom = aboveBar > floor && aboveBar <= maxBottom ? aboveBar : floor;
   return { left, bottom: Math.round(Math.max(floor, Math.min(bottom, cap))) };
 }
 
@@ -382,13 +388,29 @@ function panelBox(id) {
   return getUiLocalRect(el);
 }
 
+/**
+ * Expanded bar: the full dock. Minimized: only the chevron — the dock still
+ * reports the collapsed motion's max-content width, which falsely overlaps the
+ * right-side pad and leaves a floating gap above the arrow.
+ */
+function actionBarObstacle() {
+  const dock = document.getElementById("ich-action-bar-dock");
+  if (!dock || !obstacleVisible(dock)) return null;
+  if (dock.classList.contains("ich-action-bar-dock--minimized")) {
+    const chevron = dock.querySelector(".ich-action-bar-minimize");
+    if (!chevron || !obstacleVisible(chevron)) return null;
+    return getUiLocalRect(chevron);
+  }
+  return getUiLocalRect(dock);
+}
+
 function placePad(root) {
   applyCameraPadChrome(root);
   const ui = getUiViewportSize();
   const { left, bottom } = cameraPadPlacement({
     viewportHeight: ui.h,
     bandEnd: getHudBand().end,
-    actionBar: panelBox("ich-action-bar-dock"),
+    actionBar: actionBarObstacle(),
     turnTracker: panelBox("ich-turn-tracker")
   });
   setImportant(root, { left: `${left}px`, bottom: `${bottom}px`, right: "auto" });
@@ -404,6 +426,11 @@ function schedulePlace() {
     const root = rootEl();
     if (root) placePad(root);
   });
+}
+
+/** Re-measure obstacles after the action bar / turn tracker moves. */
+export function repositionCameraPad() {
+  schedulePlace();
 }
 
 function watchObstacles() {
